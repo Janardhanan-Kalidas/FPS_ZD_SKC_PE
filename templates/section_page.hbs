@@ -1,0 +1,321 @@
+<!---
+{{! Hero element }}
+<div class="hero relative overflow-hidden{{#is settings.hero_image_style 'standard'}} bg-home bg-cover bg-center{{/is}}">
+
+    {{! Hero element content }}
+  <div class="relative container z-30 py-6 lg:p{{#if settings.fixed_header}}b{{else}}y{{/if}}-7"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
+-->
+    
+<!-- HIDE THE TOP - HOW CAN WE HELP YOU?
+  {{! Hero element content }}
+  <div class="relative container z-30 py-6 lg:p{{#if settings.fixed_header}}b{{else}}y{{/if}}-7"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
+
+    {{! Hero element title }}
+    <div class="my-5{{#unless settings.hero_heading}} hidden{{/unless}}">
+      {{~#if settings.hero_heading}}
+        <h1 class="font-size-4xl lg:font-size-5xl">
+          {{~#if settings.use_translations}}
+            {{dc settings.hero_heading}}
+          {{else}}
+            {{settings.hero_heading}}
+          {{/if~}}
+        </h1>
+      {{/if~}}
+    </div>
+    
+    -->
+<!--
+    {{! Hero element search bar }}
+    {{~#is settings.header_search_style 'none'}}
+      <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4">
+        <h2 class="sr-only">{{ t 'search' }}</h2>
+        {{~#if settings.search_placeholder}}
+          {{#if settings.use_translations}}
+            {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false placeholder=(dc settings.search_placeholder)}}
+          {{else}}
+            {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false placeholder=settings.search_placeholder}}
+          {{/if}}
+        {{else}}
+          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false}}
+        {{/if~}}
+        <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+          <use xlink:href="#icon-search" />
+        </svg>
+      </div>
+    {{/is}}
+
+  </div>
+
+  {{! Hero background image (overlay) }}
+  {{#isnt settings.hero_image_style 'standard'}}
+    {{#isnt settings.hero_image_style 'parallax'}}
+      <div class="absolute z-20 top-0 left-0 h-full w-full bg-home{{#is settings.hero_image_style 'overlay'}} bg-cover bg-center{{/is}}{{#is settings.hero_image_style 'overlay-pattern'}} bg-contain bg-repeat{{/is}}"></div>
+    {{/isnt}}
+  {{/isnt}}
+
+  {{! Hero background color }}
+  <div class="absolute z-10 top-0 left-0 h-full w-full bg-hero"></div>
+
+  {{! Hero background image (parallax) }}
+  {{#is settings.hero_image_style 'parallax'}}
+    <div class="absolute z-0 top-0 left-0 w-full h-full">
+      <div class="relative w-full h-full overflow-hidden">
+        <div class="absolute top-0 left-0 w-full bg-home bg-cover bg-center" x-data="Widgets.parallaxImage" style="height: 150%"></div>
+      </div>
+    </div>
+  {{/is}}
+
+  {{! SVG dividers }}
+  {{~#isnt settings.hero_element_shape 'none'}}
+    <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"
+      {{~#is settings.hero_element_shape 'book'}}class="svg-shape -mt-4 rotate-180" viewBox="0 0 1200 120"{{/is~}}
+      {{~#is settings.hero_element_shape 'curve'}}class="svg-shape -mt-6" viewBox="0 0 100 100"{{/is~}}
+      {{~#is settings.hero_element_shape 'curves'}}class="svg-shape -mt-6 rotate-180" viewBox="0 0 240 24"{{/is~}}
+      {{~#is settings.hero_element_shape 'diagonal'}}class="svg-shape -mt-4 rotate-180" viewBox="0 0 1000 100"{{/is~}}
+      {{~#is settings.hero_element_shape 'hills'}}class="svg-shape -mt-4" viewBox="0 0 240 24"{{/is~}}
+      {{~#is settings.hero_element_shape 'mountains'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}
+      {{~#is settings.hero_element_shape 'rays'}}class="svg-shape rotate-180" viewBox="0 0 2600 130.1"{{/is~}}
+      {{~#is settings.hero_element_shape 'triangle'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}
+      {{~#is settings.hero_element_shape 'wave'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}
+      {{~#is settings.hero_element_shape 'waves'}}class="svg-shape rotate-180" viewBox="0 0 283.5 27.8"{{/is~}}
+      {{~#is settings.hero_element_shape 'zigzag'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}>
+      <use xlink:href="#shape-{{settings.hero_element_shape}}" />
+    </svg>
+  {{/isnt~}}
+
+</div> {{! /.hero }}
+-->
+{{! ---------------------------------------------------------
+   UNIVERSAL BREADCRUMBS – FINAL VERSION (CLICKABLE HOME)
+   Updated by: Kalidas, Janardhanan
+   Date: 20‑Mar‑2026
+
+   Purpose:
+   - Make "Home" clickable using help_center.url
+   - Add home icon via CSS
+   - Display native breadcrumbs beside Home
+   - Work safely in ALL templates (home, category, section, article)
+---------------------------------------------------------- }}
+
+<div class="bg-gray-100 pt-5 pb-1">
+  <div class="container">
+
+    <div class="breadcrumbs-wrapper">
+
+      {{!-- CLICKABLE HOME BREADCRUMB --}}
+      <a href="{{help_center.url}}" class="bc-home">Home</a>
+
+      {{!-- Native Zendesk breadcrumbs (must remain untouched) --}}
+      <div class="bc-native">
+        {{breadcrumbs}}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="container" id="page-container">
+ <!-- 
+  {{! Hero element search bar }}
+    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4{{#is settings.hero_content_alignment 'center'}} mx-auto{{/is}}">
+      <h2 class="sr-only">{{ t 'search' }}</h2>
+      {{~#if settings.search_placeholder}}
+        {{#if settings.use_translations}}
+          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=(dc 'search')}}
+        {{else}}
+          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=settings.search_placeholder}}
+        {{/if}}
+      {{else}}
+        {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button}}
+      {{/if~}}
+      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+        <use xlink:href="#icon-search" />
+      </svg>
+    </div> 
+  -->
+  <div class="row row-lg">
+
+    <div class="col">
+
+      {{! Section header }}
+      <div class="sm:flex flex-wrap justify-content-between py-4">
+        <h1 class="w-full">
+          {{section.name}}
+        </h1>
+        {{#if section.description}}
+          <p class="font-size-lg">
+            {{section.description}}
+          </p>
+        {{/if}}
+
+        {{! Subscribe link }}
+        {{#if settings.show_follow_section}}
+          <div class="subscribe-section mb-4">
+            {{subscribe}}
+          </div>
+        {{/if}}
+      </div>
+
+      <div class="row">
+        <div class="col-12 {{~#is settings.article_list_columns '1'}} lg:col-9{{/is~}}">
+
+        {{! Subsection list }}
+        {{#isnt settings.subsection_style 'none'}}
+          {{#if section.sections}}
+            <ul class="row row-sm list-unstyled mb-2">
+              {{#each section.sections}}
+                <li class="col-12
+                  {{~#if (compare ../settings.article_list_columns ">=" "2")}} md:col-6{{/if~}}
+                  {{~#if (compare ../settings.article_list_columns ">=" "3")}} lg:col-4{{/if~}}">
+                  <div class="relative media align-items-baseline py-2 h-full">
+                    <svg class="mr-3 flex-shrink-0 fill-current" width="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6.5 1.1C6.1 0.4 5.3 0 4.5 0H0.5C0.2 0 0 0.2 0 0.5V14.4C0 14.8 0.2 15 0.5 15H14.4C14.7 15 14.9 14.8 14.9 14.5V2.8C14.9 2.5 14.7 2.3 14.4 2.3H8.4C7.6 2.3 6.9 1.8 6.5 1.1Z" />
+                    </svg>
+                    <a class="link-stretched" href="{{url}}">
+                      {{name}}
+                    </a>
+                  </div>
+                </li>
+              {{/each}}
+            </ul>
+          {{/if}}
+        {{/isnt}}
+
+          {{pagination "section.sections"}}
+
+          {{! Article list }}
+          {{#if section.articles}}
+
+            {{~#if section.sections}}
+              <h2 class="mt-6 h3">
+                {{t 'articles'}}
+              </h2>
+            {{/if~}}
+
+            <div id="articles-{{section.id}}">
+              {{#if (compare settings.article_list_style '<=' '8')}}
+
+                {{! Built-in article list }}
+                <ul class="row row-{{~#is settings.article_list_style '1-bullet'}}flush list-disc{{else}}sm list-unstyled{{/is~}}">
+                  {{~#each section.articles}}
+                    <li class="col-12
+                      {{~#if (compare ../settings.article_list_columns ">=" "2")}} md:col-6{{/if~}}
+                      {{~#if (compare ../settings.article_list_columns ">=" "3")}} lg:col-4{{/if~}}">
+
+                      <div class="relative media align-items-baseline py-3 h-full
+                        {{~#is ../settings.article_list_style '1-bullet'}} pr-7{{/is~}}
+                        {{~#is ../settings.promoted_article_style 'bold'}}{{#if promoted}} font-bold{{/if}}{{/is~}}
+                        {{~#isnt ../settings.article_list_excerpt 0}} font-semibold{{/isnt~}}
+                        {{~#is ../settings.article_list_style '3-bordered'}} border-bottom{{#is ../settings.article_list_columns "1"}}{{#if @last}} border-bottom-0{{/if}}{{/is}}{{/is~}}">
+
+                        {{~#is ../settings.article_list_style '3-bordered'}}
+                          <div class="flex" x-data="{ src: Theme.assets['article'] }">
+                            <template x-if="src">
+                              <img class="svg-icon mr-3" src="{{asset 'placeholder.png'}}" alt="" aria-hidden="true" :src="src" />
+                            </template>
+                          </div>
+                        {{/is~}}
+
+                        <div class="media-body">
+                          <a class="link-stretched" href="{{url}}">
+                            {{~title~}}
+                          </a>
+                          {{~#is ../settings.promoted_article_style 'icon'}}
+                            {{~#if promoted}}
+                              <svg class="svg-icon ml-1 fill-current text-orange-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 426 405" aria-hidden="true">
+                                <title>{{t 'promoted'}}</title>
+                                <use xlink:href="#icon-star" />
+                              </svg>
+                            {{/if~}}
+                          {{/is~}}
+                          {{~#if internal~}}
+                            <svg class="svg-icon ml-1 fill-current text-base" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">
+                              <title>{{t 'internal'}}</title>
+                              <use xlink:href="#icon-lock" />
+                            </svg>
+                          {{~/if~}}
+                          {{~#isnt ../settings.article_list_excerpt 0}}
+                            <p class="my-2 font-size-md break-words font-normal">
+                              {{excerpt body characters=../settings.article_list_excerpt}}
+                            </p>
+                          {{/isnt~}}
+                        </div>
+                      </div>
+                    </li>
+                  {{/each~}}
+                </ul>
+              {{else}}
+
+                {{! Custom article list micro-template }}
+                <script type="text/javascript">
+                  ready(function() {
+                    new Navigation(document.getElementById('article-list-{{section.id}}'), {
+                      collection: Theme.contentBlocks || {},
+                      template: 'articles',
+                      sectionId: {{section.id}},
+                      templateData: {
+                        sectionId: {{section.id}},
+                        numberColumns: {{settings.article_list_columns}},
+                        excerptLength: {{settings.article_list_excerpt}},
+                        promotedArticleStyle: "{{settings.promoted_article_style}}"
+                      }
+                    });
+                  });
+                </script>
+              {{/if}}
+            </div>
+          {{else}}
+            {{#unless section.sections}}
+              <p class="mt-5">
+                <a href="{{section.url}}">
+                  {{t 'empty'}}
+                </a>
+              </p>
+            {{/unless}}
+          {{/if}}
+
+          {{pagination "section.articles"}}
+
+        </div>
+      </div>
+    </div>
+
+    <aside class="relative md:col-4{{~#is settings.section_sidebar 'none'}}{{~#isnt settings.cta_style 'sidebar'}}{{~#isnt settings.cta_style 'all'}} hidden{{/isnt~}}{{/isnt~}}{{/is~}}">
+
+      {{! Sidebar navigation }}
+      {{~#isnt settings.section_sidebar 'none'}}
+        <div
+          data-element="navigation"
+          data-template="{{#is settings.section_sidebar 'custom'}}sidebar-navigation{{else}}{{settings.section_sidebar}}{{/is}}">
+        </div>
+      {{/isnt~}}
+
+      {{! Call-to-action }}
+      {{~#is settings.cta_style 'sidebar'}}
+        {{~#isnt settings.cta_location 'home'}}
+          <div
+            data-element="template"
+            data-template="call-to-action">
+          </div>
+        {{/isnt~}}
+      {{/is~}}
+
+    </aside>
+
+  </div> {{! /.row }}
+</div> {{! /#page-container }}
+
+{{! Call-to-action }}
+{{~#isnt settings.cta_style 'none'}}
+  {{~#isnt settings.cta_style 'sidebar'}}
+    {{~#isnt settings.cta_location 'home'}}
+      <div
+        data-element="template"
+        data-template="call-to-action">
+      </div>
+    {{/isnt~}}
+  {{/isnt~}}
+{{/isnt~}}
+
+<script type="text/javascript">document.documentElement.classList.add('section-page', 'section-' + {{section.id}})</script>

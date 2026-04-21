@@ -1,0 +1,12 @@
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+    <title>05 Icons / Broken</title>
+    <desc>Created with Sketch.</desc>
+    <g id="05-Icons-/-Broken" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#FFFFFF" opacity="0" x="0" y="0" width="24" height="24"/>
+        <g id="broken">
+            <rect id="Rectangle" fill-opacity="0" fill="#FFFFFF" x="0" y="0" width="24" height="24"/>
+            <path d="M9.5,21 L3,21 L3,3 L12,3 L9.5,7 L13,10 L11.3436313,13.3127375 L10,16 L13.0785686,12.9214314 L16,10 L12.5,7 L15,3 L21,3 L21,21 L9.5,21 Z" id="🎨Color" fill="#524F53"/>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,201 @@
+{{! ---------------------------------------------------------
+   UNIVERSAL BREADCRUMBS – FINAL VERSION (CLICKABLE HOME)
+   Updated by: Kalidas, Janardhanan
+   Date: 20‑Mar‑2026
+
+   Purpose:
+   - Make "Home" clickable using help_center.url
+   - Add home icon via CSS
+   - Display native breadcrumbs beside Home
+   - Work safely in ALL templates (home, category, section, article)
+---------------------------------------------------------- }}
+
+<div class="bg-gray-100 pt-5 pb-1">
+  <div class="container">
+
+    <div class="breadcrumbs-wrapper">
+
+      {{!-- CLICKABLE HOME BREADCRUMB --}}
+      <a href="{{help_center.url}}" class="bc-home">Home</a>
+
+      {{!-- Native Zendesk breadcrumbs (must remain untouched) --}}
+      <div class="bc-native">
+        {{breadcrumbs}}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="container" id="page-container">
+  <div class="row row-lg">
+
+    <div class="col">
+
+      {{! Category header }}
+      <div class="py-4">
+        <h1 class="category-title">{{category.name}}</h1>
+        {{#if category.description}}
+          <p class="font-size-lg">{{category.description}}</p>
+        {{/if}}
+      </div>
+
+      {{! Section list }}
+      {{#if sections}}
+        <div class="section-grid row">
+
+          {{#each sections}}
+            <div class="col-12 mb-4">
+
+              {{! Section title }}
+              <h2>
+                <a class="text-inherit" href="{{url}}">{{name}}</a>
+              </h2>
+
+              {{! Subsection list (unchanged) }}
+              {{#isnt ../settings.subsection_style 'none'}}
+                {{#if sections}}
+                  <ul class="list-unstyled mb-2">
+                    {{#each sections}}
+                      <li>
+                        <div class="relative media align-items-baseline py-2">
+                          <svg class="mr-3 flex-shrink-0 fill-current" width="12" viewBox="0 0 15 15">
+                            <path d="M6.5 1.1C6.1 0.4 5.3 0 4.5 0H0.5C0.2 0 0 0.2 0 0.5V14.4C0 14.8 0.2 15 0.5 15H14.4C14.7 15 14.9 14.8 14.9 14.5V2.8C14.9 2.5 14.7 2.3 14.4 2.3H8.4C7.6 2.3 6.9 1.8 6.5 1.1Z" />
+                          </svg>
+                          <a class="link-stretched" href="{{url}}">{{name}}</a>
+                        </div>
+                      </li>
+                    {{/each}}
+                  </ul>
+                {{/if}}
+              {{/isnt}}
+
+              {{! ============================================================
+                   REWRITTEN ARTICLE LIST (Always Single-Column Rows)
+                  ============================================================ }}
+
+              {{#if articles}}
+                <div id="article-list-{{id}}">
+                  <ul class="list-unstyled">
+
+                    {{#each articles}}
+                      <li>
+                        <div class="relative media align-items-baseline py-3 border-bottom">
+
+                          {{! Bordered icon style }}
+                          {{#is ../../settings.article_list_style '3-bordered'}}
+                            <div class="flex" x-data="{ src: Theme.assets['article'] }">
+                              <template x-if="src">
+                                <img class="svg-icon mr-3" src="{{asset 'placeholder.png'}}" aria-hidden="true" :src="src" />
+                              </template>
+                            </div>
+                          {{/is}}
+
+                          <div class="media-body">
+
+                            <a class="link-stretched" href="{{url}}">{{title}}</a>
+
+                            {{! Promoted icon }}
+                            {{#is ../../settings.promoted_article_style 'icon'}}
+                              {{#if promoted}}
+                                <svg class="svg-icon ml-1 fill-current text-orange-500" viewBox="0 0 426 405">
+                                  <title>{{t 'promoted'}}</title>
+                                  <use xlink:href="#icon-star" />
+                                </svg>
+                              {{/if}}
+                            {{/is}}
+
+                            {{! Internal lock }}
+                            {{#if internal}}
+                              <svg class="svg-icon ml-1 fill-current text-base" viewBox="0 0 16 16">
+                                <title>{{t 'internal'}}</title>
+                                <use xlink:href="#icon-lock" />
+                              </svg>
+                            {{/if}}
+
+                            {{! Excerpt }}
+                            {{#isnt ../../settings.article_list_excerpt 0}}
+                              <p class="my-2 font-size-md break-words font-normal">
+                                {{excerpt body characters=../../settings.article_list_excerpt}}
+                              </p>
+                            {{/isnt}}
+
+                          </div>
+                        </div>
+                      </li>
+                    {{/each}}
+
+                  </ul>
+
+                  {{! Show all link }}
+                  {{#if more_articles}}
+                    <p>
+                      <a href="{{url}}">
+                        {{t 'show_all_articles' count=article_count}}
+                      </a>
+                    </p>
+                  {{/if}}
+                </div>
+              {{/if}}
+
+              {{! No articles or subsections }}
+              {{#unless sections}}
+                {{#unless articles}}
+                  <p>
+                    <a href="{{url}}">{{t 'empty'}}</a>
+                  </p>
+                {{/unless}}
+              {{/unless}}
+
+            </div>
+          {{/each}}
+
+        </div>
+
+      {{else}}
+        <p>
+          <a href="{{category.url}}">{{t 'empty'}}</a>
+        </p>
+      {{/if}}
+
+    </div>
+
+    {{! Sidebar }}
+    <aside class="relative md:col-4 {{! Width of the Sidebar}}
+      {{#is settings.category_sidebar 'none'}}
+        {{#isnt settings.cta_style 'sidebar'}}
+          {{#isnt settings.cta_style 'all'}}hidden{{/isnt}}
+        {{/isnt}}
+      {{/is}}">
+      
+      {{! Sidebar navigation }}
+      {{#isnt settings.category_sidebar 'none'}}
+        <div data-element="navigation" data-template="{{#is settings.category_sidebar 'custom'}}sidebar-navigation{{else}}{{settings.category_sidebar}}{{/is}}">
+        </div>
+      {{/isnt}}
+
+      {{! Sidebar CTA }}
+      {{#is settings.cta_style 'sidebar'}}
+        {{#isnt settings.cta_location 'home'}}
+          <div data-element="template" data-template="call-to-action"></div>
+        {{/isnt}}
+      {{/is}}
+
+    </aside>
+
+  </div>
+</div>
+
+{{! Footer CTA }}
+{{#isnt settings.cta_style 'none'}}
+  {{#isnt settings.cta_style 'sidebar'}}
+    {{#isnt settings.cta_location 'home'}}
+      <div data-element="template" data-template="call-to-action"></div>
+    {{/isnt}}
+  {{/isnt}}
+{{/isnt}}
+
+<script>
+  document.documentElement.classList.add('category-page', 'category-' + {{category.id}});
+</script>
