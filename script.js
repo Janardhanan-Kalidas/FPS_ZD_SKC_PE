@@ -891,6 +891,8 @@ document.addEventListener("DOMContentLoaded", function () {
  * ============================================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
+  const emptyStateIcon =
+    (window.Theme && window.Theme.assets && window.Theme.assets.emptyStateIcon) || "";
 
   /* 1. Detect all occurrences of the literal "empty" text printed by Zendesk */
   const emptyElements = document.querySelectorAll(
@@ -908,12 +910,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement("div");
     container.className = "empty-state";
 
-    container.innerHTML = `
-      <img src="https://hiltiprofisengineering.zendesk.com/hc/theming_assets/01KKC2824EZXR6HFQKZ38AMXRA"
-           class="empty-state__icon" alt="No articles icon">
-
-      <div class="empty-state__text">No articles yet</div>
-    `;
+    container.innerHTML = [
+      emptyStateIcon
+        ? `<img src="${emptyStateIcon}" class="empty-state__icon" alt="No articles icon">`
+        : "",
+      '<div class="empty-state__text">No articles yet</div>'
+    ].join("");
 
     /* 4. Insert right below the section heading (H1 or H2) if present */
     const parentSection = el.closest(".col-12, .col-12.mb-4, .section, .article-list, main, body");

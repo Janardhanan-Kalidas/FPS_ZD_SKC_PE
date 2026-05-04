@@ -1,0 +1,36 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+stages:
+  - validate
+  - release
+
+variables:
+  GIT_DEPTH: "0"
+
+default:
+  image: node:20
+  before_script:
+    - node --version
+    - npm --version
+
+theme_version_dry_run:
+  stage: validate
+  script:
+    - npm run version:theme:dry
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+theme_version_release:
+  stage: release
+  script:
+    - npm run version:theme
+    - echo "manifest.json updated in CI workspace. Commit/push automation is intentionally not enabled by default."
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false

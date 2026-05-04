@@ -1,5 +1,5 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: {}, locale: "{{help_center.locale}}", signedIn: {{signed_in}} });</script>
+<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
 <script type="text/javascript" src="{{asset 'util.min.js'}}"></script>
 
 {{! Extensions }}
@@ -47,6 +47,12 @@
       {{/is~}}
     {{/is}}
   {{/isnt}}
+</style>
+
+<style>
+  :root {
+    --theme-home-icon: url("{{asset 'home.svg'}}");
+  }
 </style>
 
 {{! Google fonts (body text) }}

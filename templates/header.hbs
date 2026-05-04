@@ -134,9 +134,9 @@
             {{/if~}}
           </a>
         {{/if~}}
-        <li class="new-request-link" style="display: none;">
+        <div class="new-request-link hidden">
           {{link 'new_request' class='submit-a-request'}}
-        </li>
+        </div>
         {{~#if settings.header_link_3_text}}
           <a class="nav-link header-link" href="{{#if settings.use_translations}}{{dc settings.header_link_3_url}}{{else}}{{settings.header_link_3_url}}{{/if}}" x-data="link">
             {{~#if settings.use_translations}}
