@@ -1,436 +1,390 @@
-# Development Setup Guide
+# Development Setup Guide - Complete Onboarding
 
-This guide covers the complete setup for developing and managing the Zendesk theme locally, including ZCLI installation and the semantic versioning workflow.
+Welcome! This guide walks you through **everything you need** to set up your development environment for the Zendesk theme project. Follow the steps **in order** from top to bottom.
 
 ---
 
 ## Table of Contents
 
-1. [Zendesk CLI (ZCLI) Installation](#zendesk-cli-zcli-installation)
-2. [Semantic Versioning System](#semantic-versioning-system)
-3. [Local Theme Preview](#local-theme-preview)
-4. [Version Management Workflow](#version-management-workflow)
-5. [Troubleshooting](#troubleshooting)
+1. [Prerequisites](#prerequisites)
+2. [Step 1: Clone the Repository](#step-1-clone-the-repository)
+3. [Step 2: Install Node.js](#step-2-install-nodejs)
+4. [Step 3: Install Zendesk CLI (ZCLI)](#step-3-install-zendesk-cli-zcli)
+5. [Step 4: Authenticate with Zendesk](#step-4-authenticate-with-zendesk)
+6. [Step 5: Install GitLab Runner](#step-5-install-gitlab-runner)
+7. [Step 6: Understand Project Structure](#step-6-understand-project-structure)
+8. [Step 7: Git Workflow & Conventional Commits](#step-7-git-workflow--conventional-commits)
+9. [Step 8: Local Theme Preview](#step-8-local-theme-preview)
+10. [Step 9: Version Management](#step-9-version-management)
+11. [Step 10: Common Workflows](#step-10-common-workflows)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
-## Zendesk CLI (ZCLI) Installation
+## Prerequisites
 
-### What is ZCLI?
-
-Zendesk CLI (Command Line Interface) is the official tool for managing Zendesk themes locally. It allows you to:
-- Preview themes in real-time without publishing
-- Upload and manage theme files
-- Interact with your Zendesk Help Center from the terminal
-
-### Prerequisites
-
-- **Node.js** (v14 or higher)
-- **npm** (comes with Node.js)
-- **macOS, Linux, or Windows** with terminal/command prompt access
-
-### Installation Steps
-
-1. **Install ZCLI via npm**:
-   ```bash
-   npm install -g @zendesk/zcli
-   ```
-
-2. **Verify installation**:
-   ```bash
-   zcli --version
-   ```
-   You should see output like: `@zendesk/zcli/1.0.0-beta.56`
-
-3. **Authenticate with Zendesk** (one-time setup):
-   ```bash
-   zcli login -i
-   ```
-   This opens an interactive flow:
-   - Opens a browser window for Zendesk authentication
-   - Sign in with your Zendesk account
-   - Authorize the CLI tool
-   - Token is stored securely on your machine (macOS: Keychain; Linux/Windows: encrypted storage)
-
-4. **Verify authentication**:
-   ```bash
-   zcli themes:list
-   ```
-   This should display your available themes without errors.
-
-### Authentication Troubleshooting
-
-- **"Authentication failed"**: Log out and try again
-  ```bash
-  zcli logout
-  zcli login -i
-  ```
-
-- **"Multiple Zendesk instances"**: If you work with multiple instances, create separate profiles
-  ```bash
-  zcli login -i --profile=instance-name
-  zcli themes:list --profile=instance-name
-  ```
+Before starting, ensure you have:
+- ✅ macOS, Linux, or Windows with terminal access
+- ✅ Git installed (`git --version` to verify)
+- ✅ Access to GitLab repository (fork or clone permission)
+- ✅ Zendesk Help Center account access
 
 ---
 
-## Semantic Versioning System
+## Step 1: Clone the Repository
 
-### What is Semantic Versioning?
+```bash
+# Navigate to your projects folder
+cd ~/Desktop
 
-Semantic Versioning (SemVer) uses a three-part version number: **MAJOR.MINOR.PATCH**
+# Clone the repository
+git clone https://git.hilti.com/BU_FPS/sw-support-group/FPS_ZD_SKC_PE.git
+cd FPS_ZD_SKC_PE
+```
 
-- **MAJOR** (e.g., `2.0.0`): Breaking changes, incompatible updates
-- **MINOR** (e.g., `2.1.0`): New features, backwards-compatible additions
-- **PATCH** (e.g., `2.0.1`): Bug fixes, backwards-compatible patches
+Verify you're in the right folder:
+```bash
+pwd
+# Should output: /Users/[username]/Desktop/FPS_ZD_SKC_PE
 
-**Examples:**
-- `1.0.0` → `2.0.0` (major bump: complete redesign)
-- `1.5.3` → `1.6.0` (minor bump: new feature)
-- `1.5.3` → `1.5.4` (patch bump: bug fix)
+ls -la
+# Should show: manifest.json, script.js, style.css, templates/, assets/, etc.
+```
 
-### How This Project Uses Semantic Versioning
+---
 
-**Current Version**: `2.2.10.1` (from [manifest.json](manifest.json))
+## Step 2: Install Node.js
 
-Our system automatically determines the version bump based on **commit messages** using the **Conventional Commits** standard.
+Node.js is required for the version automation system.
 
-#### Conventional Commits Format
+### Check if Node.js is installed
 
-Write commit messages in this format:
+```bash
+node --version
+npm --version
+```
+
+If you see version numbers (v14+), **skip to Step 3**.
+
+### Install Node.js via Homebrew (macOS)
+
+```bash
+brew install node
+```
+
+### Verify installation
+
+```bash
+node --version
+npm --version
+```
+
+Expected output: `v25.x.x` or similar (v14+ is fine)
+
+---
+
+## Step 3: Install Zendesk CLI (ZCLI)
+
+ZCLI is the official tool for previewing and managing Zendesk themes locally.
+
+### Install via npm
+
+```bash
+npm install -g @zendesk/zcli
+```
+
+### Verify installation
+
+```bash
+zcli --version
+```
+
+Expected output: `@zendesk/zcli/1.0.0-beta.56` or similar
+
+---
+
+## Step 4: Authenticate with Zendesk
+
+## Step 4: Authenticate with Zendesk
+
+One-time setup to connect ZCLI to your Zendesk account.
+
+### Run interactive login
+
+```bash
+zcli login -i
+```
+
+This will:
+1. Open a browser window
+2. Ask you to sign in to your Zendesk account
+3. Authorize the CLI tool
+4. Store your auth token securely on your machine
+
+### Verify authentication
+
+```bash
+zcli themes:list
+```
+
+Expected output: List of available themes (should NOT show an error)
+
+If you see authentication errors, try again:
+```bash
+zcli logout
+zcli login -i
+```
+
+---
+
+## Step 5: Install GitLab Runner
+
+GitLab Runner executes your CI/CD pipelines locally. This step is optional but recommended for development.
+
+### Install via Homebrew (macOS)
+
+```bash
+brew install gitlab-runner
+```
+
+### Verify installation
+
+```bash
+gitlab-runner --version
+```
+
+### Register the runner
+
+You'll need a registration token from GitLab. Go to:
+**GitLab Project → Settings → CI/CD → Runners → Create project runner**
+
+Follow the instructions to get the registration command, then run it in your terminal:
+
+```bash
+gitlab-runner register \
+  --url https://git.hilti.com \
+  --token glrt_XXXXXXXXXXXXX
+```
+
+When prompted:
+- **Runner name**: `macOS Zendesk Theme Runner`
+- **Executor**: `shell`
+- **Tags**: `macos, shell, node`
+
+### Start the runner
+
+Run in a **dedicated terminal** (leave it running):
+
+```bash
+gitlab-runner run
+```
+
+You should see output like:
+```
+Listening for connections...
+```
+
+**Leave this terminal open** while you work. It will execute CI jobs when you push to GitLab.
+
+---
+
+## Step 6: Understand Project Structure
+
+```
+FPS_ZD_SKC_PE/
+├── manifest.json          # Theme configuration & settings
+├── script.js              # Client-side JavaScript behavior
+├── style.css              # Theme styling (~17K lines)
+├── package.json           # Node.js project metadata
+├── .gitlab-ci.yml         # CI/CD pipeline configuration
+├── templates/             # Handlebars templates (HBS)
+│   ├── document_head.hbs  # HTML <head> injection
+│   ├── header.hbs         # Navigation header
+│   ├── article_page.hbs   # Single article display
+│   ├── footer.hbs         # Footer & theme data
+│   └── ...                # Other pages
+├── assets/                # Images, fonts, icons
+│   ├── Work-in-progress.svg
+│   ├── HiltiSmall*.woff   # Custom fonts
+│   └── ...                # Other assets
+├── translations/          # Language files (JSON)
+│   ├── en-us.json
+│   ├── de.json
+│   └── ...                # 60+ languages
+├── scripts/
+│   └── version-theme.mjs  # Semantic versioning automation
+├── .vscode/
+│   ├── tasks.json         # VS Code tasks (preview, login, etc.)
+│   └── launch.json        # VS Code Run & Debug configs
+├── DEVELOPMENT_SETUP.md   # This file
+├── VERSIONING.md          # Detailed versioning rules
+├── LOCAL_PREVIEW.md       # Preview mode troubleshooting
+└── README.md              # Project overview
+```
+
+**Key files you'll edit:**
+- `script.js` - JavaScript functionality
+- `style.css` - Styling & layouts
+- `templates/*.hbs` - Page templates
+- `manifest.json` - Version & theme settings (auto-updated on release)
+
+---
+
+## Step 7: Git Workflow & Conventional Commits
+
+### Create a feature branch
+
+Always create a branch for your work:
+
+```bash
+git checkout -b FPSKB-XXX/feature-name
+```
+
+Example:
+```bash
+git checkout -b FPSKB-105/add-dark-mode
+```
+
+### Make commits with Conventional Commits format
+
+Your commit messages MUST follow this format for automatic versioning to work:
 
 ```
 type(scope): description
-
-optional body
-optional footer
 ```
 
-**Types that trigger version bumps:**
+**Allowed types:**
 
-| Type | Bump Type | Usage |
-|------|-----------|-------|
-| `fix:` | PATCH | Bug fixes, hotfixes |
-| `feat:` | MINOR | New features, additions |
-| `BREAKING CHANGE` footer | MAJOR | Incompatible API/style changes |
+| Type | Version Impact | When to use |
+|------|---|---|
+| `fix:` | PATCH bump | Bug fixes, corrections |
+| `feat:` | MINOR bump | New features, additions |
+| `chore:` | No bump | Docs, config, dependencies |
+| `refactor:` | No bump | Code restructuring |
+| `style:` | No bump | Formatting only |
 
-**Commit Message Examples:**
+**Examples:**
 
-**PATCH bump (bug fix):**
 ```bash
+# Patch bump (bug fix)
 git commit -m "fix: correct empty state icon asset reference"
-```
 
-**MINOR bump (new feature):**
-```bash
-git commit -m "feat: add multi-language support for UI strings"
-```
-
-**MAJOR bump (breaking change - using footer):**
-```bash
-git commit -m "feat: redesign search page layout
-
-BREAKING CHANGE: CSS class names changed from .search-* to .search-widget-*
-Users must update custom CSS overrides."
-```
-
-Or for fixes with breaking changes:
-```bash
-git commit -m "fix: remove deprecated sidebar styling
-
-BREAKING CHANGE: .sidebar-legacy class removed. Use .sidebar instead."
-```
-
-**Complex example with body and breaking change:**
-```bash
-git commit -m "feat: migrate from jQuery to vanilla JS
-
-Replaces jQuery event binding with native JavaScript event listeners.
-Improves performance and reduces bundle size.
-
-BREAKING CHANGE: Custom extensions using jQuery window.Widgets API must be rewritten.
-See MIGRATION.md for upgrade guide."
-```
-
-### Understanding Versions and Releases
-
-This project follows **Semantic Versioning** with explicit **release tagging**.
-
-**Current Version**: `2.2.10.1` in [manifest.json](manifest.json)
-- The `.1` is a manual patch added after initial release
-- Official releases use format: `MAJOR.MINOR.PATCH` (e.g., `2.2.10`, `2.3.0`, `3.0.0`)
-- When you create a release, a git tag is created (e.g., `theme-v2.2.11`)
-
-**Version Progression Example**:
-```
-Development branch: 2.2.10 (base version)
-  ↓ (make changes)
-Release v2.2.11 (tag: theme-v2.2.11)
-  ↓ (make more changes)
-Release v2.3.0 (tag: theme-v2.3.0)  ← MINOR bump (new feature)
-  ↓ (bug fix)
-Release v2.3.1 (tag: theme-v2.3.1)  ← PATCH bump (bug fix)
-  ↓ (breaking changes)
-Release v3.0.0 (tag: theme-v3.0.0)  ← MAJOR bump (breaking change)
-```
-
-### The Version Script
-
-The version automation is handled by [scripts/version-theme.mjs](scripts/version-theme.mjs) (200 lines of Node.js).
-
-**What it does:**
-
-1. Reads current version from [manifest.json](manifest.json)
-2. Queries git history since the last tag (prefix: `theme-v`)
-3. Analyzes commit messages to determine bump type:
-   - `fix:` commits → PATCH bump
-   - `feat:` commits → MINOR bump
-   - `BREAKING CHANGE:` footer → MAJOR bump
-   - No commits of these types → no version change
-4. Calculates next version based on highest bump type found
-5. Updates version in [manifest.json](manifest.json) (if not dry-run)
-6. Creates a git tag for the release (if --tag flag used)
-
-**Example workflow:**
-
-```
-Current manifest version: 2.2.10
-Last release tag: theme-v2.2.10
-
-Commits since last tag:
-  - fix: update icon asset URL
-  - feat: add newsletter subscription widget
-  - fix: correct breadcrumb styling
-
-Version script analyzes:
-  - Found: 2 fix: commits, 1 feat: commit
-  - Highest bump: MINOR (due to feat:)
-  - Decision: Bump MINOR
-
-Next version calculated: 2.3.0
-Tag created: theme-v2.3.0
-manifest.json updated: "version": "2.3.0"
-```
-
----
-
-## Managing Release Versions
-
-### Is 2.2.10.1 a Release Version?
-
-**No.** The current version `2.2.10.1` in manifest.json is a **development version**, not an official release.
-
-- **Development versions** (like `2.2.10.1`): Used during local development and testing
-- **Release versions** (like `2.2.10`, `2.3.0`, `3.0.0`): Official tagged releases in git
-
-### Release vs Development Workflow
-
-**Development (daily work):**
-```
-You work on fixes/features
-  ↓
-Commit with conventional format (fix:, feat:, BREAKING CHANGE:)
-  ↓
-Push to feature branch
-  ↓
-manifest.json stays at 2.2.10 (development version)
-  ↓
-Create Pull Request
-  ↓
-Run npm run version:dry-run to preview next version
-```
-
-**Release (after merge to main):**
-```
-PR merged to main
-  ↓
-Run: npm run version:release
-  ↓
-Script calculates next version based on commits
-  ↓
-manifest.json updated: 2.2.10 → 2.3.0 (OFFICIAL RELEASE)
-  ↓
-Git tag created: theme-v2.3.0
-  ↓
-Tag pushed to GitLab
-  ↓
-Deploy to Zendesk Help Center
-```
-
-### How to Know if You're in a Release
-
-Check if your manifest version matches a git tag:
-
-```bash
-# List all release tags
-git tag -l "theme-v*"
-
-# Output:
-# theme-v2.0.0
-# theme-v2.1.0
-# theme-v2.2.10
-
-# Current manifest version
-grep "version" manifest.json | head -1
-# "version": "2.2.10"  ← RELEASED (matches theme-v2.2.10 tag)
-
-# vs.
-
-grep "version" manifest.json | head -1
-# "version": "2.2.10.1" ← DEVELOPMENT (no matching tag)
-```
-
-### Example Release Lifecycle
-
-```
-Day 1:
-  - manifest.json version: 2.2.10
-  - Last release tag: theme-v2.2.10
-  - Status: Ready for new changes
-
-You commit: fix: icon reference issue
-  - manifest.json STAYS at 2.2.10 (development ongoing)
-
-You commit: feat: add newsletter widget
-  - manifest.json STAYS at 2.2.10 (development ongoing)
-
-Day 5: Ready to release
-  - Run: npm run version:release
-  - manifest.json updated to 2.3.0 (new OFFICIAL release)
-  - Git tag created: theme-v2.3.0
-  - Status: Released to Zendesk
-
-Day 6: More development
-  - You make fixes/features
-  - manifest.json STAYS at 2.3.0 (development ongoing)
-  - Commits accumulate for next release
-  
-Day 10: Ready for next release
-  - Run: npm run version:release
-  - manifest.json updated to 2.3.1 or 2.4.0 (depending on commits)
-  - Git tag created accordingly
-```
-
-### Release Checklist
-
-Before creating a release:
-
-```bash
-# 1. Switch to main and update
-git checkout main
-git pull origin main
-
-# 2. Preview what version will be released
-npm run version:dry-run
-
-# 3. Review recent commits
-git log --oneline -10
-
-# 4. If correct, create release
-npm run version:release
-
-# 5. Verify tag was created
-git tag -l | tail -5
-
-# 6. Verify manifest updated
-git diff HEAD~1 manifest.json
-```
-
----
-
-## Local Theme Preview
-
-### Quick Start
-
-1. **Ensure ZCLI is authenticated**:
-   ```bash
-   zcli login -i
-   ```
-
-2. **Start the preview from VS Code**:
-   - Press **⌘Shift+P** (macOS) or **Ctrl+Shift+P** (Linux/Windows)
-   - Type `Tasks: Run Task`
-   - Select `Zendesk: Preview Theme`
-
-3. **Open the preview URL** in your browser:
-   ```
-   https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start
-   ```
-
-4. **View your theme** in real-time
-   - Changes you make are auto-synced to the preview
-   - Refresh the browser to see updates
-
-5. **Stop the preview**:
-   - Press **Ctrl+C** in the VS Code terminal, or
-   - Visit: `https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/stop`
-
-### DNS Requirements
-
-If you see "Domain can't be reached" errors:
-
-1. Check your DNS resolution:
-   ```bash
-   nslookup help.profisengineering.hilti.com
-   ```
-
-2. If unresolved, switch to Google Public DNS:
-   - **macOS**: System Preferences → Network → Wi-Fi → Advanced → DNS
-   - Add: `8.8.8.8` and `8.8.4.4`
-
-3. Flush DNS cache:
-   ```bash
-   sudo dscacheutil -flushcache
-   ```
-
-See [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md) for detailed troubleshooting.
-
----
-
-## Version Management Workflow
-
-### Standard Release Process
-
-#### 1. Develop Features/Fixes
-
-```bash
-# Create a feature branch
-git checkout -b FPSKB-105/add-dark-mode
-
-# Make changes and commit with conventional format
-# Use fix: for bug fixes
-git commit -m "fix: correct spacing in dark mode buttons"
-
-# Use feat: for new features
+# Minor bump (new feature)
 git commit -m "feat: add dark mode toggle to theme settings"
 
-# Push to GitLab
-git push origin FPSKB-105/add-dark-mode
+# No version change (documentation)
+git commit -m "chore: update README with setup instructions"
+
+# Multiple lines (for breaking changes)
+git commit -m "feat: redesign search page layout
+
+This commit completely redesigns the search page:
+- New responsive grid layout
+- Updated filtering options
+- Improved performance
+
+BREAKING CHANGE: Old CSS class names removed
+Users must update custom CSS overrides.
+See MIGRATION.md for details."
 ```
 
-#### 2. Verify Commit Format
+### View your commits
 
-Your commits must follow Conventional Commits. Check them:
+Before pushing, verify your commit messages are correct:
 
 ```bash
-# View your commits
 git log --oneline -5
-
-# Should show:
-# abc1234 feat: add dark mode toggle to theme settings
-# def5678 fix: correct spacing in dark mode buttons
-# ghi9012 fix: correct empty state icon reference
 ```
 
-#### 3. Dry-run Version Check
+Expected output:
+```
+abc1234 feat: add dark mode toggle
+def5678 fix: correct icon spacing
+ghi9012 fix: resolve breadcrumb styling
+```
 
-Before merging, check what version bump will be applied:
+### Push to GitLab
+
+```bash
+git push origin FPSKB-XXX/feature-name
+```
+
+---
+
+## Step 8: Local Theme Preview
+
+Preview your changes locally before committing.
+
+### Ensure ZCLI is authenticated
+
+```bash
+zcli login -i
+```
+
+### Start preview from VS Code
+
+**Option A: Using VS Code Tasks (Easiest)**
+1. Press **⌘Shift+P** (macOS) or **Ctrl+Shift+P** (Linux/Windows)
+2. Type `Tasks: Run Task`
+3. Select `Zendesk: Preview Theme`
+
+**Option B: Using terminal**
+```bash
+zcli themes:preview
+```
+
+### Open the preview URL
+
+You'll see output like:
+```
+Uploading theme... Ok
+Ready https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start 🚀
+```
+
+Click the URL or open in browser:
+```
+https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start
+```
+
+You'll be taken through Zendesk authentication, then see your live preview.
+
+### Make changes and see them live
+
+- Edit any file in VS Code
+- The preview auto-syncs your changes
+- Refresh the browser to see updates
+
+### Stop preview
+
+Press **Ctrl+C** in the terminal, or visit:
+```
+https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/stop
+```
+
+### DNS Issues?
+
+If the preview page won't load, see [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md) for DNS troubleshooting.
+
+---
+
+## Step 9: Version Management
+
+The project uses **Semantic Versioning** with automatic version bumps based on your commit messages.
+
+### Understanding Versions
+
+- **Development version**: `2.2.10` - your working version in manifest.json
+- **Release version**: `2.2.10` tagged as `theme-v2.2.10` - official release in git
+
+### Check what version will be released
+
+Before merging to main, preview the next version:
 
 ```bash
 npm run version:dry-run
 ```
 
-Output example:
+Example output:
 ```
 Current version: 2.2.10
 Commits since tag theme-v2.2.10: 3
@@ -441,194 +395,267 @@ Detected bump type: MINOR (due to feat:)
 Next version: 2.3.0
 ```
 
-#### 4. Create Pull Request
+### Create a release (after merge to main)
 
-- Push your branch to GitLab
-- GitLab CI automatically runs `version:dry-run` in the pipeline
-- Review the CI output to confirm version bump
-- Create a Pull Request and have team members review
+Once your PR is merged to `main` branch:
 
-#### 5. Merge to Main
-
-Once approved and all checks pass:
-- Merge to `main` branch
-- This triggers another CI `version:dry-run` check
-
-#### 6. Create Release (Manual)
-
-After merging to `main`, create an official release:
-
-**Option A: Via GitLab CI (Recommended)**
-```
-1. Go to CI/CD → Pipelines
-2. Find the most recent pipeline on main branch
-3. Click on the theme_version_release job
-4. Click "Play" or "Retry" to trigger release
-5. This automatically:
+**Option A: Using GitLab CI (Recommended)**
+1. Go to **CI/CD → Pipelines** on main branch
+2. Find the `theme_version_release` job
+3. Click **Run** to trigger the release
+4. This automatically:
    - Calculates next version
    - Updates manifest.json
-   - Creates git tag (e.g., theme-v2.3.0)
-   - Uploads updated theme to Zendesk
-```
+   - Creates git tag (e.g., `theme-v2.3.0`)
 
-**Option B: Via CLI (Local)**
+**Option B: Using CLI**
 ```bash
 npm run version:release
 ```
 
-This does:
-- Reads commits since last tag
-- Determines next version (2.3.0)
-- Updates manifest.json
-- Creates git tag: `theme-v2.3.0`
-- Displays release summary
+### Force a specific version bump (if needed)
 
-**Option C: Force Specific Version**
 ```bash
-# If dry-run detection is wrong, force the type
-npm run version:patch    # Force PATCH bump
-npm run version:minor    # Force MINOR bump
-npm run version:major    # Force MAJOR bump
+npm run version:patch   # Force PATCH bump (2.2.10 → 2.2.11)
+npm run version:minor   # Force MINOR bump (2.2.10 → 2.3.0)
+npm run version:major   # Force MAJOR bump (2.2.10 → 3.0.0)
 ```
 
-#### 7. Deploy to Production
-
-After release tag is created:
-- New version is now tagged in git (e.g., `theme-v2.3.0`)
-- Deploy via Zendesk admin console or CI/CD pipeline
-- Document changes in release notes
+For detailed versioning rules, see [VERSIONING.md](VERSIONING.md).
 
 ---
 
-## Available npm Scripts
+## Step 10: Common Workflows
 
-| Command | Purpose | Output |
-|---------|---------|--------|
-| `npm run version:dry-run` | Preview next version without changes | Shows version bump decision |
-| `npm run version:release` | Create new version tag and update manifest | Updates manifest.json, creates git tag |
-| `npm run version:patch` | Force PATCH bump | Useful if dry-run detection fails |
-| `npm run version:minor` | Force MINOR bump | Override automatic detection |
-| `npm run version:major` | Force MAJOR bump | For breaking changes |
-
-### Examples
+### Workflow 1: Fix a Bug
 
 ```bash
-# Check what version change would happen
-npm run version:dry-run
+# 1. Create a branch
+git checkout -b FPSKB-105/fix-icon-issue
 
-# Automatically bump and tag
-npm run version:release
+# 2. Make your changes in VS Code
+# (Edit script.js, style.css, etc.)
 
-# Force a specific bump type
-npm run version:minor
-npm run version:major
+# 3. Test with preview
+# Press ⌘Shift+P → Tasks: Run Task → Zendesk: Preview Theme
+
+# 4. Commit with fix: prefix
+git commit -m "fix: correct empty state icon reference"
+
+# 5. Push to GitLab
+git push origin FPSKB-105/fix-icon-issue
+
+# 6. Create Pull Request on GitLab
+# - GitLab CI runs version:dry-run
+# - Review shows version would bump to 2.2.11 (PATCH)
+
+# 7. After review, merge to main
+# - Creates new pipeline on main
+
+# 8. Trigger release (if ready)
+# - Go to CI/CD → theme_version_release → Run
+# - Version tagged as theme-v2.2.11
 ```
 
----
+### Workflow 2: Add a New Feature
 
-## GitLab CI Integration
+```bash
+# 1. Create a branch
+git checkout -b FPSKB-106/add-newsletter-widget
 
-The project includes [.gitlab-ci.yml](.gitlab-ci.yml) with automated version management:
+# 2. Make changes (create new templates, JS, CSS)
 
-### On Every Push/MR
+# 3. Test locally with preview
 
-- **`theme_version_dry_run`** job runs
-- Validates commit messages and shows next version
-- No files modified; safe to run
+# 4. Commit with feat: prefix
+git commit -m "feat: add newsletter subscription widget"
+git commit -m "fix: correct widget alignment on mobile"
 
-### On Merge to Main
+# 5. Push and create PR
 
-- Manual **`theme_version_release`** job available
-- Creates version tag and updates manifest
-- Uploads theme to Zendesk
-
-### Example CI Output
-
+# 6. After merge, release
+# - Version bumps to 2.3.0 (MINOR, due to feat:)
+# - Tagged as theme-v2.3.0
 ```
-theme_version_dry_run
-├─ Current version: 2.2.10
-├─ Commits since last tag: 3
-├─ Commit types detected: fix(2), feat(1)
-├─ Version bump type: MINOR
-└─ Next version: 2.3.0
+
+### Workflow 3: Handle Breaking Changes
+
+```bash
+# 1. Create a branch
+git checkout -b FPSKB-107/redesign-search
+
+# 2. Make changes
+
+# 3. Commit with BREAKING CHANGE footer
+git commit -m "feat: redesign search page layout
+
+Complete redesign of search page:
+- New responsive grid layout
+- Updated filtering interface
+- Improved performance
+
+BREAKING CHANGE: Old CSS class names removed
+- .search-* → .search-widget-*
+- .filter-* → .search-filter-*
+
+Users must update custom CSS overrides.
+See MIGRATION.md for upgrade guide."
+
+# 4. Push and create PR
+# - CI shows: BREAKING CHANGE detected, MAJOR bump to 3.0.0
+
+# 5. After review and merge, release
+# - Version bumps to 3.0.0 (MAJOR)
+# - Tagged as theme-v3.0.0
 ```
 
 ---
 
 ## Troubleshooting
 
-### "ZCLI command not found"
+### ZCLI command not found
 
 Make sure ZCLI is globally installed:
+```bash
+which zcli
+# Should return: /usr/local/bin/zcli
+
+# If not found, install:
+npm install -g @zendesk/zcli
+```
+
+### Preview not loading / "Domain can't be reached"
+
+DNS issue. See [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md) for full troubleshooting.
+
+Quick fix:
+```bash
+# Check DNS
+nslookup help.profisengineering.hilti.com
+
+# If unresolved, switch to Google DNS
+# macOS: System Preferences → Network → Wi-Fi → Advanced → DNS
+# Add: 8.8.8.8 and 8.8.4.4
+
+# Flush cache
+sudo dscacheutil -flushcache
+```
+
+### GitLab Runner not picking up jobs
+
+Make sure the runner is **actively running**:
 
 ```bash
-npm install -g @zendesk/zcli
-which zcli  # Should return /usr/local/bin/zcli
+# In a dedicated terminal, run:
+gitlab-runner run
 ```
+
+You should see:
+```
+Listening for connections...
+```
+
+Keep this terminal open while working.
 
 ### "No version change detected"
 
-Check that your commits follow Conventional Commits format:
+Your commits don't follow Conventional Commits format. Check:
 
 ```bash
-# ❌ Bad commits (won't trigger version bump)
-git commit -m "update styling"
-git commit -m "changes"
-
-# ✅ Good commits
-git commit -m "fix: correct button styling"
-git commit -m "feat: add search functionality"
+git log --oneline -10
 ```
 
-### Preview not loading
+Commits must start with `fix:`, `feat:`, or `chore:`. Examples:
 
-See [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md) troubleshooting section for DNS and network issues.
+❌ Bad:
+```
+update styling
+fix icon
+add feature
+```
+
+✅ Good:
+```
+fix: correct icon alignment
+feat: add newsletter widget
+chore: update dependencies
+```
 
 ### Version tag already exists
 
-If you try to create a release but the tag exists:
+If release fails because tag already exists:
 
 ```bash
-# Delete the local tag
+# Delete the tag locally
 git tag -d theme-v2.2.11
 
 # Try release again
 npm run version:release
 ```
 
----
+### Preview stuck or not syncing changes
 
-## Quick Reference
+Kill the preview process and restart:
 
-**First time setup:**
 ```bash
-zcli login -i
-npm install
+# Press Ctrl+C in the terminal where zcli is running
+
+# Wait 5 seconds, then restart:
+zcli themes:preview
 ```
-
-**Daily workflow:**
-```bash
-# Start preview
-npm run preview  # or use VS Code task
-
-# Make changes
-git commit -m "fix: description"
-
-# Check version
-npm run version:dry-run
-
-# Release (after merge to main)
-npm run version:release
-```
-
-**CI/CD:**
-- Push → GitLab CI validates version
-- Merge to main → Manual release available
-- Release → Version tag created + manifest updated
 
 ---
 
-For additional help:
-- [VERSIONING.md](VERSIONING.md) - Detailed versioning rules
-- [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md) - Preview mode guide
+## Quick Reference Checklist
+
+**First time setup (do once):**
+```bash
+☐ git clone repository
+☐ brew install node (if needed)
+☐ npm install -g @zendesk/zcli
+☐ zcli login -i
+☐ brew install gitlab-runner
+☐ gitlab-runner register
+☐ gitlab-runner run (in dedicated terminal)
+```
+
+**Daily development:**
+```bash
+☐ git checkout -b FPSKB-XXX/feature-name
+☐ zcli themes:preview (or use VS Code task)
+☐ Edit files, test in preview
+☐ git commit -m "fix|feat: description"
+☐ git push origin branch-name
+☐ Create Pull Request on GitLab
+☐ npm run version:dry-run (to see next version)
+☐ Merge PR to main
+☐ npm run version:release (or trigger via GitLab CI)
+```
+
+---
+
+## Additional Documentation
+
+- [VERSIONING.md](VERSIONING.md) - Detailed semantic versioning rules
+- [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md) - Preview mode setup & troubleshooting
 - [.vscode/tasks.json](.vscode/tasks.json) - Available VS Code tasks
+- [manifest.json](manifest.json) - Theme configuration & settings
+- [scripts/version-theme.mjs](scripts/version-theme.mjs) - Version automation script
+
+---
+
+## Getting Help
+
+**Common questions:**
+- "How do I preview locally?" → See Step 8
+- "What version will be released?" → Run `npm run version:dry-run`
+- "How should I write commit messages?" → See Step 7
+- "Preview not loading?" → See [LOCAL_PREVIEW.md](LOCAL_PREVIEW.md)
+- "Git/version issues?" → See Troubleshooting section
+
+**Questions about this guide?**
+Ask your team lead or check the existing documentation above.
+
+---
+
+**Welcome to the team!** 🚀 Follow these steps in order and you'll be ready to develop. Happy coding!
