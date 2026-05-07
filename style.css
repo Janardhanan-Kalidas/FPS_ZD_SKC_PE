@@ -15859,8 +15859,8 @@ a:hover .icon-circle {
 }
 
 .kc-footer-logo {
-  width: 8.125rem;
-  height: 2.5rem;
+  width: 8rem;
+  height: 1.875rem;
   display: block;
   object-fit: contain;
   margin-bottom: 1rem; /* Space between logo and social icons */
@@ -15868,53 +15868,13 @@ a:hover .icon-circle {
 
 .footer-social-row {
   display: flex;
-  gap: 15px; /* Spacing between social icons */
+  gap: 16px; /* Spacing between social icons */
 }
 
 .footer-social-row .nav-link {
   padding: 0;
-  width: 20px;
-  height: 20px;
-}
-
-/* --- Right Column: Link & Language --- */
-.footer-column-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* Aligns text to the right */
-  text-align: right;
-}
-
-/* Back to PE Styling */
-.back-to-pe {
-  /* font-weight: bold; */ /* Jana Disabled this */
-  margin-bottom: 0.5rem;
-  color: inherit;
-  text-decoration: none;
-}
-
-/* Language Selector & Dropdown Fix */
-.language-selector-wrap {
-  position: relative;
-}
-
-.not-a-button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-/* Forces dropdown to appear BELOW the selector */
-.language-selector-wrap .z-dropdown {
-  top: 100% !important;
-  right: 0 !important;
-  left: auto !important;
-  position: absolute;
-  margin-top: 5px;
-  z-index: 1000;
+  width: 24px;
+  height: 24px;
 }
 
 /* --- Image & Legacy Overrides --- */
@@ -15939,12 +15899,6 @@ a:hover .icon-circle {
   color:  #524f53 !important; /* Jana - Hilti Steel for article title */
   font-size: 1.5rem;
 }
-
-/* REMOVED: Absolute positions (left: 54rem, top: -4rem, etc.) 
-   to prevent layout breaking on mobile/different monitors */
-
-
-/* Jana - Feedback form+ticketing and customer ticket submission */
 
 /* =============================================================================
    ZENDESK HELP CENTRE — FEEDBACK & TICKET PROMPT STYLES
@@ -17103,11 +17057,7 @@ header.d-flex h1 {
   cursor: pointer;
 
   /* red caret */
-  background-image: url("data:image/svg+xml;utf8,\
-  <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' \
-  viewBox='0 0 24 24' fill='none' stroke='%23d0021b' stroke-width='2' \
-  stroke-linecap='round' stroke-linejoin='round'>\
-  <polyline points='6 9 12 15 18 9'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23d0021b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
 
@@ -17293,4 +17243,166 @@ header.d-flex h1 {
 .section-page .category-toggle-link:hover {
   color: #D2051E !important;
   text-decoration: underline;
+}
+
+/* ===========================================================
+   HILTI LANGUAGE SWITCHER — Header Button + Modal
+   Matches Hilti brand colours: Red #D2051E, Steel #524f53
+   Updated by: Kalidas, Janardhanan
+   =========================================================== */
+
+/* --- Header trigger button --- */
+.hilti-lang-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.hilti-lang-trigger:hover {
+  background: rgba(210, 5, 30, 0.08);
+}
+.hilti-lang-trigger .svg-icon {
+  width: 20px;
+  height: 20px;
+}
+.hilti-lang-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #524f53;
+}
+
+/* --- Overlay backdrop --- */
+.hilti-lang-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.hilti-lang-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* --- Modal container --- */
+.hilti-lang-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 520px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.25s ease;
+}
+.hilti-lang-overlay.is-open .hilti-lang-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* --- Modal header --- */
+.hilti-lang-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 2px solid #D2051E;
+}
+.hilti-lang-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-family: 'Hilti Small Bold', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #333;
+}
+.hilti-lang-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  color: #524f53;
+  transition: background 0.2s, color 0.2s;
+}
+.hilti-lang-close:hover {
+  background: #f5f5f5;
+  color: #D2051E;
+}
+
+/* --- Modal body --- */
+.hilti-lang-modal-body {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+}
+.hilti-lang-current {
+  font-size: 0.8125rem;
+  color: #777;
+  margin: 0 0 16px;
+}
+.hilti-lang-current strong {
+  color: #D2051E;
+  font-weight: 600;
+}
+
+/* --- Language list grid --- */
+.hilti-lang-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.hilti-lang-list li {
+  margin: 0;
+  padding: 0;
+}
+.hilti-lang-option {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  border: 1px solid transparent;
+}
+.hilti-lang-option:hover {
+  background: rgba(210, 5, 30, 0.06);
+  color: #D2051E;
+  border-color: rgba(210, 5, 30, 0.2);
+  text-decoration: none;
+}
+.hilti-lang-option:focus-visible {
+  outline: 2px solid #D2051E;
+  outline-offset: 2px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .hilti-lang-label {
+    display: none;
+  }
+  .hilti-lang-modal {
+    width: 95%;
+    max-height: 85vh;
+  }
+  .hilti-lang-list {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
 }

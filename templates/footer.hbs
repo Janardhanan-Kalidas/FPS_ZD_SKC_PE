@@ -77,21 +77,7 @@
         </a>
       {{/if~}}
 
-      {{~#if alternative_locales}}
-        <div class="language-selector-wrap" x-data="Widgets.dropdown" @click.away="close">
-          <button class="nav-link not-a-button" aria-haspopup="true" :aria-expanded="isExpanded" x-ref="toggle">
-            {{current_locale.name}}
-            <svg class="svg-icon" viewBox="0 0 12 12" :class="{ 'rotate-180': isExpanded }"><use xlink:href="#icon-chevron-down" /></svg>
-          </button>
-          <div class="z-dropdown absolute bg-white border shadow-md" x-ref="menu" x-cloak x-show="isExpanded">
-            <div class="py-2 font-size-sm text-left">
-              {{#each alternative_locales}}
-                <a class="dropdown-item" href="{{url}}" dir="{{direction}}" rel="nofollow">{{name}}</a>
-              {{/each}}
-            </div>
-          </div>
-        </div>
-      {{/if~}}
+      {{! Language selector moved to header — see header.hbs }}
     </div>
 
   </div>
