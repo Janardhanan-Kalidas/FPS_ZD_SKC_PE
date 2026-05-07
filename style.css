@@ -1,4 +1,4 @@
-.recent-activity-item-parent@charset "UTF-8";
+@charset "UTF-8";
 :root {
   --color-primary: $color_primary;
   --color-primary-inverse: $color_primary_inverse;
@@ -3106,7 +3106,7 @@ html[dir="rtl"] .notification-left-aligned {
   content: "";
   width: 14px;
   height: 14px;
-  background-image: url("https://hiltiprofisengineering.zendesk.com/hc/theming_assets/01KM4ZBE34AM11BAYN71CK0G18");
+  background-image: var(--theme-home-icon);
   background-size: 14px 14px;
   background-repeat: no-repeat;
   background-position: center;

@@ -833,6 +833,12 @@
     alignment: "{{settings.custom_block_alignment}}",
     color: "{{settings.color_custom_blocks}}"
   };
+
+  Theme.customBlocks.blocks.forEach(function(block) {
+    if (block.html_url === '/hc/en-us/requests/new' && Theme.routes && Theme.routes.newRequest) {
+      block.html_url = Theme.routes.newRequest;
+    }
+  });
   {{/isnt~}}
 
   {{! Contact block data }}
