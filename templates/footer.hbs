@@ -290,7 +290,10 @@
           <% (categories.length > 1 ? categories : sections).forEach(function(block, index) { %>
             <li class="mb-5 <%= getColumnClasses(numberColumns) %>">
               <div class="card p-6 h-full bg-white transition-fast <% if (['white', 'gray-100', 'gray-200'].indexOf(color) !== -1) { %>hover:border-primary<% } else { %>hover:border-<%= color %><% } %>">
-                <% if (imageHeight) { %>
+                <% var _categoryIcon = (typeof Theme !== 'undefined' && Theme.assets) ? Theme.assets['category-' + block.id] : null; %>
+                <% if (_categoryIcon) { %>
+                  <img class="mb-4<% if (alignment === 'left') { %> align-self-start<% } %>" src="<%= _categoryIcon %>" alt="" style="height: <%= imageHeight || '48px' %>; width: auto;" />
+                <% } else if (imageHeight && images.length) { %>
                   <img class="mb-4<% if (alignment === 'left') { %> align-self-start<% } %>" src="<%= images.length > index ? images[index] : images[images.length - 1] %>" alt="" style="height: <%= imageHeight %>; width: auto;" />
                 <% } %>
                 <h2 class="h3 m-0">

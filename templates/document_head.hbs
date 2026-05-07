@@ -337,7 +337,7 @@
   - No business logic is implemented here
 
   Updated by : Kalidas, Janardhanan
-  Updated on : 22 Apr 2026, 06:47 IST
+  Updated on : 13 Apr 2026, 18:07 IST
   Jira Ref   : FPSKB-128
   ---------------------------------------------------------
 --}}
@@ -369,7 +369,7 @@
     '43697142165521': "{{asset 'concrete-overlay.svg'}}",
 
     // Category 9 – Anchoring to Masonry
-    '43697171088785': "{{asset 'Anchoring-to-mansonry.svg'}}",
+    '43697171088785': "{{asset 'Anchoring-to-Masonry.svg'}}",
 
     // Category 10 – Diaphragm Design
     '45069669042321': "{{asset 'Diaphragm_Design.svg'}}",
@@ -390,5 +390,18 @@
 
   window.DEFAULT_CATEGORY_ICON =
     "{{asset 'broken.svg'}}";
-</script>
 
+  // Bridge: populate Theme.assets['category-{id}'] so the
+  // content-blocks EJS template can render icons synchronously
+  // without any DOMContentLoaded race condition.
+  (function () {
+    var map = window.CATEGORY_ICON_MAP;
+    var assets = window.Theme && window.Theme.assets;
+    if (!assets || !map) return;
+    for (var id in map) {
+      if (map.hasOwnProperty(id)) {
+        assets['category-' + id] = map[id];
+      }
+    }
+  })();
+</script>
