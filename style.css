@@ -3056,6 +3056,17 @@ html[dir="rtl"] .notification-left-aligned {
   color: darken($color_footer_link, 12%);
 }
 
+/* Sign In button — targeted style */
+.header a.nav-link[data-auth-action="signin"] {
+  font-size: 1rem;
+  font-weight: 400;
+  color: $color_header_link;
+}
+.header a.nav-link[data-auth-action="signin"]:hover {
+  color: #D2051E;
+  text-decoration: none;
+}
+
 /* -----------------------------------------------------------
    UNIVERSAL BREADCRUMB STYLE – FINAL VERSION
    Updated by: Kalidas, Janardhanan
@@ -3477,21 +3488,6 @@ html[dir="rtl"] .notification-left-aligned {
 .navbar-light .nav-link:focus,
 .navbar-light .nav-link:hover {
   color: #1A202C;
-}
-
-.navbar-dark .navbar-brand {
-  color: #fff;
-}
-
-.navbar-dark .navbar-toggle,
-.navbar-dark .nav-link {
-  color: #E2E8F0;
-}
-
-.navbar-dark .navbar-toggle:focus, .navbar-dark .navbar-toggle:hover,
-.navbar-dark .nav-link:focus,
-.navbar-dark .nav-link:hover {
-  color: #fff;
 }
 
 .navbar-brand {
@@ -17276,7 +17272,7 @@ header.d-flex h1 {
   height: 20px;
 }
 .hilti-lang-label {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 500;
   color: #524f53;
 }
