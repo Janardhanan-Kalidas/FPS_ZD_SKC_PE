@@ -696,7 +696,7 @@ caption {
 .badge, .recent-activity-item-parent {
   padding: 0.25em 0.375em;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1;
   border-radius: 0 !important; /*Popular Keywords tabs converted to Rectangle - Jana */
   text-align: center;
@@ -705,30 +705,25 @@ caption {
   color: #D2051D;
   background-color: #EDF2F7;
   transition: 0.15s ease-in-out;
+  border: 1px solid #ffffff;
+  position: relative;
+  top: 1px;
 }
 
 /*Jana Made change to the color on hover and text*/
 a.badge:focus, a.recent-activity-item-parent:focus, a.badge:hover, a.recent-activity-item-parent:hover {
   color: #fff;
   background-color: #d2051e; /*Hilti Red HEX #d2051e */
+  text-decoration: none;
 }
 
 a.badge:focus, a.recent-activity-item-parent:focus, a.badge.is-focused, a.is-focused.recent-activity-item-parent {
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(237, 242, 247, 0.25);
-}
-
-a.badge:focus, a.recent-activity-item-parent:focus, a.badge:hover, a.recent-activity-item-parent:hover {
-  text-decoration: none;
+  box-shadow: none;
 }
 
 .badge:empty, .recent-activity-item-parent:empty {
   display: none;
-}
-
-.badge, .recent-activity-item-parent {
-  position: relative;
-  top: 1px;
 }
 
 .button {
@@ -6372,6 +6367,11 @@ html[dir="rtl"] .notification-left-aligned {
 
 .bg-translucent {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Popular keywords — override translucent bg with solid badge colour */
+#popular-keywords .bg-translucent {
+  background-color: #080808;
 }
 
 .bg-header-fixed {
@@ -15863,7 +15863,7 @@ a:hover .icon-circle {
   height: 1.875rem;
   display: block;
   object-fit: contain;
-  margin-bottom: 1rem; /* Space between logo and social icons */
+  margin-bottom: 0.75rem; /* Space between logo and social icons */
 }
 
 .footer-social-row {
@@ -15873,8 +15873,13 @@ a:hover .icon-circle {
 
 .footer-social-row .nav-link {
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
+}
+
+.footer-social-row .nav-link .svg-icon {
+  width: 16px;
+  height: 16px;
 }
 
 /* --- Image & Legacy Overrides --- */
@@ -17260,18 +17265,18 @@ header.d-flex h1 {
   background: none;
   border: none;
   padding: 6px 10px;
-  border-radius: 4px;
+  border-radius: 0px;
   transition: background 0.2s;
 }
 .hilti-lang-trigger:hover {
-  background: rgba(210, 5, 30, 0.08);
+  background: rgba(215, 206, 189, 0.6);
 }
 .hilti-lang-trigger .svg-icon {
   width: 20px;
   height: 20px;
 }
 .hilti-lang-label {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: #524f53;
 }
@@ -17297,7 +17302,7 @@ header.d-flex h1 {
 /* --- Modal container --- */
 .hilti-lang-modal {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 0px;
   width: 90%;
   max-width: 520px;
   max-height: 80vh;
@@ -17317,7 +17322,7 @@ header.d-flex h1 {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  border-bottom: 2px solid #D2051E;
+  border-bottom: 1px solid #D2051E;
 }
 .hilti-lang-modal-title {
   display: flex;
@@ -17325,16 +17330,16 @@ header.d-flex h1 {
   gap: 10px;
   margin: 0;
   font-family: 'Hilti Small Bold', sans-serif;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #333;
+  color: #524f53;
 }
 .hilti-lang-close {
   background: none;
   border: none;
   cursor: pointer;
   padding: 6px;
-  border-radius: 4px;
+  border-radius: 0px;
   color: #524f53;
   transition: background 0.2s, color 0.2s;
 }
@@ -17349,8 +17354,9 @@ header.d-flex h1 {
   overflow-y: auto;
 }
 .hilti-lang-current {
-  font-size: 0.8125rem;
-  color: #777;
+  font-size: 0.75rem;
+  color: #524f53;
+  font-weight: 700;
   margin: 0 0 16px;
 }
 .hilti-lang-current strong {
@@ -17374,18 +17380,18 @@ header.d-flex h1 {
 .hilti-lang-option {
   display: block;
   padding: 10px 14px;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 0px;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: #333;
+  color: #524f53;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
   border: 1px solid transparent;
 }
 .hilti-lang-option:hover {
-  background: rgba(210, 5, 30, 0.06);
+  background: rgba(215, 206, 189, 0.6);
   color: #D2051E;
-  border-color: rgba(210, 5, 30, 0.2);
+  border-color: rgba(215, 206, 189, 0.2);
   text-decoration: none;
 }
 .hilti-lang-option:focus-visible {
