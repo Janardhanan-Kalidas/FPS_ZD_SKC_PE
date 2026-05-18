@@ -3142,6 +3142,19 @@ html[dir="rtl"] .notification-left-aligned {
   transition: color 0.2s ease;
 }
 
+/* Active breadcrumb — Hilti Steel, no underline, non-clickable.
+   Targets both aria-current="page" (category pages) and the last <li>
+   (section/article pages where Zendesk may render plain text or <span>) */
+.bc-native a[aria-current="page"],
+.bc-native ol.breadcrumbs li:last-child a,
+.bc-native ol.breadcrumbs li:last-child span {
+  color: #524f53 !important;
+  font-weight: 600;
+  text-decoration: none !important;
+  pointer-events: none;
+  cursor: default;
+}
+
 
 /* -----------------------------------------------------------
    HIDE FIRST DEFAULT BREADCRUMB ("Hilti PROFIS Engineering")
@@ -3159,7 +3172,7 @@ html[dir="rtl"] .notification-left-aligned {
 .bc-native ol.breadcrumbs li:not(:first-child)::before {
   content: "/";
   margin: 0 0.35rem;             /* EVEN spacing around "/" */
-  color: #4A5568;                /* subtle neutral */
+  color: #d2051e;                /* Hilti Red */
   font-weight: 400;
 }
 
@@ -3170,8 +3183,9 @@ html[dir="rtl"] .notification-left-aligned {
    Date: 23‑Mar‑2026
 ------------------------------------------------------------ */
 
-/* Hover effect for ALL breadcrumb links */
-.breadcrumbs-wrapper a:hover {
+/* Hover effect for breadcrumb links — excluded on the active page item */
+.breadcrumbs-wrapper a:not([aria-current="page"]):hover,
+.bc-native ol.breadcrumbs li:not(:last-child) a:hover {
   text-decoration: underline !important;
   color: #d2051e !important;     /* Hilti Red */
 }
@@ -17498,7 +17512,7 @@ header.d-flex h1 {
 }
 
 .category-page .section-grid h2 a:hover {
-  color: #a60017 !important;
+  color: #D2051D !important;
   text-decoration: underline;
 }
 
