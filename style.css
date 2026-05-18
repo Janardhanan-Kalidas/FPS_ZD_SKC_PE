@@ -17641,3 +17641,159 @@ header.d-flex h1 {
     width: 100%;
   }
 }
+
+
+/* ==========================================================
+   SECTION PAGE — Layout & Style (mirrors category-page)
+   Author: Kalidas Janardhanan
+   Date: 18-May-2026
+   ========================================================== */
+
+/* 1. Page container row */
+.section-page #page-container > .row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  gap: 2rem;
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+/* 2. Main content column */
+.section-page #page-container > .row > .col {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 3. Section title h1 */
+.section-page h1.w-full,
+.section-page .sm\:flex h1 {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #524f53;
+  margin: 0 0 0.25rem !important;
+  padding: 0;
+  line-height: 1.25;
+}
+
+.section-page .sm\:flex.py-4 {
+  padding-top: 0 !important;
+  padding-bottom: 1rem !important;
+}
+
+.section-page .sm\:flex.py-4 > p {
+  font-size: 0.9rem;
+  color: #737373;
+  margin: 0.25rem 0 0;
+}
+
+/* 4. Inner row containing article list */
+.section-page #page-container > .row > .col > .row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.section-page #page-container > .row > .col > .row > [class*="col"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 5. Article list rows — same padding and dividers as category page */
+.section-page #page-container ul.list-unstyled li > div {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+}
+
+.section-page #page-container ul.list-unstyled li > div.border-bottom {
+  border-bottom-color: #e8e8e8 !important;
+}
+
+/* Last article gets bottom border */
+.section-page #page-container ul.list-unstyled li:last-child > div.border-bottom {
+  border-bottom: 1px solid #e8e8e8 !important;
+}
+
+.section-page #page-container ul.list-unstyled li a.link-stretched {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #524f53 !important;
+  text-decoration: none;
+}
+
+.section-page #page-container ul.list-unstyled li a.link-stretched:hover {
+  color: #d2051e !important;
+  text-decoration: underline;
+}
+
+/* 6. Sidebar — same width and card style as category page */
+.section-page #page-container > .row > aside {
+  flex: 0 0 220px !important;
+  max-width: 220px !important;
+  min-width: 180px;
+  padding: 0 !important;
+  align-self: flex-start;
+}
+
+.section-page [data-element="navigation"] > div {
+  background-color: #f7f6f3 !important;
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  margin: 0 !important;
+  padding: 0.75rem 1.125rem 1rem !important;
+}
+
+.section-page [data-element="navigation"] h3 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #524f53 !important;
+  margin: 0 0 0.625rem !important;
+  padding-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d8d5cf;
+}
+
+.section-page [data-element="navigation"] ul li a {
+  padding: 5px 6px !important;
+  font-size: 0.8125rem !important;
+  border-radius: 2px;
+  color: #524f53 !important;
+  transition: background 0.15s, color 0.15s;
+}
+
+.section-page [data-element="navigation"] ul li a:hover {
+  background-color: #eeebe5 !important;
+  color: #d2051e !important;
+}
+
+.section-page [data-element="navigation"] ul li a.underline,
+.section-page [data-element="navigation"] ul li a[aria-current="page"] {
+  background-color: #e7e5e2 !important;
+  color: #d2051e !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+
+/* 7. Mobile: stack layout */
+@media (max-width: 768px) {
+  .section-page #page-container > .row {
+    flex-direction: column !important;
+    gap: 1.5rem;
+    padding-top: 1rem;
+  }
+
+  .section-page #page-container > .row > aside {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .section-page #page-container > .row > .col {
+    width: 100%;
+  }
+}
