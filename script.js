@@ -1115,7 +1115,56 @@ document.addEventListener('DOMContentLoaded', function () {
         closeModal();
       }
     });
+
+    /* ---------------------------------------------------------
+       Remove sidebar category limit (show all categories)
+    --------------------------------------------------------- */
+    (function expandAllSidebarItems() {
+      var sidebarNav = document.querySelector('[data-element="navigation"]');
+      if (!sidebarNav) return;
+
+      // Remove the is-collapsed class and inline height from the list
+      var collapsedList = sidebarNav.querySelector('ul.is-collapsed, ul[style*="height"]');
+      if (collapsedList) {
+        collapsedList.classList.remove('is-collapsed');
+        collapsedList.style.height = 'auto';
+        collapsedList.style.maxHeight = 'none';
+        collapsedList.style.overflow = 'visible';
+      }
+
+      // Hide the Show more/Show less toggle link
+      var toggleLink = sidebarNav.querySelector('.category-toggle-link');
+      if (toggleLink) {
+        toggleLink.style.display = 'none';
+      }
+    })();
   });
+})();
+
+/* ---------------------------------------------------------
+   Sidebar expand – runs after Zendesk injects navigation
+   (navigation is rendered dynamically, after DOMContentLoaded)
+--------------------------------------------------------- */
+;(function () {
+  function expandSidebar() {
+    var sidebarNav = document.querySelector('[data-element="navigation"]');
+    if (!sidebarNav) return;
+
+    var collapsedList = sidebarNav.querySelector('ul.is-collapsed, ul[style*="height"]');
+    if (collapsedList) {
+      collapsedList.classList.remove('is-collapsed');
+      collapsedList.style.cssText += '; height: auto !important; max-height: none !important; overflow: visible !important;';
+    }
+
+    var toggleLink = sidebarNav.querySelector('.category-toggle-link');
+    if (toggleLink) {
+      toggleLink.style.display = 'none';
+    }
+  }
+
+  // Run at 300ms and 800ms to catch Zendesk's async navigation render
+  setTimeout(expandSidebar, 300);
+  setTimeout(expandSidebar, 800);
 })();
 
 
