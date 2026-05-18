@@ -17495,14 +17495,16 @@ header.d-flex h1 {
 }
 
 /* ----------------------------------------------------------
-   5. Section h2 — tight, clean heading
+   5. Section h2 — tight, clean heading with top & bottom border
 ---------------------------------------------------------- */
 .category-page .section-grid h2 {
   font-size: 0.9375rem;
   font-weight: 700;
   color: #d2051e;
-  margin: 0 0 0.625rem !important;
+  margin: 0 !important;
+  padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+  border-top: none !important;
   border-bottom: none !important;
 }
 
@@ -17524,10 +17526,9 @@ header.d-flex h1 {
   padding-bottom: 0.6rem !important;
 }
 
-/* Remove bottom border on the last article in each section */
-.category-page #page-container ul.list-unstyled li:last-child > div,
+/* Keep bottom border on the last article in each section */
 .category-page #page-container ul.list-unstyled li:last-child > div.border-bottom {
-  border-bottom: none !important;
+  border-bottom: 1px solid #e8e8e8 !important;
 }
 
 /* Indent article borders so left/right column borders don't visually merge */
