@@ -16761,8 +16761,8 @@ footer ul li a:hover {
 
 .col-12.mb-4 a[href*="/sections/"] {
   display: inline-block;
-  color: #d2051e;
-  font-size: 0.875rem;
+  color: #524f53;
+  font-size: 1rem;
   font-weight: 400;
   text-decoration: none;
   margin-top: 12px;
@@ -16937,8 +16937,8 @@ aside.md\:col-4 * {
   width: 100%;                   /* Allow full responsive scaling */
   margin-left: auto;             /* Center the container */
   margin-right: auto;
-  padding-left: 24px;            /* Safe gutter spacing */
-  padding-right: 24px;
+  padding-left: 2rem !important; /* Unified gutter — matches row-lg compensation */
+  padding-right: 2rem !important;
 }
 
 /* ============================================================
@@ -17086,7 +17086,7 @@ header.d-flex h1 {
 .article-layout .container .row > .col:not(aside) {
     flex: 1 !important;
     max-width: calc(100% - 240px) !important;   /* The rest after sidebar */
-    padding-right: 24px;
+    padding-right: 2rem;
     box-sizing: border-box;
 }
 
@@ -17406,5 +17406,222 @@ header.d-flex h1 {
   }
   .hilti-lang-list {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+/* ============================================================
+   CATEGORY PAGE — Layout, Alignment & Spacing Polish
+   Author:  Kalidas, Janardhanan
+   Date:    18-May-2026
+   Purpose: Align main content + sidebar top edge, clean up
+            section/article spacing, and tidy sidebar card.
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   1. Page container — flex row, tops aligned
+---------------------------------------------------------- */
+.category-page #page-container > .row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  gap: 2rem;
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+/* ----------------------------------------------------------
+   2. Main content column — fills remaining width
+---------------------------------------------------------- */
+.category-page #page-container > .row > .col {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* ----------------------------------------------------------
+   3. Category page title — compact, flush top
+---------------------------------------------------------- */
+.category-page .category-title {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #524f53;
+  margin: 0 0 0.25rem !important;
+  padding: 0;
+  line-height: 1.25;
+}
+
+.category-page .py-4 {
+  padding-top: 0 !important;
+  padding-bottom: 1rem !important;
+}
+
+.category-page .py-4 > p {
+  font-size: 0.9rem;
+  color: #737373;
+  margin: 0.25rem 0 0;
+}
+
+/* ----------------------------------------------------------
+   4. Section grid — consistent gap between panels
+---------------------------------------------------------- */
+.category-page .section-grid {
+  gap: 0 !important;
+}
+
+.category-page .section-grid > .col-12 {
+  padding-bottom: 0 !important;
+  border-bottom: none !important;
+  margin-bottom: 2.5rem !important;
+  padding-top: 0 !important;
+}
+
+.category-page .section-grid > .col-12:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ----------------------------------------------------------
+   5. Section h2 — tight, clean heading
+---------------------------------------------------------- */
+.category-page .section-grid h2 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #d2051e;
+  margin: 0 0 0.625rem !important;
+  padding-bottom: 0.5rem;
+  border-bottom: none !important;
+}
+
+.category-page .section-grid h2 a {
+  color: inherit !important;
+  text-decoration: none;
+}
+
+.category-page .section-grid h2 a:hover {
+  color: #a60017 !important;
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
+   6. Article list rows — tighter padding, clear dividers
+---------------------------------------------------------- */
+.category-page #page-container ul.list-unstyled li > div {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+}
+
+/* Remove bottom border on the last article in each section */
+.category-page #page-container ul.list-unstyled li:last-child > div,
+.category-page #page-container ul.list-unstyled li:last-child > div.border-bottom {
+  border-bottom: none !important;
+}
+
+/* Indent article borders so left/right column borders don't visually merge */
+.category-page #page-container ul.list-unstyled li > div.border-bottom {
+  border-bottom-color: #e8e8e8 !important;
+  margin-right: 1.5rem !important;
+}
+
+.category-page #page-container ul.list-unstyled li a.link-stretched {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #524f53 !important;
+  text-decoration: none;
+}
+
+.category-page #page-container ul.list-unstyled li a.link-stretched:hover {
+  color: #d2051e !important;
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
+   7. "See all N articles" link — flush left, muted
+---------------------------------------------------------- */
+.category-page #page-container .section-grid p > a {
+  font-size: 0.8125rem;
+  color: #737373 !important;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.category-page #page-container .section-grid p > a:hover {
+  color: #d2051e !important;
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
+   8. Sidebar — flush top aligned with page title, clean card
+---------------------------------------------------------- */
+.category-page #page-container > .row > aside {
+  flex: 0 0 220px !important;
+  max-width: 220px !important;
+  min-width: 180px;
+  padding: 0 !important;
+  align-self: flex-start;
+}
+
+/* Sidebar card wrapper */
+.category-page [data-element="navigation"] > div {
+  background-color: #f7f6f3 !important;
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  padding: 1rem 1.125rem !important;
+}
+
+/* "Categories" heading inside sidebar */
+.category-page [data-element="navigation"] h3 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #524f53 !important;
+  margin: 0 0 0.625rem !important;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d8d5cf;
+}
+
+/* Sidebar list items */
+.category-page [data-element="navigation"] ul li a {
+  padding: 5px 6px !important;
+  font-size: 0.8125rem !important;
+  border-radius: 2px;
+  color: #524f53 !important;
+  transition: background 0.15s, color 0.15s;
+}
+
+.category-page [data-element="navigation"] ul li a:hover {
+  background-color: #eeebe5 !important;
+  color: #d2051e !important;
+}
+
+/* Active / current category in sidebar */
+.category-page [data-element="navigation"] ul li a.underline,
+.category-page [data-element="navigation"] ul li a[aria-current="page"] {
+  background-color: #e7e5e2 !important;
+  color: #d2051e !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+
+/* ----------------------------------------------------------
+   9. Mobile: stack layout
+---------------------------------------------------------- */
+@media (max-width: 768px) {
+  .category-page #page-container > .row {
+    flex-direction: column !important;
+    gap: 1.5rem;
+    padding-top: 1rem;
+  }
+
+  .category-page #page-container > .row > aside {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .category-page #page-container > .row > .col {
+    width: 100%;
   }
 }
