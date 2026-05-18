@@ -209,13 +209,7 @@
                         {{~#isnt ../settings.article_list_excerpt 0}} font-semibold{{/isnt~}}
                         {{~#is ../settings.article_list_style '3-bordered'}} border-bottom{{#is ../settings.article_list_columns "1"}}{{#if @last}} border-bottom-0{{/if}}{{/is}}{{/is~}}">
 
-                        {{~#is ../settings.article_list_style '3-bordered'}}
-                          <div class="flex" x-data="{ src: Theme.assets['article'] }">
-                            <template x-if="src">
-                              <img class="svg-icon mr-3" src="{{asset 'placeholder.png'}}" alt="" aria-hidden="true" :src="src" />
-                            </template>
-                          </div>
-                        {{/is~}}
+
 
                         <div class="media-body">
                           <a class="link-stretched" href="{{url}}">
