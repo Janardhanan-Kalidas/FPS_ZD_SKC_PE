@@ -1,34 +1,59 @@
+# Prevent duplicate pipelines: when a branch has an open MR,
+# only run the MR pipeline (not a separate push pipeline).
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
     - if: '$CI_PIPELINE_SOURCE == "web"'
 
 stages:
   - validate
   - release
+  - deploy
 
 variables:
   GIT_DEPTH: "0"
 
 default:
+  tags:
+    - shell
+    - macos
   before_script:
     - node --version
     - npm --version
+    - npx zcli --version 2>/dev/null || npm install -g @zendesk/zcli
 
+# ── Validate ────────────────────────────────────────────────────────────────
+# Runs on every push and every MR — acts as a smoke-test for versioning.
 theme_version_dry_run:
   stage: validate
   script:
     - npm run version:theme:dry
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
+# ── Release ─────────────────────────────────────────────────────────────────
+# Manual job — bumps manifest.json version. Trigger from the GitLab UI.
 theme_version_release:
   stage: release
   script:
     - npm run version:theme
-    - echo "manifest.json updated in CI workspace. Commit/push automation is intentionally not enabled by default."
+    - echo "Version bumped. Commit and push manifest.json manually or extend this job with a deploy token."
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+# ── Deploy ───────────────────────────────────────────────────────────────────
+# Manual job — imports the theme into Zendesk via zcli.
+# Required CI/CD variables (Settings → CI/CD → Variables):
+#   ZD_SUBDOMAIN  — e.g. hilti
+#   ZD_EMAIL      — Zendesk admin email
+#   ZD_API_TOKEN  — Zendesk API token
+theme_deploy:
+  stage: deploy
+  script:
+    - zcli themes:import --subdomain "$ZD_SUBDOMAIN" --username "$ZD_EMAIL" --password "$ZD_API_TOKEN" .
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: manual
