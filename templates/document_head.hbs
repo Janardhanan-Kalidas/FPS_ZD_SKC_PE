@@ -1,5 +1,5 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: {}, locale: "{{help_center.locale}}", signedIn: {{signed_in}} });</script>
+<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
 <script type="text/javascript" src="{{asset 'util.min.js'}}"></script>
 
 {{! Extensions }}
@@ -47,6 +47,12 @@
       {{/is~}}
     {{/is}}
   {{/isnt}}
+</style>
+
+<style>
+  :root {
+    --theme-home-icon: url("{{asset 'home.svg'}}");
+  }
 </style>
 
 {{! Google fonts (body text) }}
@@ -341,10 +347,64 @@
     // Category 1 – FAQ
     '45070746209937': "{{asset 'faq.svg'}}",
 
-    
+    // Category 2 – What’s New
+    '43347810588945': "{{asset 'announcement.svg'}}",
+
+    // Category 3 – Getting Started with PE
+    '43357295486993': "{{asset 'Rocket.svg'}}",
+
+    // Category 4 – PE Premium Subscription
+    '43697046714897': "{{asset 'subscription.svg'}}",
+
+    // Category 5 – Anchoring to Concrete
+    '43697070376977': "{{asset 'Anchoring-to-Concrete.svg'}}",
+
+    // Category 6 – Concrete to Concrete a.k.a. Post-installed rebar
+    '43697123005969': "{{asset 'C2C_new.svg'}}",
+
+    // Category 7 – Shear Strengthening
+    '43697144515473': "{{asset 'Shear_Strengthening.svg'}}",
+
+    // Category 8 – Concrete Overlay
+    '43697142165521': "{{asset 'concrete-overlay.svg'}}",
+
+    // Category 9 – Anchoring to Masonry
+    '43697171088785': "{{asset 'Anchoring-to-Masonry.svg'}}",
+
+    // Category 10 – Diaphragm Design
+    '45069669042321': "{{asset 'Diaphragm_Design.svg'}}",
+
+    // Category 11 – Concrete-over-metal-deck
+    '45069633150481': "{{asset 'concrete-over-metal-deck.svg'}}",
+
+    // Category 12 – Anchor Channel
+    '43697241738129': "{{asset 'anchor_channel.svg'}}",
+
+    // Category 13 – Facade
+    '43697173115409': "{{asset 'Facade.svg'}}",
+
+    // Category 14 – Glass Balustrade
+    '43697227593105': "{{asset 'HIT_Glass.svg'}}",
+
+    // Category 15 – Wood
+    'To be updated': "{{asset 'Wood.svg'}}"
+
   };
 
   window.DEFAULT_CATEGORY_ICON =
     "{{asset 'broken.svg'}}";
-</script>
 
+  // Bridge: populate Theme.assets['category-{id}'] so the
+  // content-blocks EJS template can render icons synchronously
+  // without any DOMContentLoaded race condition.
+  (function () {
+    var map = window.CATEGORY_ICON_MAP;
+    var assets = window.Theme && window.Theme.assets;
+    if (!assets || !map) return;
+    for (var id in map) {
+      if (map.hasOwnProperty(id)) {
+        assets['category-' + id] = map[id];
+      }
+    }
+  })();
+</script>

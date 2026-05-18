@@ -891,6 +891,8 @@ document.addEventListener("DOMContentLoaded", function () {
  * ============================================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
+  const emptyStateIcon =
+    (window.Theme && window.Theme.assets && window.Theme.assets.emptyStateIcon) || "";
 
   /* 1. Detect all occurrences of the literal "empty" text printed by Zendesk */
   const emptyElements = document.querySelectorAll(
@@ -908,12 +910,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement("div");
     container.className = "empty-state";
 
-    container.innerHTML = `
-      <img src="https://hiltiprofisengineering.zendesk.com/hc/theming_assets/01KKC2824EZXR6HFQKZ38AMXRA"
-           class="empty-state__icon" alt="No articles icon">
-
-      <div class="empty-state__text">No articles yet</div>
-    `;
+    container.innerHTML = [
+      emptyStateIcon
+        ? `<img src="${emptyStateIcon}" class="empty-state__icon" alt="No articles icon">`
+        : "",
+      '<div class="empty-state__text">No articles yet</div>'
+    ].join("");
 
     /* 4. Insert right below the section heading (H1 or H2) if present */
     const parentSection = el.closest(".col-12, .col-12.mb-4, .section, .article-list, main, body");
@@ -1056,5 +1058,64 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+/* ============================================================
+   HILTI LANGUAGE SWITCHER MODAL
+   - Opens on globe icon click in header
+   - Closes on X, overlay click, or ESC
+   - Focus trap for accessibility
+   ============================================================ */
+;(function () {
+  'use strict';
+
+  function onReady(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
+    else fn();
+  }
+
+  onReady(function () {
+    var trigger = document.getElementById('hiltiLangTrigger');
+    var overlay = document.getElementById('hiltiLangOverlay');
+    var closeBtn = document.getElementById('hiltiLangClose');
+
+    if (!trigger || !overlay) return;
+
+    function openModal() {
+      overlay.classList.add('is-open');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      // Focus first language link
+      var firstLink = overlay.querySelector('.hilti-lang-option');
+      if (firstLink) firstLink.focus();
+    }
+
+    function closeModal() {
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger.focus();
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal();
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeModal);
+    }
+
+    // Close on overlay (backdrop) click
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal();
+    });
+
+    // Close on ESC
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.classList.contains('is-open')) {
+        closeModal();
+      }
+    });
+  });
+})();
 
 
