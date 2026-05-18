@@ -12,7 +12,6 @@ variables:
   GIT_DEPTH: "0"
 
 default:
-  image: node:20
   before_script:
     - node --version
     - npm --version
