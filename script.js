@@ -1120,72 +1120,51 @@ document.addEventListener('DOMContentLoaded', function () {
        Remove sidebar category limit (show all categories)
     --------------------------------------------------------- */
     (function expandAllSidebarItems() {
-      // Wait for navigation to render
-      function processNavigation() {
-        var sidebarNav = document.querySelector('[data-element="navigation"]');
-        if (!sidebarNav) {
-          // Retry after a short delay if not found
-          setTimeout(processNavigation, 200);
-          return;
-        }
+      var sidebarNav = document.querySelector('[data-element="navigation"]');
+      if (!sidebarNav) return;
 
-        // Remove all height/overflow restrictions
-        var style = sidebarNav.getAttribute('style') || '';
-        sidebarNav.setAttribute('style', style + '; max-height: none !important; height: auto !important; overflow: visible !important;');
-
-        // Find the container with the list
-        var container = sidebarNav.querySelector('[class*="bg-"], [class*="rounded"]');
-        if (container) {
-          container.style.maxHeight = 'none';
-          container.style.height = 'auto';
-          container.style.overflow = 'visible';
-        }
-
-        // Show all list items
-        var listItems = sidebarNav.querySelectorAll('li, [role="listitem"], a.block');
-        listItems.forEach(function (item) {
-          item.style.display = '';
-          item.classList.remove('is-hidden');
-          if (item.parentElement) {
-            item.parentElement.style.maxHeight = 'none';
-            item.parentElement.style.overflow = 'visible';
-          }
-        });
-
-        // Remove/hide show-more/show-less buttons
-        var buttons = sidebarNav.querySelectorAll('button, [role="button"], a[class*="show"], a[class*="more"], a[class*="less"]');
-        buttons.forEach(function (btn) {
-          var text = (btn.textContent || '').toLowerCase();
-          if (text.includes('show') || text.includes('more') || text.includes('less')) {
-            btn.style.display = 'none';
-          }
-        });
-
-        // Also check for any collapsed states and expand them
-        var parentNav = sidebarNav.parentElement;
-        if (parentNav) {
-          parentNav.style.maxHeight = 'none';
-          parentNav.style.overflow = 'visible';
-        }
+      // Remove the is-collapsed class and inline height from the list
+      var collapsedList = sidebarNav.querySelector('ul.is-collapsed, ul[style*="height"]');
+      if (collapsedList) {
+        collapsedList.classList.remove('is-collapsed');
+        collapsedList.style.height = 'auto';
+        collapsedList.style.maxHeight = 'none';
+        collapsedList.style.overflow = 'visible';
       }
 
-      // Run immediately and after DOM changes
-      processNavigation();
-      
-      // Also observe for dynamic changes
-      if (window.MutationObserver) {
-        var observer = new MutationObserver(function () {
-          processNavigation();
-        });
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['style', 'class', 'aria-expanded']
-        });
+      // Hide the Show more/Show less toggle link
+      var toggleLink = sidebarNav.querySelector('.category-toggle-link');
+      if (toggleLink) {
+        toggleLink.style.display = 'none';
       }
     })();
   });
+})();
+
+/* ---------------------------------------------------------
+   Sidebar expand – runs after Zendesk injects navigation
+   (navigation is rendered dynamically, after DOMContentLoaded)
+--------------------------------------------------------- */
+;(function () {
+  function expandSidebar() {
+    var sidebarNav = document.querySelector('[data-element="navigation"]');
+    if (!sidebarNav) return;
+
+    var collapsedList = sidebarNav.querySelector('ul.is-collapsed, ul[style*="height"]');
+    if (collapsedList) {
+      collapsedList.classList.remove('is-collapsed');
+      collapsedList.style.cssText += '; height: auto !important; max-height: none !important; overflow: visible !important;';
+    }
+
+    var toggleLink = sidebarNav.querySelector('.category-toggle-link');
+    if (toggleLink) {
+      toggleLink.style.display = 'none';
+    }
+  }
+
+  // Run at 300ms and 800ms to catch Zendesk's async navigation render
+  setTimeout(expandSidebar, 300);
+  setTimeout(expandSidebar, 800);
 })();
 
 

@@ -16761,7 +16761,7 @@ footer ul li a:hover {
 
 .col-12.mb-4 a[href*="/sections/"] {
   display: inline-block;
-  color: #524f53;
+  color: #524f53 !important; /* Hilti Steel */
   font-size: 1rem;
   font-weight: 400;
   text-decoration: none;
@@ -17228,22 +17228,20 @@ header.d-flex h1 {
   transition: height 300ms ease;
 }
 
-/* Toggle link styling */
-.category-page .category-toggle-link,
-.section-page .category-toggle-link {
-  display: block;
-  margin-top: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #D2051E !important;
-  cursor: pointer;
-  text-decoration: none;
+/* Force expanded — remove Zendesk's inline height cap and is-collapsed state */
+.category-page .cards-wrapper ul.is-collapsed,
+.section-page .cards-wrapper ul.is-collapsed,
+.category-page .cards-wrapper ul[style*="height"],
+.section-page .cards-wrapper ul[style*="height"] {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
-.category-page .category-toggle-link:hover,
-.section-page .category-toggle-link:hover {
-  color: #D2051E !important;
-  text-decoration: underline;
+/* Hide Show more / Show less toggle link entirely */
+.category-page .category-toggle-link,
+.section-page .category-toggle-link {
+  display: none !important;
 }
 
 /* ===========================================================
@@ -17540,19 +17538,19 @@ header.d-flex h1 {
    7. "See all N articles" link — flush left, muted
 ---------------------------------------------------------- */
 .category-page #page-container .section-grid p > a {
-  font-size: 0.8125rem;
-  color: #737373 !important;
+  font-size: 0.875rem;
+  color: #D2051E !important;
   text-decoration: none;
   font-weight: 400;
 }
 
 .category-page #page-container .section-grid p > a:hover {
-  color: #d2051e !important;
+  color: #D2051E !important;
   text-decoration: underline;
 }
 
 /* ----------------------------------------------------------
-   8. Sidebar — flush top aligned with page title, clean card
+   8. Sidebar — top edge aligned with section grid start
 ---------------------------------------------------------- */
 .category-page #page-container > .row > aside {
   flex: 0 0 220px !important;
@@ -17562,12 +17560,14 @@ header.d-flex h1 {
   align-self: flex-start;
 }
 
-/* Sidebar card wrapper */
+/* Sidebar card wrapper — strip Zendesk's my-6 margin and py-4 padding so
+   CATEGORIES heading aligns flush with the category page title */
 .category-page [data-element="navigation"] > div {
   background-color: #f7f6f3 !important;
   border: 1px solid #e8e8e8;
   border-radius: 2px;
-  padding: 1rem 1.125rem !important;
+  margin: 0 !important;
+  padding: 0.75rem 1.125rem 1rem !important;
 }
 
 /* "Categories" heading inside sidebar */
@@ -17578,6 +17578,7 @@ header.d-flex h1 {
   letter-spacing: 0.06em;
   color: #524f53 !important;
   margin: 0 0 0.625rem !important;
+  padding-top: 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #d8d5cf;
 }
