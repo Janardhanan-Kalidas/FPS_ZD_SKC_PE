@@ -100,4 +100,4 @@ If you want fully automatic `minor` and `major` releases, your team needs to kee
 
 ## Local preview
 
-For local theme preview from VS Code, see `LOCAL_PREVIEW.md`.
+For local theme preview from VS Code, see `LOCAL_PREVIEW.md`
