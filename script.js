@@ -1115,6 +1115,76 @@ document.addEventListener('DOMContentLoaded', function () {
         closeModal();
       }
     });
+
+    /* ---------------------------------------------------------
+       Remove sidebar category limit (show all categories)
+    --------------------------------------------------------- */
+    (function expandAllSidebarItems() {
+      // Wait for navigation to render
+      function processNavigation() {
+        var sidebarNav = document.querySelector('[data-element="navigation"]');
+        if (!sidebarNav) {
+          // Retry after a short delay if not found
+          setTimeout(processNavigation, 200);
+          return;
+        }
+
+        // Remove all height/overflow restrictions
+        var style = sidebarNav.getAttribute('style') || '';
+        sidebarNav.setAttribute('style', style + '; max-height: none !important; height: auto !important; overflow: visible !important;');
+
+        // Find the container with the list
+        var container = sidebarNav.querySelector('[class*="bg-"], [class*="rounded"]');
+        if (container) {
+          container.style.maxHeight = 'none';
+          container.style.height = 'auto';
+          container.style.overflow = 'visible';
+        }
+
+        // Show all list items
+        var listItems = sidebarNav.querySelectorAll('li, [role="listitem"], a.block');
+        listItems.forEach(function (item) {
+          item.style.display = '';
+          item.classList.remove('is-hidden');
+          if (item.parentElement) {
+            item.parentElement.style.maxHeight = 'none';
+            item.parentElement.style.overflow = 'visible';
+          }
+        });
+
+        // Remove/hide show-more/show-less buttons
+        var buttons = sidebarNav.querySelectorAll('button, [role="button"], a[class*="show"], a[class*="more"], a[class*="less"]');
+        buttons.forEach(function (btn) {
+          var text = (btn.textContent || '').toLowerCase();
+          if (text.includes('show') || text.includes('more') || text.includes('less')) {
+            btn.style.display = 'none';
+          }
+        });
+
+        // Also check for any collapsed states and expand them
+        var parentNav = sidebarNav.parentElement;
+        if (parentNav) {
+          parentNav.style.maxHeight = 'none';
+          parentNav.style.overflow = 'visible';
+        }
+      }
+
+      // Run immediately and after DOM changes
+      processNavigation();
+      
+      // Also observe for dynamic changes
+      if (window.MutationObserver) {
+        var observer = new MutationObserver(function () {
+          processNavigation();
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style', 'class', 'aria-expanded']
+        });
+      }
+    })();
   });
 })();
 
