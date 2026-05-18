@@ -17691,13 +17691,26 @@ header.d-flex h1 {
   margin: 0.25rem 0 0;
 }
 
-/* 4. Inner row containing article list */
+/* 4. Inner row containing article list + article list ul rows — neutralise negative margins */
 .section-page #page-container > .row > .col > .row {
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 
 .section-page #page-container > .row > .col > .row > [class*="col"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* The article ul itself uses row/row-sm which has negative margins */
+.section-page #page-container ul.row,
+.section-page #page-container ul[class*="row-"] {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.section-page #page-container ul.row > li[class*="col"],
+.section-page #page-container ul[class*="row-"] > li[class*="col"] {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
