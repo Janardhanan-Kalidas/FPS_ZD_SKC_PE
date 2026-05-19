@@ -17288,9 +17288,11 @@ header.d-flex h1 {
   height: 20px;
 }
 .hilti-lang-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #524f53;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: inherit;
+  text-transform: uppercase;
 }
 
 /* --- Overlay backdrop --- */
@@ -17314,20 +17316,18 @@ header.d-flex h1 {
 /* --- Modal container --- */
 .hilti-lang-modal {
   background: #fff;
-  border-radius: 0px;
+  border-radius: 2px;
   width: 90%;
-  max-width: 520px;
-  max-height: 80vh;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(20px) scale(0.97);
+  transform: translateY(16px) scale(0.98);
   transition: transform 0.25s ease;
 }
 .hilti-lang-overlay.is-open .hilti-lang-modal {
   transform: translateY(0) scale(1);
 }
-
 /* --- Modal header --- */
 .hilti-lang-modal-header {
   display: flex;
@@ -17376,8 +17376,56 @@ header.d-flex h1 {
   font-weight: 600;
 }
 
-/* --- Language list grid --- */
-.hilti-lang-list {
+/* --- Region keyword list (ACI / EU) --- */
+.hilti-region-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.hilti-region-group {
+  border-bottom: 1px solid #f0f0f0;
+}
+.hilti-region-group:last-child {
+  border-bottom: none;
+}
+.hilti-region-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 24px;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.hilti-region-toggle:hover {
+  background: #f7f7f7;
+  text-decoration: none;
+}
+.hilti-region-toggle strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #524f53;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+.hilti-region-toggle:hover strong {
+  color: #D2051E;
+}
+.hilti-region-toggle.is-active {
+  border-left-color: #D2051E;
+  background: #fff5f5;
+}
+.hilti-region-toggle.is-active strong {
+  color: #D2051E;
+}
+.hilti-region-toggle:focus-visible {
+  outline: 2px solid #D2051E;
+  outline-offset: -2px;
+}
+
+/* Legacy generic lang option kept for non-region lists */
+.hilti-lang-list:not(.hilti-region-list) {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -17385,11 +17433,11 @@ header.d-flex h1 {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 6px;
 }
-.hilti-lang-list li {
+.hilti-lang-list:not(.hilti-region-list) li {
   margin: 0;
   padding: 0;
 }
-.hilti-lang-option {
+.hilti-lang-list:not(.hilti-region-list) .hilti-lang-option {
   display: block;
   padding: 10px 14px;
   border-radius: 0px;
@@ -17400,15 +17448,27 @@ header.d-flex h1 {
   transition: background 0.15s, color 0.15s;
   border: 1px solid transparent;
 }
-.hilti-lang-option:hover {
+.hilti-lang-list:not(.hilti-region-list) .hilti-lang-option:hover {
   background: rgba(215, 206, 189, 0.6);
   color: #D2051E;
   border-color: rgba(215, 206, 189, 0.2);
   text-decoration: none;
 }
-.hilti-lang-option:focus-visible {
-  outline: 2px solid #D2051E;
-  outline-offset: 2px;
+
+/* --- Page-load progress bar (shown on design code redirect) --- */
+.hilti-page-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: #D2051E;
+  z-index: 9999999;
+  transition: width 1.2s cubic-bezier(0.1, 0.6, 0.4, 1);
+  pointer-events: none;
+}
+.hilti-page-loading-bar.is-animating {
+  width: 85%;
 }
 
 /* --- Responsive --- */
