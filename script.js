@@ -1167,4 +1167,51 @@ document.addEventListener('DOMContentLoaded', function () {
   setTimeout(expandSidebar, 800);
 })();
 
+/* ----------------------------------------------------------
+   Auth-required elements: hide submit-a-request links
+   for anonymous users. Uses Zendesk's HelpCenter.user API.
+---------------------------------------------------------- */
+;(function () {
+  function applyAuthVisibility() {
+    var user = window.HelpCenter && window.HelpCenter.user;
+    var isSignedIn = !!(user && (user.email || user.identifier || user.id));
+    if (isSignedIn) {
+      document.documentElement.classList.add('is-signed-in');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyAuthVisibility, { once: true });
+  } else {
+    applyAuthVisibility();
+  }
+})();
+
+/* ----------------------------------------------------------
+   Submit a request — redirect anonymous users to sign-in
+   Intercepts any link to /requests/new for non-signed-in users
+---------------------------------------------------------- */
+;(function () {
+  function interceptRequestLinks() {
+    var user = window.HelpCenter && window.HelpCenter.user;
+    var isSignedIn = !!(user && (user.email || user.identifier || user.id));
+    if (isSignedIn) return;
+
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[href]');
+      if (!link) return;
+      if (link.href.indexOf('/requests/new') === -1) return;
+      e.preventDefault();
+      var returnTo = encodeURIComponent(link.href);
+      window.location.href = '/access/unauthenticated?return_to=' + returnTo;
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', interceptRequestLinks, { once: true });
+  } else {
+    interceptRequestLinks();
+  }
+})();
+
 

@@ -55,6 +55,12 @@
   }
 </style>
 
+<style>
+  /* Auth-required: hidden until JS confirms signed-in */
+  [data-requires-auth] { display: none !important; }
+  .is-signed-in [data-requires-auth] { display: revert !important; }
+</style>
+
 {{! Google fonts (body text) }}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

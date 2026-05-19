@@ -28,9 +28,39 @@
   </div>
 </div>
 <div class="container" id="page-container">
-  <div class="row row-lg">
+  <div class="article-3col-layout">
 
-    <article class="col" itemscope itemtype="http://schema.org/Article">
+    {{! ======================================================= }}
+    {{! LEFT SIDEBAR — Articles in this section                 }}
+    {{! ======================================================= }}
+    <aside class="article-left-sidebar" aria-label="Articles in this section">
+      {{#isnt settings.article_sidebar 'none'}}
+        {{#is settings.article_sidebar 'articles-in-section'}}
+          <div class="article-sidebar-card">
+            <h3 class="article-sidebar-heading">{{t 'articles_in_section'}}</h3>
+            <ul class="article-sidebar-list">
+              {{#each section.articles}}
+                <li>
+                  <a class="article-sidebar-link{{#is id ../article.id}} is-active{{/is}}" href="{{url}}">
+                    {{title}}
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+            <p class="article-sidebar-more">
+              <a href="{{section.url}}">Show all articles</a>
+            </p>
+          </div>
+        {{else}}
+          <div data-element="navigation" data-template="{{settings.article_sidebar}}"></div>
+        {{/is}}
+      {{/isnt}}
+    </aside>
+
+    {{! ======================================================= }}
+    {{! CENTER — Article content                               }}
+    {{! ======================================================= }}
+    <article class="article-main-content" itemscope itemtype="http://schema.org/Article">
 
       {{! Article header }}
       <div class="article-title py-4">
@@ -45,75 +75,63 @@
           {{/if}}
         </h1>
 
-        {{! Article metadata }}
-        <div class="flex{{#is settings.article_metadata 'none'}}{{#unless settings.show_follow_article}} hidden{{/unless}}{{/is}}">
-          <div class="media">
-            {{#is settings.article_metadata 'author'}}
-              <div class="avatar">
-                {{#if article.author.agent}}
-                  <svg class="svg-icon absolute bottom-0 right-0 text-primary bg-white border border-white circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
-                    <use xlink:href="#icon-agent" />
-                  </svg>
-                {{/if}}
-                <img class="avatar-img w-7 h-7" alt="{{article.author.name}}" src="{{article.author.avatar_url}}">
-              </div>
-            {{/is}}
-            {{#isnt settings.article_metadata 'none'}}
-              <div class="media-body font-size-md align-self-center{{#is settings.article_metadata 'date-end'}}{{#unless comments}} hidden{{/unless}}{{/is}}">
-                {{#is settings.article_metadata 'author'}}
-                  {{#link 'user_profile' class="link-implied" id=article.author.id}}
-                    {{article.author.name}}
-                  {{/link}}
-                  {{#each article.author.badges}}
-                    {{#is category_slug "titles"}}
-                      <span class="badge bg-primary text-primary-inverse py-1 pr-2 mx-2" title="{{description}}" aria-label="{{name}}">
-                        {{#if icon_url}}
-                          <img src="{{icon_url}}" alt="{{description}}" />
-                        {{/if}}
-                        {{name}}
-                      </span>
-                    {{/is}}
-                  {{/each}}
-                  {{#each article.author.badges}}
-                    {{#is category_slug "achievements"}}
-                      {{#if icon_url}}
-                        <img width="22" height="22" src="{{icon_url}}" alt="{{name}}" title="{{name}} | {{description}}" aria-label="{{name}}" />
-                      {{/if}}
-                    {{/is}}
-                  {{/each}}
-                {{/is}}
-                <ul class="list-divider">
-                  {{#isnt settings.article_metadata 'date-end'}}
-                    <li class="text-gray-600">
-                      {{#is article.created_at article.edited_at}}
-                        {{date article.created_at timeago=true}}
-                      {{else}}
-                        {{t 'updated'}}
-                        {{date article.edited_at timeago=true}}
-                      {{/is}}
-                    </li>
-                  {{/isnt}}
-                  {{#if settings.show_article_comments}}
-                    {{#if comments}}
-                      <li class="text-gray-600">
-                        <a href="#comments" title="{{t 'go_to_comments'}}">
-                          {{t 'comments_count' count=article.comment_count}}
-                        </a>
-                      </li>
-                    {{/if}}
-                  {{~/if}}
-                </ul>
-              </div>
-            {{/isnt}}
+        {{! Row 1: Author | Date | Follow }}
+        <div class="article-meta-row">
+          {{#is settings.article_metadata 'author'}}
+            <span class="article-meta-author">
+              {{#link 'user_profile' class="article-author-link" id=article.author.id}}
+                {{article.author.name}}
+              {{/link}}
+            </span>
+            <span class="article-meta-sep">|</span>
+          {{/is}}
+          {{#isnt settings.article_metadata 'none'}}
+            <span class="article-meta-date">
+              {{#is article.created_at article.edited_at}}
+                {{date article.created_at timeago=true}}
+              {{else}}
+                {{t 'updated'}} {{date article.edited_at timeago=true}}
+              {{/is}}
+            </span>
+          {{/isnt}}
+          {{#if settings.show_follow_article}}
+            <span class="article-meta-follow">
+              {{subscribe}}
+            </span>
+          {{/if}}
+        </div>
 
-            {{! Subscribe link }}
-            {{#if settings.show_follow_article}}
-              <div class="subscribe-article">
-                {{subscribe}}
-              </div>
-            {{/if}}
+        {{! Row 2: Content tags }}
+        {{#if (compare article.content_tags.length ">" 0)}}
+          <ul class="article-tags-custom">
+            {{#each article.content_tags}}
+              <li>
+                {{#link "search_result" content_tag_id=id class="article-tag-link"}}
+                  {{name}}
+                {{/link}}
+              </li>
+            {{/each}}
+          </ul>
+        {{/if}}
 
-          </div>
+        {{! Row 3: Views | Likes | Share }}
+        <div class="article-actions-row">
+          {{! Views — populated via API }}
+          <span class="article-action-item article-action-views" title="Article views">
+            <img src="{{asset 'views.svg'}}" width="16" height="16" alt="" aria-hidden="true">
+            <span class="article-action-count" id="article-view-count" data-article-id="{{article.id}}">0</span>
+          </span>
+          {{! Likes }}
+          <span class="article-action-item article-action-likes" title="Helpful votes">
+            <img src="{{asset 'thumb_up.svg'}}" width="16" height="16" alt="" aria-hidden="true">
+            <span class="article-action-count">{{article.vote_sum}}</span>
+          </span>
+          {{! Share — right-aligned }}
+          <button class="article-action-share" onclick="navigator.clipboard.writeText(window.location.href).then(function(){var b=document.getElementById('share-toast');b.classList.add('show');setTimeout(function(){b.classList.remove('show')},2000)})" title="Copy link" aria-label="Copy article link">
+            <img src="{{asset 'share.svg'}}" width="16" height="16" alt="" aria-hidden="true">
+            <span>Share</span>
+          </button>
+          <span id="share-toast" class="article-share-toast">Link copied!</span>
         </div>
 
       </div>
@@ -137,24 +155,6 @@
 
         {{! Article content }}
         {{article.body}}
-
-        {{!-- CUSTOM CONTENT TAG UI (SAFE)   --}}
-        {{!-- Matches your design exactly     --}}
-        {{!-- =============================== --}}
-
-        {{#if (compare article.content_tags.length ">" 0)}}
-        <ul class="list-divider font-size-md article-tags-custom">
-          {{#each article.content_tags}}
-            <li>
-              <a class="article-tag-link"
-                 title="Search results"
-                 href="{{page_path 'search'}}?content_tags={{id}}&utf8=✓">
-                {{name}}
-              </a>
-            </li>
-          {{/each}}
-        </ul>
-      {{/if}}
 
         {{! Attachments }}
         {{#if attachments}}
@@ -184,25 +184,7 @@
 
       </section>
 
-      {{! Article sharing }}
-      {{#if settings.show_article_sharing}}
-        {{#if settings.share_title}}
-          <div class="flex mt-6">
-            <span class="h5 my-0 mr-4">
-              {{#if settings.use_translations}}
-                {{dc settings.share_title}}
-              {{else}}
-                {{settings.share_title}}
-              {{/if}}
-            </span>{{share}}
-          </div>
-        {{else}}
-          <div class="mt-6">
-            {{share}}
-          </div>
-        {{/if}}
-      {{/if}}
-
+      {{! Article sharing — moved to article header row 3, kept here as fallback for themes without show_article_sharing }}
       {{! Article navigation }}
       {{~#isnt settings.article_navigation_style 'none'}}
         <div
@@ -431,94 +413,31 @@
 
     </article>
 
-   {{! Left-hand sidebar }}
-    {{~#is settings.table_of_contents_style 'sidebar-left'}}
-      <aside class="relative flex-first hidden lg:flex lg:col lg:max-w-12">
+    </article>
 
-        {{! Table of Contents }}
+    {{! ======================================================= }}
+    {{! RIGHT SIDEBAR — Table of Contents                      }}
+    {{! ======================================================= }}
+    <aside class="article-right-sidebar" aria-label="On this page">
+      <div class="article-toc-card" id="article-toc-wrapper">
+        <h3 class="article-toc-heading">{{t 'on_this_page'}}</h3>
         <div
-          class="table-of-contents sticky top-0"
+          class="article-toc-nav"
           data-element="table-of-contents"
           data-template="sidebar-table-of-contents"
-          data-selector=".content h2">
+          data-selector=".article-content h2, .article-content h3"
+          data-spy="scroll"
+          data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}160px{{/if}}">
         </div>
-      </aside>
-    {{/is}}
-
-   {{! Right-hand sidebar }}
-<aside class="md:col-4" x-data="{ tableOfContents: false }">
-  <div
-    :class="{ 'sticky top-0': tableOfContents }"
-    @table-of-contents:render.camel="
-      tableOfContents = $event.target.children.length > 0
-    "
-  >
-
-    {{! ========================= }}
-    {{! Table of Contents (TOC) }}
-    {{! ========================= }}
-    <div
-      class="table-of-contents block mb-6"
-      data-element="table-of-contents"
-      data-template="sidebar-table-of-contents"
-      data-selector=".article-content h2, .article-content h3"
-      data-spy="scroll"
-      data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}20px{{/if}}">
-    </div>
-
-    {{! ================================= }}
-    {{! Articles in this section sidebar }}
-    {{! ================================= }}
-    {{#isnt settings.article_sidebar 'none'}}
-      {{#is settings.article_sidebar 'articles-in-section'}}
-        <div class="bg-gray-200 py-4 px-5 my-6">
-          <h3 class="my-4">
-            {{t 'articles_in_section'}}
-          </h3>
-
-          <ul>
-            {{#each section.articles}}
-              <li>
-                <a
-                  class="block py-1{{#is id ../article.id}} is-active font-bold{{/is}}"
-                  href="{{url}}">
-                  {{title}}
-                </a>
-              </li>
-            {{/each}}
-          </ul>
-
-          {{#if section.more_articles}}
-            <p class="mt-3">
-              <a href="{{section.url}}">
-                {{t 'show_all_articles' count=section.article_count}}
-              </a>
-            </p>
-          {{/if}}
-        </div>
-      {{else}}
-        <div
-          data-element="navigation"
-          data-template="{{settings.article_sidebar}}">
-        </div>
-      {{/is}}
-    {{/isnt}}
-
-  </div>
-</aside>
-
-        {{! Call-to-action }}
-        {{~#is settings.cta_style 'sidebar'}}
-          {{~#isnt settings.cta_location 'home'}}
-            <div
-              data-element="template"
-              data-template="call-to-action">
-            </div>
-          {{/isnt~}}
-        {{/is~}}
-
       </div>
     </aside>
+
+    {{! Call-to-action }}
+    {{~#is settings.cta_style 'sidebar'}}
+      {{~#isnt settings.cta_location 'home'}}
+        <div data-element="template" data-template="call-to-action"></div>
+      {{/isnt~}}
+    {{/is~}}
 
   </div>
 </div>
@@ -537,6 +456,18 @@
 {{/isnt~}}
 
 <script type="text/javascript">document.documentElement.classList.add('article-page', 'article-' + {{article.id}})</script>
+<script>
+(function() {
+  var el = document.getElementById('article-view-count');
+  if (!el) return;
+  var id = el.getAttribute('data-article-id');
+  if (!id) return;
+  fetch('/api/v2/help_center/articles/' + id + '.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.article && typeof d.article.view_count !== 'undefined') { el.textContent = d.article.view_count; } })
+    .catch(function(){ el.textContent = '0'; });
+})();
+</script>
 
 {{!---------------
    Micro-templates
@@ -661,7 +592,7 @@
           <% if (allItems.length > 1) { %>
             <div class="sticky top-0{{#unless settings.sticky_header}} pt-4 -mt-4{{/unless}}"{{#if settings.sticky_header}} style="padding-top: {{settings.header_height}}; margin-top: -{{settings.header_height}}; "{{/if}}
               data-spy="scroll"
-              data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}20px{{/if}}">
+              data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}160px{{/if}}">
               <div class="bg-gray-200 py-4 px-5 my-6" x-data="{ active: null }" @scrollspy:active="active = $event.target">
                 <h3 class="my-4">
                   {{#if settings.use_translations}}
