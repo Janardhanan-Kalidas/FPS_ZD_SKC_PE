@@ -33,8 +33,22 @@
   </div>
 </div>
 
+{{! Search Bar }}
+<div class="search-results-search-bar">
+  <div class="container">
+    <div class="search-bar-wrapper">
+      <div class="search search-lg">
+        {{search class='form-field mb-0' instant=true submit=false placeholder='Search articles...'}}
+        <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+          <use xlink:href="#icon-search" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{! Main Content Container }}
-<div class="hc-search-container" id="page-container">
+<div class="hc-search-container" id="page-container" data-search-query="{{query}}" data-help-center-url="{{help_center.url}}">
   <div class="hc-search-layout">
 
     {{! ===== LEFT SIDEBAR - FILTERS ===== }}
@@ -66,8 +80,16 @@
 
       {{! Categories - built by JavaScript from rendered result breadcrumbs }}
       <div class="hc-filter-section" id="hc-category-filter">
-        <h3 class="hc-filter-title">Sections</h3>
+        <h3 class="hc-filter-title">Categories</h3>
         <ul class="hc-filter-list" id="hc-category-list">
+          {{! Populated by JavaScript from rendered results }}
+        </ul>
+      </div>
+
+      {{! Sections - built by JavaScript from rendered result breadcrumbs }}
+      <div class="hc-filter-section" id="hc-section-filter">
+        <h3 class="hc-filter-title">Sections</h3>
+        <ul class="hc-filter-list" id="hc-section-list">
           {{! Populated by JavaScript from rendered results }}
         </ul>
       </div>
@@ -79,17 +101,17 @@
       
       {{! Results Header with Count }}
       <div class="hc-results-header">
-        <h1 class="hc-results-title">
+        <h1 class="hc-results-title" data-display-query="{{query}}">
           {{#if query}}
             {{#if results}}
-              Showing <strong>{{results_count}}</strong> results for "{{query}}"
+              Showing <strong>{{results_count}}</strong> results for "<span class="hc-clean-query"></span>"
               {{#is current_filter.identifier 'unified'}}
                 in all categories
               {{else}}
                 in {{current_filter.name}}
               {{/is}}
             {{else}}
-              No results for "<strong>{{query}}</strong>"
+              No results for "<strong><span class="hc-clean-query"></span></strong>"
             {{/if}}
           {{else}}
             Search Results
@@ -108,8 +130,8 @@
         {{/if}}
       </div>
 
-      {{! Generative Answers }}
-      {{generative_answers}}
+      {{! Generative Answers - Disabled per user request }}
+      {{!-- {{generative_answers}} --}}
 
       {{! Results List }}
       {{#if results}}
@@ -204,7 +226,7 @@
           <p class="hc-empty-text">
             Try different keywords or browse our
             {{#link 'help_center'}}
-              help center
+              Software Knowledge Center
             {{/link}}
           </p>
         </div>
@@ -214,136 +236,3 @@
 
   </div>
 </div>
-
-{{! Add search results page class for styling }}
-<script>document.documentElement.classList.add('search-results-page')</script>
-
-{{! Keyword Highlighting Script }}
-<script>
-(function() {
-  'use strict';
-  
-  // Highlight search keywords in results
-  var query = '{{query}}'.trim();
-  if (!query) return;
-  
-  var keywords = query.split(/\s+/).filter(function(k) { return k.length > 2; });
-  if (!keywords.length) return;
-  
-  var pattern = new RegExp('(' + keywords.map(function(k) {
-    return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }).join('|') + ')', 'gi');
-  
-  document.querySelectorAll('.hc-result-title, .hc-result-snippet').forEach(function(el) {
-    var html = el.innerHTML;
-    el.innerHTML = html.replace(pattern, '<mark class="hc-highlight">$1</mark>');
-  });
-
-  // Sort select - robust URL param manipulation
-  var sortSelect = document.getElementById('sortSelect');
-  if (sortSelect) {
-    if (window.location.search.indexOf('sort_by=created_at') !== -1) {
-      sortSelect.value = 'recent';
-    }
-    sortSelect.addEventListener('change', function() {
-      var href = window.location.href;
-      var hashIdx = href.indexOf('#');
-      var hash = hashIdx > -1 ? href.substring(hashIdx) : '';
-      if (hashIdx > -1) href = href.substring(0, hashIdx);
-      var parts = href.split('?');
-      var urlBase = parts[0];
-      var params = parts[1] ? parts[1].split('&').filter(function(p) {
-        return p && p.indexOf('sort_by=') !== 0 && p.indexOf('sort_order=') !== 0;
-      }) : [];
-      if (this.value === 'recent') {
-        params.push('sort_by=created_at');
-        params.push('sort_order=desc');
-      }
-      window.location.href = urlBase + (params.length ? '?' + params.join('&') : '') + hash;
-    });
-  }
-
-  // Build category checkboxes with client-side filtering
-  (function() {
-    var catList = document.getElementById('hc-category-list');
-    var catSection = document.getElementById('hc-category-filter');
-    var cards = document.querySelectorAll('.hc-result-card');
-
-    if (!catList || !catSection || !cards.length) return;
-
-    var cardCats = [];
-    var catCounts = {};
-
-    for (var i = 0; i < cards.length; i++) {
-      var catLinks = cards[i].querySelectorAll('.hc-result-category .hc-category-link');
-      var cn = catLinks.length ? catLinks[catLinks.length - 1].textContent.trim() : null;
-      cardCats.push(cn);
-      if (cn) catCounts[cn] = (catCounts[cn] || 0) + 1;
-    }
-
-    var catNames = Object.keys(catCounts).sort();
-    if (!catNames.length) {
-      catSection.style.display = 'none';
-      return;
-    }
-
-    catNames.forEach(function(cat) {
-      var li = document.createElement('li');
-      li.className = 'hc-filter-item';
-
-      var label = document.createElement('label');
-      label.className = 'hc-filter-link';
-
-      var input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'hc-filter-input';
-      input.value = cat;
-
-      var box = document.createElement('span');
-      box.className = 'hc-filter-checkbox';
-      box.setAttribute('aria-hidden', 'true');
-
-      var nameEl = document.createElement('span');
-      nameEl.className = 'hc-filter-name';
-      nameEl.textContent = cat;
-
-      var countEl = document.createElement('span');
-      countEl.className = 'hc-filter-count';
-      countEl.textContent = '(' + catCounts[cat] + ')';
-
-      label.appendChild(input);
-      label.appendChild(box);
-      label.appendChild(nameEl);
-      label.appendChild(countEl);
-      li.appendChild(label);
-      catList.appendChild(li);
-    });
-
-    function applyFilter() {
-      var checked = [];
-      var inputs = catList.querySelectorAll('.hc-filter-input');
-      for (var k = 0; k < inputs.length; k++) {
-        var lbl = inputs[k].parentElement;
-        var chkBox = lbl ? lbl.querySelector('.hc-filter-checkbox') : null;
-        if (inputs[k].checked) {
-          checked.push(inputs[k].value);
-          if (lbl) lbl.classList.add('hc-filter-active');
-          if (chkBox) chkBox.classList.add('is-checked');
-        } else {
-          if (lbl) lbl.classList.remove('hc-filter-active');
-          if (chkBox) chkBox.classList.remove('is-checked');
-        }
-      }
-      for (var n = 0; n < cards.length; n++) {
-        if (!checked.length || checked.indexOf(cardCats[n]) > -1) {
-          cards[n].style.display = '';
-        } else {
-          cards[n].style.display = 'none';
-        }
-      }
-    }
-
-    catList.addEventListener('change', applyFilter);
-  })();
-})();
-</script>
