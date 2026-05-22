@@ -1,4 +1,5 @@
 {
   "css.validate": false,
-  "css.lint.unknownProperties": "ignore"
+  "css.lint.unknownProperties": "ignore",
+  "github-enterprise.uri": "https://ssh-git.hilti.com/"
 }
