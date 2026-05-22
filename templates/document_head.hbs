@@ -55,6 +55,12 @@
   }
 </style>
 
+<style>
+  /* Auth-required: hidden until JS confirms signed-in */
+  [data-requires-auth] { display: none !important; }
+  .is-signed-in [data-requires-auth] { display: revert !important; }
+</style>
+
 {{! Google fonts (body text) }}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -366,7 +372,7 @@
     '43697144515473': "{{asset 'Shear_Strengthening.svg'}}",
 
     // Category 8 – Concrete Overlay
-    '43697142165521': "{{asset 'concrete-overlay.svg'}}",
+    '45575806938897': "{{asset 'Concrete_Overlay.svg'}}",
 
     // Category 9 – Anchoring to Masonry
     '43697171088785': "{{asset 'Anchoring-to-Masonry.svg'}}",
