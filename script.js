@@ -1079,13 +1079,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!trigger || !overlay) return;
 
+    // Set header label to region keyword based on current locale URL
+    var langLabel = trigger.querySelector('.hilti-lang-label');
+    if (langLabel) {
+      langLabel.textContent = /\/hc\/en-gb(?:\/|$)/i.test(window.location.pathname) ? 'EU' : 'ACI';
+    }
+
+    // Build the redirect URL for a given locale code
+    function buildLocaleUrl(locale) {
+      return window.location.href.replace(
+        /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
+        '$1' + locale
+      );
+    }
+
+    // Inject a <link rel="prefetch"> so the browser fetches the target page
+    // in the background before the user clicks — reduces perceived load time
+    function prefetchLocale(locale) {
+      var url = buildLocaleUrl(locale);
+      if (!url || url === window.location.href) return;
+      var id = 'hilti-prefetch-' + locale;
+      if (document.getElementById(id)) return; // already queued
+      var link = document.createElement('link');
+      link.id   = id;
+      link.rel  = 'prefetch';
+      link.href = url;
+      document.head.appendChild(link);
+    }
+
+    // Prefetch both locales as soon as the user hovers the globe button
+    trigger.addEventListener('mouseenter', function () {
+      prefetchLocale('en-us');
+      prefetchLocale('en-gb');
+    }, { once: true });
+
     function openModal() {
+      // Prefetch all available locale options when the modal opens (backup)
+      overlay.querySelectorAll('[data-locale]').forEach(function (el) {
+        prefetchLocale(el.getAttribute('data-locale'));
+      });
+
       overlay.classList.add('is-open');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
-      // Focus first language link
-      var firstLink = overlay.querySelector('.hilti-lang-option');
-      if (firstLink) firstLink.focus();
+
+      // Mark the currently active keyword
+      var currentLocale = ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
+      overlay.querySelectorAll('.hilti-region-toggle[data-locale]').forEach(function (a) {
+        a.classList.toggle('is-active', a.getAttribute('data-locale') === currentLocale);
+      });
+
+      // Focus the active keyword, or the first one
+      var focusTarget = overlay.querySelector('.hilti-region-toggle.is-active') ||
+                        overlay.querySelector('.hilti-region-toggle');
+      if (focusTarget) focusTarget.focus();
     }
 
     function closeModal() {
@@ -1104,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function () {
       closeBtn.addEventListener('click', closeModal);
     }
 
-    // Close on overlay (backdrop) click
+    // Close on backdrop click
     overlay.addEventListener('click', function (e) {
       if (e.target === overlay) closeModal();
     });
@@ -1114,6 +1161,39 @@ document.addEventListener('DOMContentLoaded', function () {
       if (e.key === 'Escape' && overlay.classList.contains('is-open')) {
         closeModal();
       }
+    });
+
+    // Keyword click → show loading bar + redirect
+    // ─────────────────────────────────────────────────────────────────────
+    // FUTURE: When sub-languages are added under ACI or EU (see header.hbs),
+    // swap each keyword <a data-locale="..."> for a toggle button +
+    // <ul class="hilti-region-suboptions"> with one <a data-locale="...">
+    // per language. This handler already targets any [data-locale] element
+    // — no JS changes needed when adding sub-languages.
+    //
+    // Suggested future locales:
+    //   ACI: 'es-419' (Spanish LatAm), 'pt-br' (Portuguese BR)
+    //   EU : 'de' (German), 'fr' (French), 'es-es' (Spanish ES)
+    // ─────────────────────────────────────────────────────────────────────
+    overlay.addEventListener('click', function (e) {
+      var option = e.target.closest('[data-locale]');
+      if (!option) return;
+      e.preventDefault();
+      var locale = option.getAttribute('data-locale');
+      if (!locale) return;
+
+      // Close modal immediately for instant feedback
+      closeModal();
+
+      // Show a red progress bar at the top of the page for visual feedback
+      var bar = document.createElement('div');
+      bar.className = 'hilti-page-loading-bar';
+      document.body.appendChild(bar);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { bar.classList.add('is-animating'); });
+      });
+
+      window.location.href = buildLocaleUrl(locale);
     });
 
     /* ---------------------------------------------------------
@@ -1165,6 +1245,53 @@ document.addEventListener('DOMContentLoaded', function () {
   // Run at 300ms and 800ms to catch Zendesk's async navigation render
   setTimeout(expandSidebar, 300);
   setTimeout(expandSidebar, 800);
+})();
+
+/* ----------------------------------------------------------
+   Auth-required elements: hide submit-a-request links
+   for anonymous users. Uses Zendesk's HelpCenter.user API.
+---------------------------------------------------------- */
+;(function () {
+  function applyAuthVisibility() {
+    var user = window.HelpCenter && window.HelpCenter.user;
+    var isSignedIn = !!(user && (user.email || user.identifier || user.id));
+    if (isSignedIn) {
+      document.documentElement.classList.add('is-signed-in');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyAuthVisibility, { once: true });
+  } else {
+    applyAuthVisibility();
+  }
+})();
+
+/* ----------------------------------------------------------
+   Submit a request — redirect anonymous users to sign-in
+   Intercepts any link to /requests/new for non-signed-in users
+---------------------------------------------------------- */
+;(function () {
+  function interceptRequestLinks() {
+    var user = window.HelpCenter && window.HelpCenter.user;
+    var isSignedIn = !!(user && (user.email || user.identifier || user.id));
+    if (isSignedIn) return;
+
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[href]');
+      if (!link) return;
+      if (link.href.indexOf('/requests/new') === -1) return;
+      e.preventDefault();
+      var returnTo = encodeURIComponent(link.href);
+      window.location.href = '/access/unauthenticated?return_to=' + returnTo;
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', interceptRequestLinks, { once: true });
+  } else {
+    interceptRequestLinks();
+  }
 })();
 
 
