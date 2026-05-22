@@ -15199,7 +15199,7 @@ a:hover .icon-circle {
 
 .recent-articles h2,
 .related-articles h2 {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 500;
   margin-top: 1rem;
 }
@@ -16864,19 +16864,15 @@ ul.article-tags-custom > li a {
 
 /* 2. Individual tag appearance (auto-size, rectangles) */
 ul.article-tags-custom > li {
-  display: inline-flex !important;       /* auto width based on text */
-  align-items: center !important;         /* vertical centering */
-  white-space: nowrap !important;         /* keep text single-line */
-
-  padding: 6px 12px !important;           /* scales height naturally */
+  display: inline-flex !important;
+  align-items: stretch !important;
+  white-space: nowrap !important;
   height: auto !important;
-
-  background: #e8e8e8;
-  border: 1px solid #ccc;
-  border-radius: 0 !important;            /* square corners */
-
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
   box-shadow: none !important;
-  margin: 0 !important;                   /* IMPORTANT: remove margin */
+  margin: 0 !important;
 }
 
 
@@ -17231,7 +17227,8 @@ header.d-flex h1 {
 
 /* Hide Zendesk default View more / View less button */
 .category-page .view-toggle-btn,
-.section-page .view-toggle-btn {
+.section-page .view-toggle-btn,
+.article-page .article-left-sidebar .view-toggle-btn {
   display: none !important;
 }
 
@@ -17247,6 +17244,13 @@ header.d-flex h1 {
 .section-page .cards-wrapper ul.is-collapsed,
 .category-page .cards-wrapper ul[style*="height"],
 .section-page .cards-wrapper ul[style*="height"] {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.article-page .article-left-sidebar .cards-wrapper ul.is-collapsed,
+.article-page .article-left-sidebar .cards-wrapper ul[style*="height"] {
   height: auto !important;
   max-height: none !important;
   overflow: visible !important;
@@ -17284,9 +17288,11 @@ header.d-flex h1 {
   height: 20px;
 }
 .hilti-lang-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #524f53;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: inherit;
+  text-transform: uppercase;
 }
 
 /* --- Overlay backdrop --- */
@@ -17310,20 +17316,18 @@ header.d-flex h1 {
 /* --- Modal container --- */
 .hilti-lang-modal {
   background: #fff;
-  border-radius: 0px;
+  border-radius: 2px;
   width: 90%;
-  max-width: 520px;
-  max-height: 80vh;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(20px) scale(0.97);
+  transform: translateY(16px) scale(0.98);
   transition: transform 0.25s ease;
 }
 .hilti-lang-overlay.is-open .hilti-lang-modal {
   transform: translateY(0) scale(1);
 }
-
 /* --- Modal header --- */
 .hilti-lang-modal-header {
   display: flex;
@@ -17372,8 +17376,56 @@ header.d-flex h1 {
   font-weight: 600;
 }
 
-/* --- Language list grid --- */
-.hilti-lang-list {
+/* --- Region keyword list (ACI / EU) --- */
+.hilti-region-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.hilti-region-group {
+  border-bottom: 1px solid #f0f0f0;
+}
+.hilti-region-group:last-child {
+  border-bottom: none;
+}
+.hilti-region-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 24px;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.hilti-region-toggle:hover {
+  background: #f7f7f7;
+  text-decoration: none;
+}
+.hilti-region-toggle strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #524f53;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+.hilti-region-toggle:hover strong {
+  color: #D2051E;
+}
+.hilti-region-toggle.is-active {
+  border-left-color: #D2051E;
+  background: #fff5f5;
+}
+.hilti-region-toggle.is-active strong {
+  color: #D2051E;
+}
+.hilti-region-toggle:focus-visible {
+  outline: 2px solid #D2051E;
+  outline-offset: -2px;
+}
+
+/* Legacy generic lang option kept for non-region lists */
+.hilti-lang-list:not(.hilti-region-list) {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -17381,11 +17433,11 @@ header.d-flex h1 {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 6px;
 }
-.hilti-lang-list li {
+.hilti-lang-list:not(.hilti-region-list) li {
   margin: 0;
   padding: 0;
 }
-.hilti-lang-option {
+.hilti-lang-list:not(.hilti-region-list) .hilti-lang-option {
   display: block;
   padding: 10px 14px;
   border-radius: 0px;
@@ -17396,15 +17448,27 @@ header.d-flex h1 {
   transition: background 0.15s, color 0.15s;
   border: 1px solid transparent;
 }
-.hilti-lang-option:hover {
+.hilti-lang-list:not(.hilti-region-list) .hilti-lang-option:hover {
   background: rgba(215, 206, 189, 0.6);
   color: #D2051E;
   border-color: rgba(215, 206, 189, 0.2);
   text-decoration: none;
 }
-.hilti-lang-option:focus-visible {
-  outline: 2px solid #D2051E;
-  outline-offset: 2px;
+
+/* --- Page-load progress bar (shown on design code redirect) --- */
+.hilti-page-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: #D2051E;
+  z-index: 9999999;
+  transition: width 1.2s cubic-bezier(0.1, 0.6, 0.4, 1);
+  pointer-events: none;
+}
+.hilti-page-loading-bar.is-animating {
+  width: 85%;
 }
 
 /* --- Responsive --- */
@@ -17809,4 +17873,643 @@ header.d-flex h1 {
   .section-page #page-container > .row > .col {
     width: 100%;
   }
+}
+
+
+/* ==========================================================
+   ARTICLE PAGE — 3-Column Layout
+   Left: Articles in section | Center: Article | Right: TOC
+   Author: Kalidas Janardhanan
+   Date: 18-May-2026
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   1. Outer 3-column grid
+---------------------------------------------------------- */
+.article-page #page-container {
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.article-3col-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 200px;
+  gap: 0;
+  align-items: start;
+  align-content: start;
+}
+
+/* ----------------------------------------------------------
+   2. Left sidebar — Articles in this section
+---------------------------------------------------------- */
+.article-left-sidebar {
+  position: sticky;
+  top: 1.5rem;
+  align-self: start;
+  height: fit-content;
+  padding-right: 0;
+}
+
+.article-sidebar-card {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  padding-right: 1.25rem;
+}
+
+.article-sidebar-heading {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #524F53 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.article-sidebar-list {
+  list-style: none !important;
+  margin: 0.625rem 0 0 !important;
+  padding: 0;
+}
+
+.article-sidebar-list li {
+  margin: 0;
+}
+
+.article-sidebar-link {
+  display: block;
+  padding: 5px 6px;
+  font-size: 0.75rem;
+  color: #524f53 !important;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.35;
+}
+
+.article-sidebar-link:hover {
+  background-color: #eeebe5;
+  color: #d2051e !important;
+  text-decoration: none;
+}
+
+.article-sidebar-link.is-active {
+  background-color: #e7e5e2 !important;
+  color: #d2051e !important;
+  font-weight: 600;
+}
+
+.article-sidebar-more {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.article-sidebar-more a {
+  color: #d2051e !important;
+  font-size: 0.75rem !important;
+  text-decoration: none;
+}
+
+.article-sidebar-more a:hover {
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
+   Sidebar article link controls
+   Adjust: font-size, color, hover-color
+---------------------------------------------------------- */
+.article-sidebar-link {
+  font-size: 0.75rem;       /* ← sidebar link font size */
+  color: #524f53 !important; /* ← sidebar link color */
+}
+
+.article-sidebar-link:hover {
+  color: #d2051e !important; /* ← sidebar link hover color */
+}
+
+/* ----------------------------------------------------------
+   Previous / Next article navigation controls
+   Adjust: font-size, color, hover-color
+---------------------------------------------------------- */
+[data-element="article-navigation"] h4 {
+  font-size: 1rem;     /* ← "Previous article" / "Next article" label size */
+  color: #524F53;           /* ← label color */
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+[data-element="article-navigation"] a {
+  font-size: 0.875rem;      /* ← article title link font size */
+  color: #D2051D;           /* ← article title link color */
+  text-decoration: none;
+}
+
+[data-element="article-navigation"] a:hover {
+  color: #d2051e;           /* ← article title link hover color */
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
+   3. Center — Article content
+---------------------------------------------------------- */
+.article-main-content {
+  min-width: 0;
+  padding: 0;
+  border-left: 1px solid #e8e8e8;
+  border-right: 1px solid #e8e8e8;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+/* Article title — aligned with sidebars top */
+.article-page .article-title {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: none;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Row 1: Author | Date */
+.article-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #757275;
+  margin: 0.5rem 0 0.5rem;
+}
+
+.article-meta-follow {
+  margin-left: auto;
+}
+
+.article-meta-follow .subscribe-article button {
+  border-radius: 0;
+  border: 1px solid #e8e8e8;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #524f53;
+  background: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.article-meta-follow .subscribe-article button:hover {
+  border-color: #d2051e;
+  color: #d2051e;
+}
+
+.article-meta-author,
+.article-meta-date {
+  color:#757275;
+}
+
+.article-author-link {
+  color: #524f53 !important;
+  font-weight: 300;
+  text-decoration: none;
+}
+
+.article-author-link:hover {
+  color: #d2051e !important;
+}
+
+.article-meta-sep {
+  color: #c0bec0;
+}
+
+/* Row 3: Views | Likes | Share */
+.article-actions-row {
+  display: flex !important;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  color: #737373;
+}
+
+.article-action-item {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.3rem;
+  color: #737373;
+}
+
+.article-action-label {
+  font-size: 0.8125rem;
+  color: #737373;
+}
+
+.article-action-count {
+  font-size: 0.8125rem;
+  color: #524f53;
+  font-weight: 500;
+}
+
+.article-action-views img,
+.article-action-likes img {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.article-action-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  color: #524f53;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.article-action-share:hover {
+  color: #d2051e;
+}
+
+.article-share-toast {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #524f53;
+  color: #fff;
+  font-size: 0.8125rem;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.article-share-toast.show {
+  display: block;
+}
+
+.article-vote-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #737373;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.article-page .article-title h1 {
+  font-size: 1.625rem !important;
+  font-weight: 700;
+  color: #524f53 !important;
+  line-height: 1.25;
+  margin: 0 !important;
+  padding: 0;
+}
+
+/* Metadata row — author, date */
+.article-page .article-title .media {
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.article-page .article-title .media-body {
+  font-size: 0.8125rem;
+  color: #737373;
+  margin: 0;
+}
+
+/* Tags */
+.article-tags-custom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none !important;
+  margin: 0.625rem 0 0.75rem !important;
+  padding: 0 !important;
+}
+
+.article-tag-link {
+  display: block;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #524f53 !important;
+  background: #E7E5E2;
+  border-radius: 0;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.article-tag-link:hover {
+  background: #E7E5E2;
+  color: #D2051D !important;
+}
+
+/* ----------------------------------------------------------
+   4. Article body typography
+---------------------------------------------------------- */
+.article-content {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #3d3d3d;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+  color: #524f53;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.625rem;
+  line-height: 1.3;
+}
+
+.article-content h2 { font-size: 1.25rem; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.4rem; }
+.article-content h3 { font-size: 1.0625rem; }
+.article-content h4 { font-size: 0.9375rem; }
+
+.article-content p {
+  margin: 0 0 1rem;
+}
+
+.article-content strong,
+.article-content b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.article-content em,
+.article-content i {
+  font-style: italic;
+}
+
+.article-content ul,
+.article-content ol {
+  margin: 0 0 1rem 1.5rem;
+  padding: 0;
+}
+
+.article-content li {
+  margin-bottom: 0.35rem;
+}
+
+.article-content a {
+  color: #d2051e;
+  text-decoration: none;
+}
+
+.article-content a:hover {
+  text-decoration: underline;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 2px;
+  display: block;
+  margin: 1rem 0;
+}
+
+.article-content blockquote {
+  border-left: 3px solid #d2051e;
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background: #f7f6f3;
+  color: #524f53;
+  font-style: italic;
+}
+
+.article-content pre,
+.article-content code {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.875em;
+  background: #f4f4f4;
+  border-radius: 2px;
+}
+
+.article-content pre {
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.article-content code {
+  padding: 0.15em 0.4em;
+}
+
+.article-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.article-content th {
+  background: #524f53;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.article-content td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.article-content tr:nth-child(even) td {
+  background: #f7f6f3;
+}
+
+/* ----------------------------------------------------------
+   5. Right sidebar — Table of Contents
+---------------------------------------------------------- */
+.article-right-sidebar {
+  position: sticky;
+  top: 1.5rem;
+  align-self: start;
+  height: fit-content;
+  padding-left: 0;
+}
+
+.article-toc-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #524f53;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem 0;
+  padding: 0;
+  border: none;
+}
+
+.article-toc-heading {
+  font-size: 1.25rem !important;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #524f53 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.article-toc-card {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  padding-left: 1.25rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+/* Remove numbering from TOC list */
+.article-toc-card ol,
+.article-toc-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Zendesk TOC wrapper — strip all default spacing on all nested divs */
+.article-toc-nav > div,
+.article-toc-nav > div > div {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Zendesk TOC heading */
+.article-toc-nav h3 {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: normal;
+  color: #524f53 !important;
+  margin: 0 0 0.5rem 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Zendesk TOC ordered list */
+.article-toc-nav ol {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.article-toc-nav ol li {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* TOC links injected by Zendesk */
+.article-toc-nav a,
+.article-toc-nav .toc-link {
+  display: block;
+  font-size: 0.75rem;
+  color: #524f53 !important;
+  text-decoration: none !important;
+  padding: 0.375rem 0.5rem !important;
+  line-height: 1.4;
+  border-right: none;
+  border-radius: 2px;
+  transition: color 0.15s, background 0.15s;
+  background-color: transparent;
+  font-weight: normal !important;
+  text-align: left;
+  margin-bottom: 0.125rem;
+}
+
+.article-toc-nav a:hover,
+.article-toc-nav .toc-link:hover {
+  color: #d2051e !important;
+  background-color: #e8e8e8;
+}
+
+.article-toc-nav a.is-active,
+.article-toc-nav .toc-link.is-active,
+.article-toc-nav a.active {
+  color: #d2051e !important;
+  background-color: #e8e8e8;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+
+/* h3 TOC entries get indent */
+.article-toc-nav li li a,
+.article-toc-nav li li .toc-link {
+  padding-left: 1.25rem;
+}
+
+/* ----------------------------------------------------------
+   6. Mobile — collapse to single column
+---------------------------------------------------------- */
+@media (max-width: 1200px) {
+  .article-3col-layout {
+    grid-template-columns: 200px 1fr 180px;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .article-3col-layout {
+    grid-template-columns: 1fr;
+  }
+  .article-left-sidebar {
+    position: static;
+    order: 1;
+  }
+  .article-main-content {
+    order: 2;
+  }
+  .article-right-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .article-page #page-container {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+  .article-3col-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .article-left-sidebar {
+    position: static;
+  }
+  .article-right-sidebar {
+    display: none;
+  }
+}
+
+/* ----------------------------------------------------------
+   Auth-required elements — hidden by default, revealed via
+   JS for signed-in users (class added to <html> by script.js)
+---------------------------------------------------------- */
+[data-requires-auth] {
+  display: none !important;
+}
+
+.is-signed-in [data-requires-auth] {
+  display: revert !important;
 }
