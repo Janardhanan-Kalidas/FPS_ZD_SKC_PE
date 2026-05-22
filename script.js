@@ -1578,8 +1578,13 @@ document.addEventListener('DOMContentLoaded', function () {
       var locale = localeMatch ? localeMatch[1] : 'en-us';
 
       function fetchJson(url) {
-        return fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
-          .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+        return fetch(url, { 
+          credentials: 'same-origin',
+          headers: { 
+            'Accept': 'application/json', 
+            'X-Requested-With': 'XMLHttpRequest' 
+          } 
+        }).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); });
       }
 
       // Fetch categories and sections in parallel to build ID→name lookup maps
@@ -1968,7 +1973,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function triggerBuildFilters() {
       if (filtersBuildStarted) return;
       filtersBuildStarted = true;
-      buildFiltersViaAPI();
+      
+      // Skip API calls in local preview mode to avoid triggering Cloudflare security checks
+      var isLocalPreview = window.location.pathname.indexOf('/admin/local_preview/') > -1;
+      if (isLocalPreview) {
+        buildFiltersFromCurrentPage();
+      } else {
+        buildFiltersViaAPI();
+      }
     }
 
     // Trigger filter build once result cards exist in the DOM
