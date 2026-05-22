@@ -9,51 +9,131 @@
 
 /* ============================================================
    SEARCH SUGGESTIONS – Hilti Brand Colors
-   Result items are in the regular DOM with id="search-result-N"
-   (confirmed via aria-activedescendant on the search input).
-   Colors: Hilti Red (#d2051e), Hilti Steel (#524f53)
+   Removed redundant inline styling IIFE (now handled by CSS)
+   Colors are applied via CSS rules:
+   - [id^="search-result-"] > *:first-child → Hilti Steel
+   - [id^="search-result-"] em → Hilti Red on yellow
+   - [id^="search-result-"] [role="directory"] → breadcrumb styling
+============================================================ */
+
+/* ============================================================
+   INSTANT SEARCH TRIGGER – Show suggestions immediately at 4 chars
+   Calls Zendesk's autocomplete API directly (0 debounce) the
+   moment value.length reaches 4, then re-styles injected items.
+   For < 4 chars the dropdown is cleared so nothing shows early.
 ============================================================ */
 ;(function () {
   'use strict';
 
-  var RED   = '#d2051e';
-  var STEEL = '#524f53';
+  var MIN_CHARS = 4;
+  var activeQuery = '';
 
-  function styleResultItem(el) {
-    var links = el.querySelectorAll('a');
-    links.forEach(function (a) {
-      a.style.setProperty('color', RED, 'important');
-      a.style.setProperty('text-decoration', 'none', 'important');
-      var spans = a.querySelectorAll('span');
-      if (spans.length >= 2) {
-        spans[spans.length - 1].style.setProperty('color', STEEL, 'important');
+  /** Resolve /hc/{locale} prefix from the current URL */
+  function hcBase() {
+    var m = location.pathname.match(/^(\/hc\/[^/]+)/);
+    return m ? m[1] : '/hc/en-us';
+  }
+
+  /** Escape special regex characters inside a user query */
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /** Wrap all case-insensitive matches of `query` in <em> */
+  function highlightMatch(text, query) {
+    if (!query) return text;
+    return text.replace(new RegExp('(' + escapeRe(query) + ')', 'gi'), '<em>$1</em>');
+  }
+
+  /** Build breadcrumb string from API result object */
+  function buildCrumb(item) {
+    var parts = [];
+    if (item.category_title) parts.push(item.category_title);
+    if (item.section_title) parts.push(item.section_title);
+    return parts.join(' > ');
+  }
+
+  /** Populate zd-autocomplete with API results and re-style them */
+  function renderResults(zdAuto, results, query) {
+    // Clear whatever Zendesk (or a previous call) put in the dropdown
+    while (zdAuto.firstChild) zdAuto.removeChild(zdAuto.firstChild);
+
+    if (!results.length) return;
+
+    results.slice(0, 6).forEach(function (item, i) {
+      var li = document.createElement('li');
+      li.id = 'search-result-' + i;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', 'false');
+
+      var titleSpan = document.createElement('span');
+      titleSpan.innerHTML = highlightMatch(item.title || '', query);
+
+      var crumbDiv = document.createElement('div');
+      crumbDiv.setAttribute('role', 'directory');
+      crumbDiv.textContent = buildCrumb(item);
+
+      li.appendChild(titleSpan);
+      li.appendChild(crumbDiv);
+
+      // Use mousedown so the click fires before the input loses focus
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        window.location.href = item.html_url;
+      });
+
+      zdAuto.appendChild(li);
+    });
+  }
+
+  /** Fetch from Zendesk's autocomplete endpoint and render */
+  function doSearch(query) {
+    var url = hcBase() + '/search/autocomplete.json?query=' + encodeURIComponent(query);
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        // Discard stale responses
+        if (!data || query !== activeQuery) return;
+        var zdAuto = document.querySelector('zd-autocomplete');
+        if (zdAuto) renderResults(zdAuto, data.results || [], query);
+      })
+      .catch(function () {/* network error – silently ignore */});
+  }
+
+  /** Bind input handler to the search field (idempotent) */
+  function bindInput() {
+    var input = document.querySelector('input[name="query"], input[type="search"]');
+    if (!input || input._hkInstantBound) return;
+    input._hkInstantBound = true;
+
+    input.addEventListener('input', function () {
+      activeQuery = this.value.trim();
+      var zdAuto = document.querySelector('zd-autocomplete');
+
+      if (activeQuery.length < MIN_CHARS) {
+        // Clear dropdown – don't show anything for 1-3 chars
+        if (zdAuto) {
+          while (zdAuto.firstChild) zdAuto.removeChild(zdAuto.firstChild);
+        }
+      } else {
+        // Trigger API call immediately (no debounce)
+        doSearch(activeQuery);
       }
     });
   }
 
-  function styleAllResults() {
-    document.querySelectorAll('[id^="search-result-"]').forEach(styleResultItem);
+  function init() {
+    bindInput();
+    // Re-bind after SPA navigation or dynamic DOM changes
+    new MutationObserver(bindInput)
+      .observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  // Watch the whole body for search-result-N elements being inserted
-  new MutationObserver(function (mutations) {
-    var needsStyle = false;
-    mutations.forEach(function (mutation) {
-      mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType !== 1) return;
-        var id = node.id || '';
-        if (id.indexOf('search-result-') === 0) {
-          styleResultItem(node);
-        } else if (node.querySelector) {
-          var items = node.querySelectorAll('[id^="search-result-"]');
-          if (items.length) { needsStyle = true; }
-        }
-      });
-    });
-    if (needsStyle) styleAllResults();
-  }).observe(document.documentElement, { childList: true, subtree: true });
-
-  document.addEventListener('DOMContentLoaded', styleAllResults);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 
 /* ---------- Small helpers (local, non-destructive) ---------- */

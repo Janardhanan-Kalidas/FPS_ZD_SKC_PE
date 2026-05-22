@@ -48,54 +48,118 @@ h1 {
 }
 
 /* ============================================================================
+   SEARCH INPUT & AUTOCOMPLETE DROPDOWN - HILTI DESIGN SYSTEM
+   Colors: Hilti Red (#d2051e), Hilti Steel (#524f53)
+   ============================================================================ */
+
+/* ── Single red border, zero radius ──
+   The theme's focus rule produces two visible red edges:
+     1. border-color: $color_primary  (solid border)
+     2. box-shadow: 0 0 0 .2rem $color_outline  (glowing ring)
+   We keep only the solid border and remove the ring.
+*/
+.search [type="search"],
+.search .form-field > input {
+  border-radius: 0 !important;
+}
+
+.search [type="search"]:focus,
+.search .form-field > input:focus,
+.form-field [type="search"]:focus {
+  border-color: #d2051e !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+}
+
+/* ── Autocomplete dropdown – match exact width of the search input ──
+   .search is position:relative; the input has margin: 0 0.5rem.
+   Using the same left/right offset aligns the dropdown to the input edges.
+*/
+.search zd-autocomplete,
+.search > zd-autocomplete {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0.5rem !important;
+  right: 0.5rem !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  z-index: 500;
+}
+
+/* ============================================================================
    SEARCH SUGGESTIONS & RESULTS - HILTI DESIGN SYSTEM
-   Updated: 2026-05-21
    Colors: Hilti Red (#d2051e), Hilti Steel (#524f53)
    ============================================================================ */
 
 /* ── Zendesk instant-search suggestions ──
-   Result items have id="search-result-N" (confirmed via aria-activedescendant).
-   Targeting these is the only reliable selector since the host
-   <zd-autocomplete-announcement> may use Shadow DOM. */
-[id^="search-result-"] a {
-  color: #d2051e !important;
-  text-decoration: none !important;
-}
+   Structure (no <a> tags — click handled by JS):
+     <li id="search-result-N" role="option">
+       <span>[title with <em>matches</em>]</span>
+       <[element role="directory"]>[breadcrumb path]</[element]>
+     </li>
+   The previous selectors used "a" descendants which never matched.
+*/
 
-[id^="search-result-"] a:hover {
-  text-decoration: underline !important;
-}
-
-/* Breadcrumb / section path (last span inside each suggestion link) */
-[id^="search-result-"] a span:last-child {
+/* ── Suggestion title: direct first child of each result item → Hilti Steel ── */
+[id^="search-result-"] > *:first-child,
+zd-autocomplete [role="option"] > *:first-child {
   color: #524f53 !important;
 }
 
-.search-suggestion-breadcrumb {
-  color: #524f53;
-  font-size: 0.85rem;
-  display: flex;
-  gap: 0.25rem;
-  align-items: center;
-  flex-wrap: wrap;
+/* ── Legacy fallback: cover <a> tags if present in older Zendesk versions ── */
+[id^="search-result-"] a,
+zd-autocomplete [role="option"] a {
+  color: #524f53 !important;
+  text-decoration: none !important;
 }
 
-.search-suggestion-breadcrumb a {
-  color: #524f53;
-  text-decoration: none;
+/* ── Hover and keyboard-active states ── */
+[id^="search-result-"]:hover,
+[id^="search-result-"][aria-selected="true"] {
+  background-color: rgba(210, 5, 30, 0.06) !important;
 }
 
-.search-suggestion-breadcrumb a:hover {
-  color: #d2051e;
+[id^="search-result-"]:hover > *:first-child,
+[id^="search-result-"][aria-selected="true"] > *:first-child,
+zd-autocomplete [role="option"]:hover > *:first-child,
+zd-autocomplete [role="option"][aria-selected="true"] > *:first-child {
+  color: #d2051e !important;
+}
+
+/* ── Highlighted matched keywords (<em> tags) → Hilti Red on yellow, inline ── */
+[id^="search-result-"] em,
+zd-autocomplete [role="option"] em {
+  /* Highlight only the background (yellow). Keep text color inherited. */
+  background-color: #fff3cd !important;
+  color: #d2051e !important; /* Hilti Red for matched keywords */
+  font-style: normal !important;
+  font-weight: 700 !important;
+  border-radius: 2px;
+  padding: 0 0.15rem; /* small horizontal padding so highlight hugs text */
+  display: inline !important;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ── Breadcrumb / category path → uses universal breadcrumb styling ── */
+/* Search autocomplete breadcrumbs are rendered with role="directory" */
+[id^="search-result-"] [role="directory"],
+zd-autocomplete [role="option"] [role="directory"] {
+  color: #524f53 !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
 }
 
 /* Keyword Highlighting in Search Suggestions */
 mark,
 .search-keyword-highlight {
+  /* Use the same yellow-only highlight for generic mark or helper classes */
   background-color: #fff3cd !important;
-  color: #d2051e !important;
-  font-weight: 600;
-  padding: 0;
+  color: inherit !important;
+  font-weight: 700;
+  font-style: normal;
+  padding: 0 0.15rem;
   border-radius: 2px;
   display: inline;
   box-decoration-break: clone;
@@ -167,29 +231,8 @@ mark,
   text-decoration: underline;
 }
 
-.search-result-breadcrumb {
-  color: #524f53;
-  font-size: 0.85rem;
-  margin: 0.5rem 0;
-  display: flex;
-  gap: 0.25rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-result-breadcrumb a {
-  color: #524f53;
-  text-decoration: none;
-}
-
-.search-result-breadcrumb a:hover {
-  color: #d2051e;
-  text-decoration: underline;
-}
-
-.breadcrumb-separator {
-  opacity: 0.6;
-}
+/* Removed: .search-result-breadcrumb — now uses universal breadcrumb classes */
+/* Removed: .breadcrumb-separator — uses universal breadcrumb separator styling */
 
 .search-no-results,
 .search-pagination {
@@ -516,7 +559,8 @@ strong {
 
 em {
   padding: 0 3px;
-  background-color: #fff4cc;
+  background-color: #fff3cd;
+  color: #d2051e !important;
   font-weight: 700;
   font-style: normal;
 }
@@ -562,8 +606,9 @@ small,
 
 mark {
   padding: .2rem;
-  color: $color_text;
-  background-color: #FEFCBF;
+  color: #d2051e !important;
+  font-weight: 700;
+  background-color: #fff3cd;
 }
 
 blockquote {
@@ -3221,13 +3266,24 @@ html[dir="rtl"] .notification-left-aligned {
 /* -----------------------------------------------------------
    UNIVERSAL BREADCRUMB STYLE – FINAL VERSION
    Updated by: Kalidas, Janardhanan
-   Date: 29‑Mar‑2026
+   Date: 22-May-2026
 
-   Improvements (23‑Mar‑2026):
-   ✔ Added Hilti Red hover color (#d2051e)
-   ✔ Standardized "/" separator spacing
-   ✔ Cleaned hover underline behavior
-   ✔ Added updated annotations
+   APPLIES TO:
+   ✓ Page breadcrumbs (.breadcrumbs-wrapper, .bc-home, .bc-native)
+   ✓ Search autocomplete breadcrumbs ([role="directory"])
+   ✓ Search results breadcrumbs (.hc-result-category, .hc-category-link)
+
+   UNIFIED STYLING:
+   ✓ Hilti Steel (#524f53) for links
+   ✓ Hilti Red (#d2051e) for hover and separators
+   ✓ Consistent 0.875rem font size
+   ✓ "/" separator with even 0.35rem spacing
+   ✓ Underline on hover
+
+   Previous duplicates removed:
+   - .search-suggestion-breadcrumb (merged)
+   - .search-result-breadcrumb (merged)
+   - Inconsistent .hc-result-category colors (unified)
 ------------------------------------------------------------ */
 
 
@@ -15590,10 +15646,13 @@ a:hover .icon-circle {
 }
 
 .content em {
-  color: inherit;
-  background-color: transparent;
-  padding: 0;
-  font-style: italic;
+  /* Allow search keyword highlights to use global em styling (Hilti Red on yellow) */
+  /* For regular italic emphasis in article content, authors should use <i> instead */
+  color: #d2051e !important;
+  background-color: #fff3cd;
+  padding: 0 3px;
+  font-weight: 700;
+  font-style: normal;
 }
 
 .content img,
@@ -16950,10 +17009,11 @@ footer ul li a:hover {
   font-weight: 500;
   margin-top: 6px;
   display: inline-block;
+.hc-empty-text a {
+  color: #d2051e;
+  text-decoration: none;
+  font-size: 1rem;
 }
-
-.empty-text:hover {
-  color: #e60000;
   text-decoration: underline;
   cursor: default;
 }
@@ -17966,38 +18026,60 @@ header.d-flex h1 {
    SEARCH RESULTS PAGE - MODERN CARD-BASED REDESIGN
    ========================================================= */
 
-/* Main Container */
+/* Main Container - Aligned with header .container */
 .hc-search-container {
-  max-width: 1200px;
   margin: 2rem auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;   /* Match header container padding */
+  width: 100%;
+  max-width: 1280px; /* Match header container max-width */
+  margin-right: auto;
+  margin-left: auto;
 }
 
-/* Layout: Sidebar + Main Content */
+/* Layout: Sidebar + Main Content - Match .row behavior */
 .hc-search-layout {
   display: flex;
-  gap: 2rem;
+  gap: 0;            /* No gap - use padding on children instead */
   align-items: flex-start;
+  margin-left: -1rem;  /* Match .row negative margin */
+  margin-right: -1rem;
 }
 
-/* ===== SIDEBAR - Filters ===== */
+/* ===== SIDEBAR - Filters (Match .col padding) ===== */
 .hc-search-sidebar {
-  flex: 0 0 260px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  padding: 1.25rem 1.5rem;
+  flex: 0 0 260px;   /* Fixed width sidebar including padding */
+  padding-left: 1rem;   /* Match .col padding for alignment */
+  padding-right: 1rem;
   position: sticky;
   top: 20px;
 }
 
-/* Sidebar header: "Filter by" + Reset */
+/* Unified sidebar wrapper with all borders */
+.hc-sidebar-wrapper {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Sidebar content wrapper with background */
 .hc-sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e8e8e8;
+  background: #fff;
+}
+
+.hc-filter-section {
+  background: #fff;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.hc-filter-section:last-child {
+  border-bottom: none;
 }
 
 .hc-sidebar-title {
@@ -18019,19 +18101,9 @@ header.d-flex h1 {
   text-decoration: underline;
 }
 
-.hc-filter-section {
-  margin-bottom: 1.5rem;
-}
-
-.hc-filter-section:last-child {
-  margin-bottom: 0;
-}
-
 .hc-filter-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 1rem;
+  font-weight: 600;
   color: #524f53;
   margin: 0 0 0.75rem 0;
 }
@@ -18045,23 +18117,42 @@ header.d-flex h1 {
 .hc-filter-item {
   margin: 0;
   padding: 0;
+  line-height: 1.4;
+}
+
+.hc-filter-item + .hc-filter-item {
+  margin-top: 0.25rem;
 }
 
 .hc-filter-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0;
-  font-size: 0.9rem;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  margin: 0 -0.625rem;
+  font-size: 0.875rem;
   color: #524f53;
   text-decoration: none;
   cursor: pointer;
-  transition: color 0.2s ease;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .hc-filter-link:hover {
   color: #d2051e;
+  background: #f8f8f8;
   text-decoration: none;
+}
+
+/* Filter name and count container */
+.hc-filter-name {
+  flex: 1;
+}
+
+.hc-filter-count {
+  font-size: 0.8125rem;
+  color: #999;
+  margin-left: 0.25rem;
 }
 
 /* Checkbox indicator */
@@ -18083,6 +18174,7 @@ header.d-flex h1 {
 .hc-filter-link.hc-filter-active {
   color: #d2051e;
   font-weight: 600;
+  background: #f8f8f8;
 }
 
 .hc-filter-link.hc-filter-active .hc-filter-checkbox {
@@ -18091,12 +18183,6 @@ header.d-flex h1 {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='10' height='10'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2 6l3 3 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
-}
-
-.hc-filter-count {
-  color: #999;
-  font-weight: 400;
-  margin-left: 2px;
 }
 
 /* Hide native checkbox — visual state handled by .hc-filter-checkbox span */
@@ -18119,10 +18205,13 @@ header.d-flex h1 {
   background-position: center;
 }
 
-/* ===== MAIN CONTENT AREA ===== */
+/* ===== MAIN CONTENT AREA (Match .col structure) ===== */
 .hc-search-main {
-  flex: 1;
-  min-width: 0;
+  flex: 1;          /* Expand to fill remaining space */
+  padding-left: 1rem;   /* Match .col padding */
+  padding-right: 1rem;
+  min-width: 0;     /* Allow content to shrink if needed */
+  max-width: 100%;  /* Use all available space */
 }
 
 /* Results Header */
@@ -18232,30 +18321,31 @@ header.d-flex h1 {
   opacity: 0.6;
 }
 
-/* Category Breadcrumb */
+/* ===== UNIVERSAL BREADCRUMB APPLIED TO SEARCH RESULTS ===== */
+/* Search results now use the universal breadcrumb styling */
 .hc-result-category {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
   margin-bottom: 0.75rem;
   font-size: 0.875rem;
-  color: #999;
 }
 
 .hc-category-link {
-  color: #999;
+  color: #524f53 !important;
+  font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .hc-category-link:hover {
-  color: #d2051e;
+  color: #d2051e !important;
   text-decoration: underline;
 }
 
-.hc-breadcrumb-separator {
-  color: #ccc;
+.hc-category-separator {
+  color: #d2051e;
+  margin: 0 0.35rem;
   user-select: none;
 }
 
@@ -18307,14 +18397,16 @@ header.d-flex h1 {
 .hc-empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: #f9f9f9;
-  border-radius: 8px;
+  background: transparent;
+  border-radius: 0;
 }
 
 .hc-empty-icon {
   width: 80px;
   height: 80px;
+  display: block;
   margin: 0 auto 1.5rem;
+  background: none;
   opacity: 0.5;
 }
 
@@ -18335,6 +18427,7 @@ header.d-flex h1 {
   color: #d2051e;
   text-decoration: none;
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .hc-empty-text a:hover {
@@ -18344,7 +18437,7 @@ header.d-flex h1 {
 /* ===== KEYWORD HIGHLIGHTING ===== */
 .hc-highlight {
   background: #fff3cd;
-  color: #d2051e;
+  color: #D2051D;
   font-weight: 700;
   padding: 0;
   border-radius: 0;
@@ -18355,14 +18448,22 @@ header.d-flex h1 {
 
 /* ===== RESPONSIVE DESIGN ===== */
 
+/* Desktop - Optimize sidebar width */
+@media (min-width: 1200px) {
+  .hc-search-sidebar {
+    flex: 0 0 280px;  /* Slightly wider for desktop */
+  }
+}
+
 /* Tablet */
 @media (max-width: 992px) {
   .hc-search-layout {
-    gap: 1.5rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
   }
   
   .hc-search-sidebar {
-    flex: 0 0 220px;
+    flex: 0 0 240px;
   }
   
   .hc-results-title {
@@ -18373,20 +18474,27 @@ header.d-flex h1 {
 /* Mobile */
 @media (max-width: 768px) {
   .hc-search-container {
-    padding: 0 1rem;
+    padding: 0 1rem;    /* Reduced padding on mobile */
     margin: 1rem auto;
   }
   
   .hc-search-layout {
     flex-direction: column;
-    gap: 1.5rem;
+    margin-left: 0;
+    margin-right: 0;
   }
   
   .hc-search-sidebar {
     flex: none;
     width: 100%;
     position: static;
-    padding: 1rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .hc-search-main {
+    padding-left: 0;
+    padding-right: 0;
   }
   
   .hc-results-header {

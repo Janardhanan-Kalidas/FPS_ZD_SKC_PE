@@ -53,47 +53,49 @@
 
     {{! ===== LEFT SIDEBAR - FILTERS ===== }}
     <aside class="hc-search-sidebar">
+      <div class="hc-sidebar-wrapper">
 
-      {{! Sidebar header: "Filter by" + Reset link }}
-      <div class="hc-sidebar-header">
-        <span class="hc-sidebar-title">Filter by</span>
-        <a href="{{help_center.url}}search?utf8=✓&query={{query}}" class="hc-sidebar-reset">Reset</a>
-      </div>
+        {{! Sidebar header: "Filter by" + Reset link }}
+        <div class="hc-sidebar-header">
+          <span class="hc-sidebar-title">Filter by</span>
+          <a href="{{help_center.url}}search?utf8=✓&query={{query}}" class="hc-sidebar-reset">Reset</a>
+        </div>
 
-      {{! Types - from Zendesk type_filters }}
-      {{#if type_filters}}
-        <div class="hc-filter-section">
-          <h3 class="hc-filter-title">Types</h3>
-          <ul class="hc-filter-list">
-            {{#each type_filters}}
-              <li class="hc-filter-item">
-                <a class="hc-filter-link{{#if selected}} hc-filter-active{{/if}}" href="{{url}}">
-                  <span class="hc-filter-checkbox" aria-hidden="true"></span>
-                  <span class="hc-filter-name">{{name}}</span>
-                  {{#if count}}<span class="hc-filter-count">({{count}})</span>{{/if}}
-                </a>
-              </li>
-            {{/each}}
+        {{! Types - from Zendesk type_filters }}
+        {{#if type_filters}}
+          <div class="hc-filter-section">
+            <h3 class="hc-filter-title">Types</h3>
+            <ul class="hc-filter-list">
+              {{#each type_filters}}
+                <li class="hc-filter-item">
+                  <a class="hc-filter-link{{#if selected}} hc-filter-active{{/if}}" href="{{url}}">
+                    <span class="hc-filter-checkbox" aria-hidden="true"></span>
+                    <span class="hc-filter-name">{{name}}</span>
+                    {{#if count}}<span class="hc-filter-count">({{count}})</span>{{/if}}
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{/if}}
+
+        {{! Categories - built by JavaScript from rendered result breadcrumbs }}
+        <div class="hc-filter-section" id="hc-category-filter">
+          <h3 class="hc-filter-title">Categories</h3>
+          <ul class="hc-filter-list" id="hc-category-list">
+            {{! Populated by JavaScript from rendered results }}
           </ul>
         </div>
-      {{/if}}
 
-      {{! Categories - built by JavaScript from rendered result breadcrumbs }}
-      <div class="hc-filter-section" id="hc-category-filter">
-        <h3 class="hc-filter-title">Categories</h3>
-        <ul class="hc-filter-list" id="hc-category-list">
-          {{! Populated by JavaScript from rendered results }}
-        </ul>
+        {{! Sections - built by JavaScript from rendered result breadcrumbs }}
+        <div class="hc-filter-section" id="hc-section-filter">
+          <h3 class="hc-filter-title">Sections</h3>
+          <ul class="hc-filter-list" id="hc-section-list">
+            {{! Populated by JavaScript from rendered results }}
+          </ul>
+        </div>
+
       </div>
-
-      {{! Sections - built by JavaScript from rendered result breadcrumbs }}
-      <div class="hc-filter-section" id="hc-section-filter">
-        <h3 class="hc-filter-title">Sections</h3>
-        <ul class="hc-filter-list" id="hc-section-list">
-          {{! Populated by JavaScript from rendered results }}
-        </ul>
-      </div>
-
     </aside>
 
     {{! ===== MAIN CONTENT - RESULTS ===== }}
@@ -216,12 +218,7 @@
       {{else}}
         {{! Empty State }}
         <div class="hc-empty-state">
-          <svg class="hc-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="80" height="80">
-            <circle cx="32" cy="32" r="30" fill="none" stroke="#e0e0e0" stroke-width="2"/>
-            <circle cx="25" cy="28" r="4" fill="#999"/>
-            <circle cx="39" cy="28" r="4" fill="#999"/>
-            <path d="M20 42c0-6.6 5.4-12 12-12s12 5.4 12 12" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+          <img src="{{asset 'Magnifier.svg'}}" class="hc-empty-icon" alt="No results" width="80" height="80" />
           <h2 class="hc-empty-title">No results found</h2>
           <p class="hc-empty-text">
             Try different keywords or browse our
