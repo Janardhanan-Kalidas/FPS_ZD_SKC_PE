@@ -7,6 +7,135 @@
    - Keeps all original features from your file
 ============================================================ */
 
+/* ============================================================
+   SEARCH SUGGESTIONS – Hilti Brand Colors
+   Removed redundant inline styling IIFE (now handled by CSS)
+   Colors are applied via CSS rules:
+   - [id^="search-result-"] > *:first-child → Hilti Steel
+   - [id^="search-result-"] em → Hilti Red on yellow
+   - [id^="search-result-"] [role="directory"] → breadcrumb styling
+============================================================ */
+
+/* ============================================================
+   INSTANT SEARCH TRIGGER – Show suggestions immediately at 4 chars
+   Calls Zendesk's autocomplete API directly (0 debounce) the
+   moment value.length reaches 4, then re-styles injected items.
+   For < 4 chars the dropdown is cleared so nothing shows early.
+============================================================ */
+;(function () {
+  'use strict';
+
+  var MIN_CHARS = 4;
+  var activeQuery = '';
+
+  /** Resolve /hc/{locale} prefix from the current URL */
+  function hcBase() {
+    var m = location.pathname.match(/^(\/hc\/[^/]+)/);
+    return m ? m[1] : '/hc/en-us';
+  }
+
+  /** Escape special regex characters inside a user query */
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /** Wrap all case-insensitive matches of `query` in <em> */
+  function highlightMatch(text, query) {
+    if (!query) return text;
+    return text.replace(new RegExp('(' + escapeRe(query) + ')', 'gi'), '<em>$1</em>');
+  }
+
+  /** Build breadcrumb string from API result object */
+  function buildCrumb(item) {
+    var parts = [];
+    if (item.category_title) parts.push(item.category_title);
+    if (item.section_title) parts.push(item.section_title);
+    return parts.join(' > ');
+  }
+
+  /** Populate zd-autocomplete with API results and re-style them */
+  function renderResults(zdAuto, results, query) {
+    // Clear whatever Zendesk (or a previous call) put in the dropdown
+    while (zdAuto.firstChild) zdAuto.removeChild(zdAuto.firstChild);
+
+    if (!results.length) return;
+
+    results.slice(0, 6).forEach(function (item, i) {
+      var li = document.createElement('li');
+      li.id = 'search-result-' + i;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', 'false');
+
+      var titleSpan = document.createElement('span');
+      titleSpan.innerHTML = highlightMatch(item.title || '', query);
+
+      var crumbDiv = document.createElement('div');
+      crumbDiv.setAttribute('role', 'directory');
+      crumbDiv.textContent = buildCrumb(item);
+
+      li.appendChild(titleSpan);
+      li.appendChild(crumbDiv);
+
+      // Use mousedown so the click fires before the input loses focus
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        window.location.href = item.html_url;
+      });
+
+      zdAuto.appendChild(li);
+    });
+  }
+
+  /** Fetch from Zendesk's autocomplete endpoint and render */
+  function doSearch(query) {
+    var url = hcBase() + '/search/autocomplete.json?query=' + encodeURIComponent(query);
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        // Discard stale responses
+        if (!data || query !== activeQuery) return;
+        var zdAuto = document.querySelector('zd-autocomplete');
+        if (zdAuto) renderResults(zdAuto, data.results || [], query);
+      })
+      .catch(function () {/* network error – silently ignore */});
+  }
+
+  /** Bind input handler to the search field (idempotent) */
+  function bindInput() {
+    var input = document.querySelector('input[name="query"], input[type="search"]');
+    if (!input || input._hkInstantBound) return;
+    input._hkInstantBound = true;
+
+    input.addEventListener('input', function () {
+      activeQuery = this.value.trim();
+      var zdAuto = document.querySelector('zd-autocomplete');
+
+      if (activeQuery.length < MIN_CHARS) {
+        // Clear dropdown – don't show anything for 1-3 chars
+        if (zdAuto) {
+          while (zdAuto.firstChild) zdAuto.removeChild(zdAuto.firstChild);
+        }
+      } else {
+        // Trigger API call immediately (no debounce)
+        doSearch(activeQuery);
+      }
+    });
+  }
+
+  function init() {
+    bindInput();
+    // Re-bind after SPA navigation or dynamic DOM changes
+    new MutationObserver(bindInput)
+      .observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
 /* ---------- Small helpers (local, non-destructive) ---------- */
 (function () {
   'use strict';
@@ -1247,6 +1376,630 @@ document.addEventListener('DOMContentLoaded', function () {
   setTimeout(expandSidebar, 800);
 })();
 
+/* ============================================================
+   SEARCH RESULTS PAGE - Functionality
+   Clean query display, keyword highlighting, sorting, filtering
+============================================================ */
+;(function() {
+  'use strict';
+
+  function initSearchResults() {
+    // Run exactly once — the DOMContentLoaded path and the setTimeout fallbacks all
+    // call this function; the flag stops the 2nd and 3rd calls from doing anything.
+    if (initSearchResults._ran) return;
+
+    // Only run on search results page
+    var searchContainer = document.querySelector('[data-search-query]');
+    if (!searchContainer) return;
+
+    initSearchResults._ran = true;
+
+    var rawQuery = searchContainer.getAttribute('data-search-query') || '';
+    var helpCenterUrl = searchContainer.getAttribute('data-help-center-url') || '';
+    
+    // Clean query by removing sort keywords
+    function cleanQuery(query) {
+      return query
+        .replace(/\s*order_by:\w+/g, '')
+        .replace(/\s*sort:(asc|desc)/g, '')
+        .trim();
+    }
+
+    // 1. Clean the query display in title and search bar
+    var cleanedQuery = cleanQuery(rawQuery);
+
+    // Shared metadata populated from the Zendesk search API once it responds.
+    // buildPaginationUI reads this for accurate per-page and page-count values.
+    var searchMeta = { perPage: null, totalPages: null, totalResults: null };
+
+    document.querySelectorAll('.hc-clean-query').forEach(function(el) {
+      el.textContent = cleanedQuery;
+    });
+
+    // 2. Highlight search keywords in results
+    if (cleanedQuery) {
+      var keywords = cleanedQuery.split(/\s+/).filter(function(k) { return k.length > 2; });
+      if (keywords.length) {
+        var pattern = new RegExp('(' + keywords.map(function(k) {
+          return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }).join('|') + ')', 'gi');
+        
+        document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
+          var html = el.innerHTML;
+          el.innerHTML = html.replace(pattern, '<mark class="hc-highlight">$1</mark>');
+        });
+      }
+    }
+
+    // 3. Sort dropdown - client-side sorting by timestamp
+    var sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', function(e) {
+        var resultsList = document.querySelector('.hc-results-list');
+        if (!resultsList) return;
+        
+        var resultCards = Array.from(resultsList.querySelectorAll('.hc-result-card'));
+        if (resultCards.length === 0) return;
+        
+        if (this.value === 'recent') {
+          // Sort by most recent - extract timestamps and sort descending
+          resultCards.sort(function(a, b) {
+            var timeA = a.querySelector('.hc-result-meta time');
+            var timeB = b.querySelector('.hc-result-meta time');
+            
+            if (!timeA || !timeB) return 0;
+            
+            var dateA = new Date(timeA.getAttribute('datetime'));
+            var dateB = new Date(timeB.getAttribute('datetime'));
+            
+            return dateB - dateA; // Descending order (most recent first)
+          });
+          
+          // Re-append sorted cards to the list
+          resultCards.forEach(function(card) {
+            resultsList.appendChild(card);
+          });
+        } else {
+          // Sort by relevance - reload page with clean query
+          var baseUrl = helpCenterUrl + (helpCenterUrl.endsWith('/') ? '' : '/') + 'search';
+          var newUrl = baseUrl + '?utf8=%E2%9C%93&query=' + encodeURIComponent(cleanedQuery);
+          window.location.href = newUrl;
+        }
+      });
+    }
+
+    // Reset button — clear persisted filter state then navigate to the clean query URL.
+    // Clearing sessionStorage before navigation means the page that loads won't re-apply
+    // any previously saved filters.
+    var resetBtn = document.querySelector('.hc-sidebar-reset');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        try { sessionStorage.removeItem('search_filters:' + cleanedQuery); } catch (ex) {}
+        var base = helpCenterUrl + (helpCenterUrl.endsWith('/') ? '' : '/') + 'search';
+        window.location.href = base + '?utf8=%E2%9C%93&query=' + encodeURIComponent(cleanedQuery);
+      });
+    }
+
+    // 4. Build category and section filters with client-side filtering across all pages
+    var catList = document.getElementById('hc-category-list');
+    var catSection = document.getElementById('hc-category-filter');
+    var secList = document.getElementById('hc-section-list');
+    var secSection = document.getElementById('hc-section-filter');
+
+    // Helper: parse results from a document (current or fetched)
+    function parseResultsFromDoc(doc) {
+      var rows = [];
+      var cards = doc.querySelectorAll('.hc-result-card');
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var link = card.querySelector('.hc-result-title a');
+        var url = link ? link.getAttribute('href') : (card.dataset && card.dataset.url) || null;
+        var catLinks = card.querySelectorAll('.hc-result-category .hc-category-link');
+        // Use last-2 links for category, last-1 for section to handle optional Help-Center root prefix
+        var category = catLinks.length >= 2 ? catLinks[catLinks.length - 2].textContent.trim() : (catLinks.length === 1 ? catLinks[0].textContent.trim() : null);
+        var section   = catLinks.length >= 2 ? catLinks[catLinks.length - 1].textContent.trim() : null;
+        rows.push({ url: url, category: category, section: section });
+      }
+      return rows;
+    }
+
+    // Build filters from current page only (used as fallback)
+    function buildFiltersFromCurrentPage() {
+      var rows = parseResultsFromDoc(document);
+      buildFilters(rows);
+    }
+
+    // Saved DOM state from immediately before the first filter was applied.
+    // null means a filter has never been active — in that case the DOM is never touched.
+    var savedBeforeFilter = null;
+
+    // Re-apply keyword highlight marks after dynamic HTML injection
+    function applyHighlights() {
+      if (!cleanedQuery) return;
+      var kw = cleanedQuery.split(/\s+/).filter(function(k){ return k.length > 2; });
+      if (!kw.length) return;
+      var pat = new RegExp('(' + kw.map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }).join('|') + ')', 'gi');
+      // Target the <a> inside the title (not the <h2>) so the href attribute is never touched.
+      // The snippet is a plain <p> with no child elements, so it is safe to replace directly.
+      document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
+        el.innerHTML = el.innerHTML.replace(pat, '<mark class="hc-highlight">$1</mark>');
+      });
+    }
+
+    // Render a single result card from API row data
+    function renderArticleCard(r) {
+      function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      var date = '';
+      if (r.updatedAt) {
+        try { date = new Date(r.updatedAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); } catch(e){}
+      }
+      var breadcrumb = '';
+      if (r.category && r.section) {
+        breadcrumb = '<div class="hc-result-category"><a class="hc-category-link">' + esc(r.category) + '</a><span class="hc-category-separator">›</span><a class="hc-category-link">' + esc(r.section) + '</a></div>';
+      } else if (r.section) {
+        breadcrumb = '<div class="hc-result-category"><a class="hc-category-link">' + esc(r.section) + '</a></div>';
+      }
+      return '<article class="hc-result-card">' +
+        '<h2 class="hc-result-title"><a href="' + esc(r.url) + '" class="hc-result-link">' + esc(r.title) + '</a></h2>' +
+        breadcrumb +
+        (r.snippet ? '<p class="hc-result-snippet">' + esc(r.snippet) + '</p>' : '') +
+        '<div class="hc-result-meta">' +
+          '<span class="hc-meta-item"><svg class="hc-meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><circle cx="6" cy="6" r="5.5" fill="none" stroke="currentColor"/><path stroke="currentColor" stroke-linecap="round" d="M6 3v3.5L8 8"/></svg>Updated ' + esc(date) + '</span>' +
+          (r.voteSum ? '<span class="hc-meta-item">' + r.voteSum + ' helpful</span>' : '') +
+          (r.commentCount ? '<span class="hc-meta-item">' + r.commentCount + ' comments</span>' : '') +
+        '</div>' +
+      '</article>';
+    }
+
+    // Compute which page numbers to show (always first, last, ±2 around current, with ... gaps).
+    // Defined at initSearchResults scope so both buildPaginationUI and filtered pagination share it.
+    function pageRange(cur, total) {
+      var pages = [];
+      var delta = 2;
+      var left  = cur - delta;
+      var right = cur + delta;
+      var prev  = null;
+      for (var i = 1; i <= total; i++) {
+        if (i === 1 || i === total || (i >= left && i <= right)) {
+          if (prev !== null && i - prev > 1) pages.push('...');
+          pages.push(i);
+          prev = i;
+        }
+      }
+      return pages;
+    }
+
+    // Fetch ALL search result articles via Zendesk JSON API, mapping section/category names.
+    // Using the JSON API avoids triggering Cloudflare's bot-detection that fires on HTML fetches.
+    function buildFiltersViaAPI() {
+      var apiOrigin = window.location.origin;
+      var localeMatch = window.location.pathname.match(/\/hc\/([^/]+)\//);
+      var locale = localeMatch ? localeMatch[1] : 'en-us';
+
+      function fetchJson(url) {
+        return fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+          .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+      }
+
+      // Fetch categories and sections in parallel to build ID→name lookup maps
+      Promise.all([
+        fetchJson(apiOrigin + '/api/v2/help_center/categories.json?per_page=100'),
+        fetchJson(apiOrigin + '/api/v2/help_center/sections.json?per_page=100')
+      ]).then(function(results) {
+        var categoryMap = {};  // id → name
+        var sectionMap  = {};  // id → { name, categoryId }
+        (results[0].categories || []).forEach(function(c) { categoryMap[c.id] = c.name; });
+        (results[1].sections   || []).forEach(function(s) { sectionMap[s.id] = { name: s.name, categoryId: s.category_id }; });
+
+        // Fetch all search result pages via API (up to 100 results per request)
+        var allRows = {};
+        var searchBase = apiOrigin + '/api/v2/help_center/articles/search.json?locale='
+                       + encodeURIComponent(locale) + '&per_page=100&query=' + encodeURIComponent(cleanedQuery);
+
+        function mapArticle(article) {
+          var sec = sectionMap[article.section_id] || null;
+          // Strip HTML tags from snippet/body for safe text rendering
+          function plainText(str) { return str ? str.replace(/<[^>]+>/g, '') : ''; }
+          return {
+            url:          article.html_url || null,
+            title:        article.title    || '',
+            snippet:      plainText(article.snippet || article.body || '').slice(0, 300),
+            updatedAt:    article.updated_at || article.created_at || '',
+            voteSum:      article.vote_sum      || 0,
+            commentCount: article.comment_count || 0,
+            category:     sec ? (categoryMap[sec.categoryId] || null) : null,
+            section:      sec ? sec.name : null
+          };
+        }
+
+        fetchJson(searchBase + '&page=1').then(function(data) {
+          (data.results || []).forEach(function(a) { if (a.html_url) allRows[a.html_url] = mapArticle(a); });
+
+          // Store total result count from the API.
+          // Do NOT use data.per_page or data.page_count — those reflect our per_page=100
+          // request, not the Zendesk front-end per_page. Let buildPaginationUI infer perPage
+          // from the DOM card count so the page numbers match what Zendesk actually renders.
+          searchMeta.totalResults = data.count || null;
+          buildPaginationUI(); // re-render with accurate values
+
+          var totalPages = data.page_count || 1;
+          var moreFetches = [];
+          for (var p = 2; p <= Math.min(totalPages, 10); p++) {
+            (function(pn) {
+              moreFetches.push(fetchJson(searchBase + '&page=' + pn).then(function(d) {
+                (d.results || []).forEach(function(a) { if (a.html_url) allRows[a.html_url] = mapArticle(a); });
+              }).catch(function() {}));
+            })(p);
+          }
+
+          Promise.all(moreFetches).then(function() {
+            var allApiRows = Object.values(allRows);
+            // Counts must reflect the current page only (what's visible after filtering)
+            // so the badge numbers always match what appears when a filter is clicked.
+            var currentPageRows = parseResultsFromDoc(document);
+            if (allApiRows.length) {
+              buildFilters(allApiRows, currentPageRows);
+            } else {
+              buildFiltersFromCurrentPage();
+            }
+          });
+        }).catch(function() { buildFiltersFromCurrentPage(); });
+
+      }).catch(function() {
+        // API unavailable — fall back to current page HTML
+        buildFiltersFromCurrentPage();
+      });
+    }
+
+    // Build filter UI.
+    // rows      = full list (all pages via API) — used to discover all category/section names.
+    // pageRows  = current page results — used for count badges so numbers match after filtering.
+    //             If omitted, rows is used for both.
+    function buildFilters(rows, pageRows) {
+      var storageKey = 'search_filters:' + cleanedQuery;
+      var storedSelections;
+      try { storedSelections = JSON.parse(sessionStorage.getItem(storageKey)) || {}; } catch (e) { storedSelections = {}; }
+      var storedCats = storedSelections.categories || [];
+      var storedSecs = storedSelections.sections || [];
+
+      // Counts from the full API result set so badges reflect total across all pages.
+      var countSource = rows;
+      var categoryCounts = {};
+      var sectionCounts  = {};
+      countSource.forEach(function(r) {
+        if (r.category) categoryCounts[r.category] = (categoryCounts[r.category] || 0) + 1;
+        if (r.section)  sectionCounts[r.section]   = (sectionCounts[r.section]   || 0) + 1;
+      });
+
+      function makeItem(value, count, extraClass, storedList) {
+        var li    = document.createElement('li');   li.className = 'hc-filter-item';
+        var label = document.createElement('label'); label.className = 'hc-filter-link';
+        var input = document.createElement('input');
+        input.type = 'checkbox'; input.className = 'hc-filter-input ' + extraClass; input.value = value;
+        var box     = document.createElement('span'); box.className = 'hc-filter-checkbox'; box.setAttribute('aria-hidden','true');
+        var nameEl  = document.createElement('span'); nameEl.className = 'hc-filter-name'; nameEl.textContent = value;
+        var countEl = document.createElement('span'); countEl.className = 'hc-filter-count'; countEl.textContent = '(' + count + ')';
+        label.appendChild(input); label.appendChild(box); label.appendChild(nameEl); label.appendChild(countEl);
+        li.appendChild(label);
+        if (storedList.indexOf(value) > -1) {
+          input.checked = true;
+          label.classList.add('hc-filter-active');
+          box.classList.add('is-checked');
+        }
+        // Toggle active styling when checkbox changes
+        input.addEventListener('change', function() {
+          label.classList.toggle('hc-filter-active', input.checked);
+          box.classList.toggle('is-checked', input.checked);
+        });
+        return li;
+      }
+
+      // Enumerate ALL categories/sections from the full result set (all pages via API).
+      // Counts come from countSource (current page) so they match what appears after filtering.
+      var allCategories = {};
+      var allSections   = {};
+      rows.forEach(function(r) {
+        if (r.category) allCategories[r.category] = true;
+        if (r.section)  allSections[r.section]   = true;
+      });
+
+      // Populate category list
+      if (catList && catSection) {
+        catList.innerHTML = '';
+        var cats = Object.keys(allCategories).sort();
+        catSection.style.display = cats.length ? '' : 'none';
+        cats.forEach(function(cat) {
+          catList.appendChild(makeItem(cat, categoryCounts[cat] || 0, 'hc-category-input', storedCats));
+        });
+      }
+
+      // Populate section list
+      if (secList && secSection) {
+        secList.innerHTML = '';
+        var secs = Object.keys(allSections).sort();
+        secSection.style.display = secs.length ? '' : 'none';
+        secs.forEach(function(sec) {
+          secList.appendChild(makeItem(sec, sectionCounts[sec] || 0, 'hc-section-input', storedSecs));
+        });
+      }
+
+      function updateDependentLists() {
+        var selectedCats = Array.from(catList ? catList.querySelectorAll('.hc-category-input:checked') : []).map(function(i){ return i.value; });
+        var selectedSecs = Array.from(secList ? secList.querySelectorAll('.hc-section-input:checked') : []).map(function(i){ return i.value; });
+
+        var resultsList = document.querySelector('.hc-results-list');
+        var paginationWrapper = document.querySelector('.hc-pagination-wrapper');
+
+        if (!selectedCats.length && !selectedSecs.length) {
+          // No filter — only restore the DOM if we previously entered filter mode.
+          // If savedBeforeFilter is null a filter was never applied, so leave every
+          // other theme component (pagination, highlights, sort) completely untouched.
+          if (savedBeforeFilter !== null) {
+            if (resultsList)       resultsList.innerHTML       = savedBeforeFilter.results;
+            if (paginationWrapper) paginationWrapper.innerHTML = savedBeforeFilter.pagination;
+            savedBeforeFilter = null;
+            applyHighlights();
+            buildPaginationUI();
+          }
+        } else {
+          // Filter active — snapshot the live DOM the first time a filter is applied.
+          if (savedBeforeFilter === null) {
+            var fpCards = document.querySelectorAll('.hc-result-card').length;
+            var fpTotal = searchMeta.totalResults || 0;
+            savedBeforeFilter = {
+              results:    resultsList        ? resultsList.innerHTML        : '',
+              pagination: paginationWrapper  ? paginationWrapper.innerHTML  : '',
+              perPage:    (fpTotal > fpCards && fpCards > 0) ? fpCards : 25
+            };
+          }
+
+          // All matching articles from the full API result set
+          var matching = rows.filter(function(r) {
+            var okCat = !selectedCats.length || selectedCats.indexOf(r.category) > -1;
+            var okSec = !selectedSecs.length || selectedSecs.indexOf(r.section)   > -1;
+            return okCat && okSec;
+          });
+
+          // Render one page of filtered results with client-side pagination.
+          function renderFilteredPage(matchArr, page) {
+            var pp      = (savedBeforeFilter && savedBeforeFilter.perPage) || 25;
+            var totalFP = Math.ceil(matchArr.length / pp);
+            page        = Math.max(1, Math.min(page, totalFP || 1));
+            var start   = (page - 1) * pp;
+            var slice   = matchArr.slice(start, start + pp);
+
+            if (resultsList) {
+              if (matchArr.length) {
+                resultsList.innerHTML = slice.map(renderArticleCard).join('');
+                applyHighlights();
+              } else {
+                resultsList.innerHTML = '<div class="hc-empty-state"><h2 class="hc-empty-title">No results for this filter</h2><p class="hc-empty-text">Try removing a filter to broaden your search.</p></div>';
+              }
+            }
+
+            if (!paginationWrapper) return;
+            if (totalFP <= 1) { paginationWrapper.innerHTML = ''; return; }
+
+            // Client-side pagination nav (buttons — no page reload)
+            var ph = '<nav class="hc-page-nav" role="navigation" aria-label="Filtered results pagination">';
+            if (page > 1) {
+              ph += '<button type="button" class="hc-page-btn hc-page-prev" data-fp="' + (page - 1) + '" aria-label="Previous page">&#8592; Prev</button>';
+            } else {
+              ph += '<span class="hc-page-btn hc-page-prev hc-page-disabled" aria-disabled="true">&#8592; Prev</span>';
+            }
+            ph += '<span class="hc-page-numbers">';
+            pageRange(page, totalFP).forEach(function(p) {
+              if (p === '...') {
+                ph += '<span class="hc-page-ellipsis">&#8230;</span>';
+              } else if (p === page) {
+                ph += '<span class="hc-page-btn hc-page-current" aria-current="page">' + p + '</span>';
+              } else {
+                ph += '<button type="button" class="hc-page-btn" data-fp="' + p + '" aria-label="Page ' + p + '">' + p + '</button>';
+              }
+            });
+            ph += '</span>';
+            if (page < totalFP) {
+              ph += '<button type="button" class="hc-page-btn hc-page-next" data-fp="' + (page + 1) + '" aria-label="Next page">Next &#8594;</button>';
+            } else {
+              ph += '<span class="hc-page-btn hc-page-next hc-page-disabled" aria-disabled="true">Next &#8594;</span>';
+            }
+            ph += '</nav>';
+            paginationWrapper.innerHTML = ph;
+
+            paginationWrapper.querySelectorAll('button[data-fp]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                renderFilteredPage(matchArr, parseInt(btn.getAttribute('data-fp'), 10));
+                var anchor = document.querySelector('.hc-search-main') || resultsList;
+                if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
+            });
+          }
+
+          renderFilteredPage(matching, 1);
+        }
+
+        // Update section counts based on selected categories
+        if (secList) {
+          if (selectedCats.length) {
+            var secCountsInCats = {};
+            rows.forEach(function(r) { if (selectedCats.indexOf(r.category) > -1 && r.section) secCountsInCats[r.section] = (secCountsInCats[r.section] || 0) + 1; });
+            secList.querySelectorAll('.hc-filter-item').forEach(function(li) {
+              var name = li.querySelector('.hc-filter-name').textContent;
+              var n = secCountsInCats[name];
+              li.style.display = n ? '' : 'none';
+              if (n) li.querySelector('.hc-filter-count').textContent = '(' + n + ')';
+            });
+          } else {
+            secList.querySelectorAll('.hc-filter-item').forEach(function(li) {
+              var name = li.querySelector('.hc-filter-name').textContent;
+              li.style.display = '';
+              li.querySelector('.hc-filter-count').textContent = '(' + (sectionCounts[name] || 0) + ')';
+            });
+          }
+        }
+
+        // Update category counts based on selected sections
+        if (catList) {
+          if (selectedSecs.length) {
+            var catCountsInSecs = {};
+            rows.forEach(function(r) { if (selectedSecs.indexOf(r.section) > -1 && r.category) catCountsInSecs[r.category] = (catCountsInSecs[r.category] || 0) + 1; });
+            catList.querySelectorAll('.hc-filter-item').forEach(function(li) {
+              var name = li.querySelector('.hc-filter-name').textContent;
+              var n = catCountsInSecs[name];
+              li.style.display = n ? '' : 'none';
+              if (n) li.querySelector('.hc-filter-count').textContent = '(' + n + ')';
+            });
+          } else {
+            catList.querySelectorAll('.hc-filter-item').forEach(function(li) {
+              var name = li.querySelector('.hc-filter-name').textContent;
+              li.style.display = '';
+              li.querySelector('.hc-filter-count').textContent = '(' + (categoryCounts[name] || 0) + ')';
+            });
+          }
+        }
+
+        // Persist selections to sessionStorage
+        try {
+          var saveCats = Array.from(catList ? catList.querySelectorAll('.hc-category-input:checked') : []).map(function(i){ return i.value; });
+          var saveSecs = Array.from(secList ? secList.querySelectorAll('.hc-section-input:checked') : []).map(function(i){ return i.value; });
+          sessionStorage.setItem(storageKey, JSON.stringify({ categories: saveCats, sections: saveSecs }));
+        } catch (e) {}
+      } // end updateDependentLists
+
+      // Wire change handlers
+      if (catList) catList.addEventListener('change', updateDependentLists);
+      if (secList) secList.addEventListener('change', updateDependentLists);
+
+      // Apply any restored selections immediately
+      updateDependentLists();
+    } // end buildFilters
+
+    // 5. Build numbered pagination UI
+    // Uses searchMeta (populated by the API call) for accurate per-page / page-count.
+    // Falls back to DOM-based detection on first synchronous call.
+    function buildPaginationUI() {
+      var wrapper = document.querySelector('.hc-pagination-wrapper');
+      if (!wrapper) return;
+
+      var urlParams   = new URLSearchParams(window.location.search);
+      var currentPage = parseInt(urlParams.get('page') || '1', 10);
+
+      // --- Determine perPage ---
+      // 1. API value (most reliable)
+      // 2. Card count on page 1 (page 1 is always fully packed)
+      // 3. Infer from current page + card count when not on page 1
+      var currentCardCount = document.querySelectorAll('.hc-result-card').length;
+      var perPage;
+      if (searchMeta.perPage) {
+        perPage = searchMeta.perPage;
+      } else if (currentPage === 1) {
+        // On page 1 the card count equals the per-page limit (unless it's the only page)
+        perPage = currentCardCount || 25;
+      } else {
+        // On a later page we can't measure perPage from DOM alone;
+        // use 25 until the API call fills in the real value.
+        perPage = 25;
+      }
+
+      // --- Determine totalResults ---
+      var totalResults = searchMeta.totalResults || 0;
+      if (!totalResults) {
+        var strongEl = document.querySelector('.hc-results-title strong');
+        if (strongEl) totalResults = parseInt(strongEl.textContent.replace(/[^0-9]/g, ''), 10) || 0;
+      }
+
+      // --- Determine totalPages ---
+      var totalPages = searchMeta.totalPages || (totalResults ? Math.ceil(totalResults / perPage) : 0);
+
+      // Hide pagination when all results fit on one page
+      if (!totalResults || totalResults <= perPage || totalPages <= 1) {
+        wrapper.innerHTML = '';
+        return;
+      }
+
+      // Build URL for a given page number
+      function pageUrl(n) {
+        var p = new URLSearchParams(window.location.search);
+        if (n === 1) { p.delete('page'); } else { p.set('page', String(n)); }
+        var qs = p.toString();
+        return window.location.pathname + (qs ? '?' + qs : '') + '#results';
+      }
+
+      // pageRange is defined at initSearchResults scope (shared with filtered pagination)
+
+      // Render
+      var html = '<nav class="hc-page-nav" role="navigation" aria-label="Pagination">';
+      // Prev
+      if (currentPage > 1) {
+        html += '<a class="hc-page-btn hc-page-prev" href="' + pageUrl(currentPage - 1) + '" aria-label="Previous page">&#8592; Prev</a>';
+      } else {
+        html += '<span class="hc-page-btn hc-page-prev hc-page-disabled" aria-disabled="true">&#8592; Prev</span>';
+      }
+      // Page numbers
+      html += '<span class="hc-page-numbers">';
+      pageRange(currentPage, totalPages).forEach(function(p) {
+        if (p === '...') {
+          html += '<span class="hc-page-ellipsis">&#8230;</span>';
+        } else if (p === currentPage) {
+          html += '<span class="hc-page-btn hc-page-current" aria-current="page">' + p + '</span>';
+        } else {
+          html += '<a class="hc-page-btn" href="' + pageUrl(p) + '" aria-label="Page ' + p + '">' + p + '</a>';
+        }
+      });
+      html += '</span>';
+      // Next
+      if (currentPage < totalPages) {
+        html += '<a class="hc-page-btn hc-page-next" href="' + pageUrl(currentPage + 1) + '" aria-label="Next page">Next &#8594;</a>';
+      } else {
+        html += '<span class="hc-page-btn hc-page-next hc-page-disabled" aria-disabled="true">Next &#8594;</span>';
+      }
+      html += '</nav>';
+
+      wrapper.innerHTML = html;
+    }
+
+    buildPaginationUI();
+
+    // Guard: buildFiltersViaAPI must run at most once per page load.
+    // Both the MutationObserver and the 2-second safety timeout call triggerBuildFilters;
+    // the flag ensures only the first one actually starts the fetch.
+    var filtersBuildStarted = false;
+    function triggerBuildFilters() {
+      if (filtersBuildStarted) return;
+      filtersBuildStarted = true;
+      buildFiltersViaAPI();
+    }
+
+    // Trigger filter build once result cards exist in the DOM
+    if (document.querySelector('.hc-results-list .hc-result-card')) {
+      triggerBuildFilters();
+    } else {
+      var resultsContainer = document.querySelector('.hc-results-list') || searchContainer;
+      var buildObserver = new MutationObserver(function(muts, o) {
+        if (document.querySelector('.hc-results-list .hc-result-card')) {
+          o.disconnect();
+          triggerBuildFilters();
+        }
+      });
+      buildObserver.observe(resultsContainer, { childList: true, subtree: true });
+      // Safety fallback in case cards arrive after the observer is set up
+      setTimeout(triggerBuildFilters, 2000);
+    }
+  }
+
+  // Run on DOMContentLoaded (or immediately if already loaded).
+  // A short safety timeout handles themes that inject result cards after DOMContentLoaded.
+  // The _ran guard inside initSearchResults ensures only the first successful call does work.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSearchResults);
+  } else {
+    initSearchResults();
+  }
+  setTimeout(initSearchResults, 500); // safety net for late-rendered content
+})();
+
+
 /* ----------------------------------------------------------
    Auth-required elements: hide submit-a-request links
    for anonymous users. Uses Zendesk's HelpCenter.user API.
@@ -1293,5 +2046,4 @@ document.addEventListener('DOMContentLoaded', function () {
     interceptRequestLinks();
   }
 })();
-
 
