@@ -15882,6 +15882,297 @@ a:hover .icon-circle {
 .submit-a-request{
   color: rgba(82, 79, 83, 1);
 }
+
+.user-profile-page .user-profile-shell {
+  background: linear-gradient(180deg, var(--color-gray-100) 0%, #fff 100%);
+}
+
+.user-profile-page #page-container {
+  position: relative;
+}
+
+.user-profile-page {
+  --profile-card-gap: 1.5rem;
+}
+
+.user-profile-page .profile-layout {
+  display: grid;
+  gap: var(--profile-card-gap);
+}
+
+.user-profile-page .profile-sidebar,
+.user-profile-page .profile-main {
+  min-width: 0;
+}
+
+.user-profile-page .profile-main {
+  display: grid;
+  gap: var(--profile-card-gap);
+}
+
+.user-profile-page .profile-main-header h1 {
+  margin: 0;
+  color: $color_heading;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.user-profile-page .profile-card {
+  border: 1px solid $color_border;
+  border-radius: 0;
+  box-shadow: 0 10px 30px rgba(82, 79, 83, 0.08);
+}
+
+.user-profile-page .profile-card-header,
+.user-profile-page .profile-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.user-profile-page .profile-card-title {
+  margin: 0;
+  color: $color_heading;
+}
+
+.user-profile-page .profile-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.user-profile-page .profile-card-actions .actions-user {
+  width: auto;
+}
+
+.user-profile-page .profile-card-actions .actions-user button {
+  width: auto;
+  min-width: 8rem;
+  margin: 0;
+}
+
+.user-profile-page .profile-sidebar {
+  display: grid;
+  gap: var(--profile-card-gap);
+}
+
+.user-profile-page .profile-sidebar > .profile-card,
+.user-profile-page .profile-main > .profile-card {
+  margin: 0;
+}
+
+.user-profile-page .profile-sidebar-avatar {
+  width: 5rem;
+  min-width: 5rem;
+  height: 5rem;
+  margin: 0 auto 1.5rem;
+}
+
+.user-profile-page .profile-sidebar-name {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  color: $color_heading;
+}
+
+.user-profile-page .profile-sidebar-nav-wrap {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid $color_border;
+}
+
+.user-profile-page .profile-sidebar-nav {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.user-profile-page .profile-nav-link {
+  display: block;
+  padding: 0.875rem 1rem;
+  border-radius: 0;
+  color: $color_text;
+  background-color: transparent;
+  transition: 0.15s ease-in-out;
+}
+
+.user-profile-page .profile-nav-link:hover,
+.user-profile-page .profile-nav-link:focus {
+  color: $color_primary;
+  background-color: rgba(210, 5, 30, 0.06);
+  text-decoration: none;
+}
+
+.user-profile-page .profile-nav-link.is-active {
+  color: $color_primary;
+  background-color: rgba(210, 5, 30, 0.08);
+  font-weight: 600;
+}
+
+.user-profile-page .profile-field-list,
+.user-profile-page .profile-field-grid {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.user-profile-page .profile-field-row,
+.user-profile-page .profile-field-item {
+  padding: 1rem;
+  border: 1px solid $color_border;
+  border-radius: 0;
+  background-color: var(--color-gray-100);
+}
+
+.user-profile-page .profile-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.user-profile-page .profile-field-row dt,
+.user-profile-page .profile-field-item dt {
+  margin: 0 0 0.5rem;
+  color: $color_gray_600;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.user-profile-page .profile-field-row dd,
+.user-profile-page .profile-field-item dd {
+  margin: 0;
+  color: $color_heading;
+  font-weight: 600;
+}
+
+.user-profile-page .profile-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid $color_border;
+  border-radius: 0;
+  background-color: var(--color-gray-100);
+}
+
+.user-profile-page .profile-activity-metric {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $color_text;
+  background-color: var(--color-gray-100);
+  border: 1px solid $color_border;
+  border-radius: 0;
+  padding: 0.375rem 0.75rem;
+}
+
+.user-profile-page .profile-summary-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.user-profile-page .profile-summary-content h3,
+.user-profile-page .profile-summary-content p {
+  word-break: break-word;
+}
+
+.user-profile-page .profile-helper-actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.user-profile-page .profile-helper-actions .subscribe-user {
+  width: 100%;
+}
+
+.user-profile-page .profile-description {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid $color_border;
+  color: $color_text;
+}
+
+.user-profile-page .profile-achievements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.user-profile-page .profile-activity-card {
+  overflow: hidden;
+}
+
+.user-profile-page .profile-activity-header {
+  padding: 1.5rem 1.5rem 0;
+}
+
+.user-profile-page .profile-filter-nav {
+  padding: 0 1.5rem;
+  border-top: 1px solid $color_border;
+  border-bottom: 1px solid $color_border;
+}
+
+.user-profile-page .profile-tab-panel {
+  padding: 1.5rem;
+}
+
+.user-profile-page .profile-tab-panel .list-bordered > :not(:last-child) {
+  border-bottom: 1px solid $color_border;
+}
+
+@media (min-width: 992px) {
+  .user-profile-page .profile-layout {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .user-profile-page .profile-sidebar {
+    position: sticky;
+    top: 6rem;
+  }
+
+  .user-profile-page .profile-field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991.98px) {
+  .user-profile-page .profile-sidebar {
+    order: 0;
+  }
+
+  .user-profile-page .profile-summary-row {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .user-profile-page .profile-card {
+    border-radius: 0;
+  }
+
+  .user-profile-page .profile-card-header,
+  .user-profile-page .profile-activity-header,
+  .user-profile-page .profile-summary-row,
+  .user-profile-page .profile-field-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-profile-page .profile-sidebar-avatar {
+    margin-bottom: 1rem;
+  }
+
+  .user-profile-page .profile-filter-nav {
+    padding: 0 1rem;
+  }
+
+  .user-profile-page .profile-tab-panel,
+  .user-profile-page .profile-activity-header {
+    padding: 1rem;
+  }
+}
 /* ============================================================
    Category Icon display dimensions
    Author : Jana
