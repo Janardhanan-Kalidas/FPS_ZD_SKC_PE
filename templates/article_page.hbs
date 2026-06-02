@@ -244,6 +244,15 @@
   {{/with}}
 {{/if}}
       {{!-- end of article voting --}}
+
+      {{#if settings.show_article_submit_request_cta}}
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 my-8 text-center">
+          <h3 class="h3 mb-3">{{t 'submit_a_request'}}</h3>
+          <a class="button button-primary" href="{{page_path 'new_request'}}" data-requires-auth>
+            {{t 'submit_a_request'}}
+          </a>
+        </div>
+      {{/if}}
       
 
       {{! Recent and related articles }}

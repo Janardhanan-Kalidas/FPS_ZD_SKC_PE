@@ -1,5 +1,5 @@
 {{! Page footer }}
-<footer class="footer mt-6{{#is settings.footer_shape 'none'}}{{#is settings.bg_color settings.bg_color_footer}} border-top{{/is}}{{/is}}" id="footer">
+<footer class="footer mt-6{{#is settings.footer_shape 'none'}}{{#is '#fff' settings.bg_color_footer}} border-top{{/is}}{{/is}}" id="footer">
 	
   
     {{! SVG dividers }}
@@ -211,7 +211,7 @@
         if (numberColumns >= 4) classNames += ' xl:col-3';
         return classNames;
       } %>
-      <div class="container text-{{settings.custom_block_alignment}} py-{{#is settings.bg_color settings.bg_color_custom_blocks}}2{{else}}4{{/is}}{{#isnt settings.content_block_style 'none'}}{{#is settings.bg_color_custom_blocks settings.bg_color_content_blocks}} -mb-4{{/is}}{{/isnt}}">
+      <div class="container text-{{settings.custom_block_alignment}} py-{{#is '#fff' settings.bg_color_custom_blocks}}2{{else}}4{{/is}}{{#isnt settings.content_block_style 'none'}}{{#is settings.bg_color_custom_blocks settings.bg_color_content_blocks}} -mb-4{{/is}}{{/isnt}}">
         <% if (heading) { %>
           <h2 class="inline-flex align-items-baseline my-4" x-data="{ src: Theme.assets['custom-blocks-heading'] }">
             <template x-if="src">
@@ -263,7 +263,7 @@
         if (numberColumns >= 4) classNames += ' xl:col-3';
         return classNames;
       } %>
-      <div class="container text-{{settings.content_block_alignment}} py-{{#is settings.bg_color settings.bg_color_content_blocks}}2{{else}}4{{/is}}">
+      <div class="container text-{{settings.content_block_alignment}} py-{{#is '#fff' settings.bg_color_content_blocks}}2{{else}}4{{/is}}">
         <% if (heading) { %>
           <h2 class="inline-flex align-items-baseline my-4" x-data="{ src: Theme.assets['content-blocks-heading'] }">
             <template x-if="src">
@@ -419,7 +419,7 @@
 {{~#isnt settings.cta_location 'none'}}
   {{~#is settings.cta_style 'banner'}}
     <script type="text/template" id="tmpl-call-to-action">
-      <div class="cta relative mt-6 -mb-6{{#is settings.bg_color settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')">
+      <div class="cta relative mt-6 -mb-6{{#is '#fff' settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')">
         <div class="container relative z-10 py-6">
           <div class="max-w-lg mx-auto text-center">
             {{#if settings.cta_element_heading}}
@@ -462,7 +462,7 @@
   {{~#is settings.cta_style 'boxed'}}
     <script type="text/template" id="tmpl-call-to-action">
       <div class="container">
-        <div class="card cta overflow-hidden my-6{{#isnt settings.bg_color settings.bg_color_cta}} border-0{{/isnt}}">
+        <div class="card cta overflow-hidden my-6{{#isnt '#fff' settings.bg_color_cta}} border-0{{/isnt}}">
           <div class="p-6">
             {{#if settings.cta_element_heading}}
               <h3 class="h2 md:font-size-xl">
@@ -503,7 +503,7 @@
   {{~#is settings.cta_style 'boxed-image'}}
     <script type="text/template" id="tmpl-call-to-action">
       <div class="container">
-        <div class="card cta overflow-hidden my-6{{#isnt settings.bg_color settings.bg_color_cta}} border-0{{/isnt}}">
+        <div class="card cta overflow-hidden my-6{{#isnt '#fff' settings.bg_color_cta}} border-0{{/isnt}}">
           <div class="row">
             <div class="p-9 sm:col-6 relative bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')"></div>
             <div class="p-6 sm:col-6 sm:px-6 sm:py-8">
