@@ -505,6 +505,6 @@
   "read_more_text_description": "The Read More button label to display when excerpts are used with the Toggles list style",
   "back_link_text_label": "'Back to' text",
   "back_link_text_description": "The text to use with the 'Back to' link",
-  "show_article_submit_request_cta_label": "Show Submit Request button in articles",
-  "show_article_submit_request_cta_description": "When checked, a Submit Request button appears at the end of each article"
+  "show_article_submit_request_cta_label": "Show Submit a request link in articles",
+  "show_article_submit_request_cta_description": "When checked, the inline \"Have more questions? Submit a request\" link is shown below article voting for signed-in users"
 }

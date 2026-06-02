@@ -214,11 +214,15 @@
       {{!-- Vote helper label (we hide via CSS later) --}}
       {{vote 'label' class='block text-gray-600 font-size-sm mb-4'}}
 
-      {{#unless ../settings.hide_article_downvote_cta}}
-        <p class="my-5">
-          {{../request_callout}}
-        </p>
+      {{#if ../settings.show_article_submit_request_cta}}
+        {{#if ../signed_in}}
+          <p class="my-5">
+            {{../request_callout}}
+          </p>
+        {{/if}}
+      {{/if}}
 
+      {{#unless ../settings.hide_article_downvote_cta}}
         <!-- Custom downvote feedback modal (initially hidden) -->
         <div id="downvote-feedback" class="hidden mt-4" aria-hidden="true">
           <textarea
@@ -244,15 +248,6 @@
   {{/with}}
 {{/if}}
       {{!-- end of article voting --}}
-
-      {{#if settings.show_article_submit_request_cta}}
-        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 my-8 text-center">
-          <h3 class="h3 mb-3">{{t 'submit_a_request'}}</h3>
-          <a class="button button-primary" href="{{page_path 'new_request'}}" data-requires-auth>
-            {{t 'submit_a_request'}}
-          </a>
-        </div>
-      {{/if}}
       
 
       {{! Recent and related articles }}
