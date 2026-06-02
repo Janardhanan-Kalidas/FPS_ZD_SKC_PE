@@ -214,7 +214,7 @@
       {{!-- Vote helper label (we hide via CSS later) --}}
       {{vote 'label' class='block text-gray-600 font-size-sm mb-4'}}
 
-      {{#unless ../settings.show_submit_a_request_link}}
+      {{#unless ../settings.hide_article_downvote_cta}}
         <p class="my-5">
           {{../request_callout}}
         </p>

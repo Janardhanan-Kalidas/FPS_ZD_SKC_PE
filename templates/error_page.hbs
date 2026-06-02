@@ -4,7 +4,7 @@
   </h1>
 
   {{#is error 'unauthorized'}}
-    {{#unless settings.show_submit_a_request_link}}
+    {{#unless settings.hide_sign_in_link}}
       <h2>
         {{link 'sign_in'}}
       </h2>

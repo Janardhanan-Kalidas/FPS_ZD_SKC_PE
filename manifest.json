@@ -965,13 +965,6 @@
           "value": ""
         },
         {
-          "identifier": "show_submit_a_request_link",
-          "type": "checkbox",
-          "description": "show_submit_a_request_link_description",
-          "label": "show_submit_a_request_link_label",
-          "value": true
-        },
-        {
           "identifier": "category_dropdown_style",
           "type": "list",
           "description": "category_dropdown_style_description",
@@ -987,6 +980,32 @@
               "value": "dropdown"
             }
           ]
+        }
+      ]
+    },
+    {
+      "label": "support_visibility_group_label",
+      "variables": [
+        {
+          "identifier": "show_submit_a_request_link",
+          "type": "checkbox",
+          "description": "show_submit_a_request_link_description",
+          "label": "show_submit_a_request_link_label",
+          "value": true
+        },
+        {
+          "identifier": "hide_sign_in_link",
+          "type": "checkbox",
+          "description": "hide_sign_in_link_description",
+          "label": "hide_sign_in_link_label",
+          "value": true
+        },
+        {
+          "identifier": "hide_article_downvote_cta",
+          "type": "checkbox",
+          "description": "hide_article_downvote_cta_description",
+          "label": "hide_article_downvote_cta_label",
+          "value": true
         }
       ]
     },
@@ -2691,34 +2710,6 @@
           "type": "text",
           "description": "footer_link_1_url_description",
           "label": "footer_link_1_url_label",
-          "value": ""
-        },
-        {
-          "identifier": "footer_link_2_text",
-          "type": "text",
-          "description": "footer_link_2_text_description",
-          "label": "footer_link_2_text_label",
-          "value": ""
-        },
-        {
-          "identifier": "footer_link_2_url",
-          "type": "text",
-          "description": "footer_link_2_url_description",
-          "label": "footer_link_2_url_label",
-          "value": ""
-        },
-        {
-          "identifier": "footer_link_3_text",
-          "type": "text",
-          "description": "footer_link_3_text_description",
-          "label": "footer_link_3_text_label",
-          "value": ""
-        },
-        {
-          "identifier": "footer_link_3_url",
-          "type": "text",
-          "description": "footer_link_3_url_description",
-          "label": "footer_link_3_url_label",
           "value": ""
         },
         {
