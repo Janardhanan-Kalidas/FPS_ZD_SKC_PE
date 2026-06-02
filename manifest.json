@@ -434,13 +434,6 @@
           "description": "hide_article_downvote_cta_description",
           "label": "hide_article_downvote_cta_label",
           "value": true
-        },
-        {
-          "identifier": "show_article_submit_request_cta",
-          "type": "checkbox",
-          "description": "show_article_submit_request_cta_description",
-          "label": "show_article_submit_request_cta_label",
-          "value": false
         }
       ]
     },
@@ -1944,6 +1937,13 @@
           "description": "enable_video_player_description",
           "label": "enable_video_player_label",
           "value": true
+        },
+        {
+          "identifier": "show_article_submit_request_cta",
+          "type": "checkbox",
+          "description": "show_article_submit_request_cta_description",
+          "label": "show_article_submit_request_cta_label",
+          "value": false
         }
       ]
     },
