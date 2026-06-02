@@ -440,7 +440,7 @@
           "type": "checkbox",
           "description": "show_article_submit_request_cta_description",
           "label": "show_article_submit_request_cta_label",
-          "value": true
+          "value": false
         }
       ]
     },
