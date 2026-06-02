@@ -440,17 +440,19 @@
                 {{/if}}
               </p>
             {{/if}}
-            <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
-              {{#if settings.cta_element_link_text}}
-                {{#if settings.use_translations}}
-                  {{dc 'submit_a_request'}}
+            {{#unless settings.show_submit_a_request_link}}
+              <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+                {{#if settings.cta_element_link_text}}
+                  {{#if settings.use_translations}}
+                    {{dc 'submit_a_request'}}
+                  {{else}}
+                    {{settings.cta_element_link_text}}
+                  {{/if}}
                 {{else}}
-                  {{settings.cta_element_link_text}}
+                  {{t 'submit_a_request'}}
                 {{/if}}
-              {{else}}
-                {{t 'submit_a_request'}}
-              {{/if}}
-            </a>
+              </a>
+            {{/unless}}
           </div>
         </div>
         <div class="absolute-top left-0 z-0 w-full h-full cta"></div>
@@ -480,17 +482,19 @@
                 {{/if}}
               </p>
             {{/if}}
-            <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
-              {{#if settings.cta_element_link_text}}
-                {{#if settings.use_translations}}
-                  {{dc settings.cta_element_link_text}}
+            {{#unless settings.show_submit_a_request_link}}
+              <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+                {{#if settings.cta_element_link_text}}
+                  {{#if settings.use_translations}}
+                    {{dc settings.cta_element_link_text}}
+                  {{else}}
+                    {{settings.cta_element_link_text}}
+                  {{/if}}
                 {{else}}
-                  {{settings.cta_element_link_text}}
+                  {{t 'submit_a_request'}}
                 {{/if}}
-              {{else}}
-                {{t 'submit_a_request'}}
-              {{/if}}
-            </a>
+              </a>
+            {{/unless}}
           </div>
         </div>
       </div>
@@ -521,17 +525,19 @@
                   {{/if}}
                 </p>
               {{/if}}
-              <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
-                {{#if settings.cta_element_link_text}}
-                  {{#if settings.use_translations}}
-                    {{dc settings.cta_element_link_text}}
+              {{#unless settings.show_submit_a_request_link}}
+                <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+                  {{#if settings.cta_element_link_text}}
+                    {{#if settings.use_translations}}
+                      {{dc settings.cta_element_link_text}}
+                    {{else}}
+                      {{settings.cta_element_link_text}}
+                    {{/if}}
                   {{else}}
-                    {{settings.cta_element_link_text}}
+                    {{t 'submit_a_request'}}
                   {{/if}}
-                {{else}}
-                  {{t 'submit_a_request'}}
-                {{/if}}
-              </a>
+                </a>
+              {{/unless}}
             </div>
           </div>
         </div>
@@ -559,17 +565,19 @@
             {{/if}}
           </p>
         {{/if}}
-        <a class="button button-primary my-4" href="{{page_path 'new_request'}}" data-requires-auth>
-          {{#if settings.cta_element_link_text}}
-            {{#if settings.use_translations}}
-              {{dc settings.cta_element_link_text}}
+        {{#unless settings.show_submit_a_request_link}}
+          <a class="button button-primary my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+            {{#if settings.cta_element_link_text}}
+              {{#if settings.use_translations}}
+                {{dc settings.cta_element_link_text}}
+              {{else}}
+                {{settings.cta_element_link_text}}
+              {{/if}}
             {{else}}
-              {{settings.cta_element_link_text}}
+              {{t 'submit_a_request'}}
             {{/if}}
-          {{else}}
-            {{t 'submit_a_request'}}
-          {{/if}}
-        </a>
+          </a>
+        {{/unless}}
       </div>
     </script>
   {{/is~}}

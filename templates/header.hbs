@@ -206,19 +206,61 @@
             </button>
             <div class="z-dropdown mt-2 bg-white {{settings.nav_breakpoint}}:absolute {{settings.nav_breakpoint}}:border {{settings.nav_breakpoint}}:border-radius {{settings.nav_breakpoint}}:shadow-md {{settings.nav_breakpoint}}:min-w-dropdown" x-ref="menu" x-cloak x-show="isExpanded">
               <div class="py-2 {{settings.nav_breakpoint}}:font-size-sm {{settings.nav_breakpoint}}:text-left">
-                {{#my_profile class='dropdown-item'}}{{t 'profile'}}{{/my_profile}}
-                {{link "requests" class='dropdown-item'}}
-                {{#link "contributions" class='dropdown-item'}}{{t "activities"}}{{/link}}
-                {{contact_details class='dropdown-item line-height-normal cursor-pointer'}}
-                {{change_password class='dropdown-item line-height-normal cursor-pointer'}}
-                {{link "sign_out" class='dropdown-item'}}
+                {{#my_profile class='dropdown-item js-my-profile-link'}}{{t 'profile'}}{{/my_profile}}
+                {{link "sign_out" class='dropdown-item js-sign-out-link'}}
               </div>
             </div>
           </div>
+
+          <script type="text/javascript">
+            (function() {
+              function toggleProfileMenuItem() {
+                var isProfilePage = /\/hc\/[^/]+\/profiles\//.test(window.location.pathname);
+                var myProfileLink = document.querySelector('.js-my-profile-link');
+                if (!myProfileLink) return;
+                myProfileLink.style.display = isProfilePage ? 'none' : '';
+              }
+
+              function ensureSignOutMenuItem() {
+                var menu = document.querySelector('.user-menu .z-dropdown .py-2');
+                if (!menu) return;
+
+                var signOutLink = menu.querySelector('.js-sign-out-link');
+                var hasText = signOutLink && signOutLink.textContent && signOutLink.textContent.trim().length > 0;
+                if (hasText) return;
+
+                if (signOutLink) signOutLink.remove();
+
+                var fallback = document.createElement('a');
+                fallback.className = 'dropdown-item js-sign-out-link';
+                fallback.href = '/access/logout';
+                fallback.textContent = 'Sign out';
+
+                var myProfileLink = menu.querySelector('.js-my-profile-link');
+                if (myProfileLink && myProfileLink.nextSibling) {
+                  myProfileLink.parentNode.insertBefore(fallback, myProfileLink.nextSibling);
+                } else {
+                  menu.appendChild(fallback);
+                }
+              }
+
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  ensureSignOutMenuItem();
+                  toggleProfileMenuItem();
+                }, { once: true });
+              } else {
+                ensureSignOutMenuItem();
+                toggleProfileMenuItem();
+              }
+            })();
+          </script>
         {{else}}
-          {{#link "sign_in" class='nav-link'}}
-            {{t 'sign_in'}}
-          {{/link}}
+          {{#unless settings.show_submit_a_request_link}}
+            {{#link "sign_in" class='nav-link'}}
+              {{t 'sign_in'}}
+            {{/link}}
+          {{/unless}}
         {{/if~}}
 
       </div>
