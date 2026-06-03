@@ -188,21 +188,21 @@
           "type": "checkbox",
           "description": "instant_search_description",
           "label": "instant_search_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "scoped_kb_search",
           "type": "checkbox",
           "description": "scoped_knowledge_base_search_description",
           "label": "scoped_knowledge_base_search_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "scoped_community_search",
           "type": "checkbox",
           "description": "scoped_community_search_description",
           "label": "scoped_community_search_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "search_placeholder",
@@ -216,14 +216,14 @@
           "type": "checkbox",
           "description": "search_translucent_description",
           "label": "search_translucent_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "show_search_button",
           "type": "checkbox",
           "description": "show_search_button_description",
           "label": "show_search_button_label",
-          "value": "false"
+          "value": false
         }
       ]
     },
@@ -260,14 +260,14 @@
           "type": "checkbox",
           "description": "fixed_header_description",
           "label": "fixed_header_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "sticky_header",
           "type": "checkbox",
           "description": "sticky_header_description",
           "label": "sticky_header_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "nav_style",
@@ -320,7 +320,7 @@
           "type": "checkbox",
           "description": "full_width_header_description",
           "label": "full_width_header_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "header_height",
@@ -419,28 +419,28 @@
           "type": "checkbox",
           "description": "show_submit_a_request_link_description",
           "label": "show_submit_a_request_link_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "hide_sign_in_link",
           "type": "checkbox",
           "description": "hide_sign_in_link_description",
           "label": "hide_sign_in_link_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "hide_article_downvote_cta",
           "type": "checkbox",
           "description": "hide_article_downvote_cta_description",
           "label": "hide_article_downvote_cta_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_article_submit_request_cta",
           "type": "checkbox",
           "description": "show_article_submit_request_cta_description",
           "label": "show_article_submit_request_cta_label",
-          "value": "false"
+          "value": false
         }
       ]
     },
@@ -515,7 +515,7 @@
           "type": "checkbox",
           "description": "boxed_layout_description",
           "label": "boxed_layout_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "bg_color_boxed",
@@ -1710,7 +1710,7 @@
           "type": "checkbox",
           "description": "follow_section_description",
           "label": "follow_section_label",
-          "value": "false"
+          "value": false
         }
       ]
     },
@@ -1747,7 +1747,7 @@
           "type": "checkbox",
           "description": "follow_article_description",
           "label": "follow_article_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "table_of_contents_style",
@@ -1833,14 +1833,14 @@
           "type": "checkbox",
           "description": "show_article_voting_description",
           "label": "show_article_voting_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_article_sharing",
           "type": "checkbox",
           "description": "article_sharing_description",
           "label": "article_sharing_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "share_title",
@@ -1854,21 +1854,21 @@
           "type": "checkbox",
           "description": "recently_viewed_articles_description",
           "label": "recently_viewed_articles_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_related_articles",
           "type": "checkbox",
           "description": "related_articles_description",
           "label": "related_articles_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_article_comments",
           "type": "checkbox",
           "description": "article_comments_description",
           "label": "article_comments_label",
-          "value": "false"
+          "value": false
         },
         {
           "identifier": "article_sidebar",
@@ -1936,14 +1936,14 @@
           "type": "checkbox",
           "description": "enable_lightboxes_description",
           "label": "enable_lightboxes_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "enable_video_player",
           "type": "checkbox",
           "description": "enable_video_player_description",
           "label": "enable_video_player_label",
-          "value": "true"
+          "value": true
         }
       ]
     },
@@ -2013,28 +2013,28 @@
           "type": "checkbox",
           "description": "show_recent_activity_community_description",
           "label": "recent_activity_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_follow_topic",
           "type": "checkbox",
           "description": "follow_topic_description",
           "label": "follow_topic_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_follow_post",
           "type": "checkbox",
           "description": "follow_post_description",
           "label": "follow_post_label",
-          "value": "true"
+          "value": true
         },
         {
           "identifier": "show_post_sharing",
           "type": "checkbox",
           "description": "post_sharing_description",
           "label": "post_sharing_label",
-          "value": "true"
+          "value": true
         }
       ]
     },
@@ -2187,7 +2187,7 @@
           "type": "checkbox",
           "description": "show_credit_link_description",
           "label": "show_credit_link_label",
-          "value": "false"
+          "value": false
         }
       ]
     },
@@ -2199,7 +2199,7 @@
           "type": "checkbox",
           "description": "use_translations_description",
           "label": "use_translations_label",
-          "value": "false"
+          "value": false
         }
       ]
     }
