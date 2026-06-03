@@ -243,13 +243,9 @@
 
       {{! Article submit request callout }}
       {{#if settings.show_article_submit_cta}}
-        {{#if signed_in}}
-          {{#with article}}
-            <p class="my-5">
-              {{../request_callout}}
-            </p>
-          {{/with}}
-        {{/if}}
+        <p class="my-5">
+          {{request_callout}}
+        </p>
       {{/if}}
 
       {{! Recent and related articles }}
