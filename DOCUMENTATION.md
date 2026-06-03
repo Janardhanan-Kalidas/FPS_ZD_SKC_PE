@@ -54,6 +54,14 @@ This repository contains:
 1. Styling and behavior files.
 1. GitLab pipeline to validate, back up, deploy, and roll back.
 
+Project layout is intentionally separated:
+
+1. Runtime theme files stay at repository root (required by Zendesk import):
+   - `manifest.json`, `script.js`, `style.css`, `templates/`, `assets/`, `settings/`, `translations/`
+1. Supporting automation files are under `tooling/`:
+   - `tooling/scripts/` for deployment, validation, versioning, and rollback scripts
+1. Developer editor tasks stay in `.vscode/` for VS Code integration.
+
 Source control is GitLab only.
 Deployment is done from GitLab to Zendesk using Zendesk CLI (ZCLI).
 
@@ -128,7 +136,17 @@ If `themes:list` fails, run login again.
 From Command Palette (`Cmd+Shift+P`):
 
 1. Run `Tasks: Run Task`.
-1. Choose `Zendesk: Login` or `Zendesk: Preview Theme`.
+1. Choose one of these tasks based on your goal:
+   - `Zendesk: Login` for first-time authentication.
+   - `Zendesk: Preview Theme` for local preview while editing.
+   - `Zendesk: List Themes` to view existing Zendesk themes.
+   - `Zendesk: Deploy Any Branch (Interactive)` to pick branch, target brand, and deploy with confirmation prompts (runs `tooling/scripts/deploy-any-branch-interactive.sh`).
+   - `Zendesk: Deploy Current Branch (Non-Interactive)` to deploy the current checked-out branch directly using the default brand ID (runs `tooling/scripts/deploy-current-branch-noninteractive.sh`).
+
+Note for new developers:
+
+1. Use `Zendesk: Deploy Any Branch (Interactive)` if you are not sure which branch or brand to deploy.
+1. Use `Zendesk: Deploy Current Branch (Non-Interactive)` only when you are sure you are on the correct branch and target brand.
 
 ---
 
@@ -255,6 +273,27 @@ Deployment is blocked if:
 1. Confirmation variable is missing or wrong.
 1. Backup artifact does not exist in pipeline.
 1. Required Zendesk variables are missing.
+
+### VS Code Deployment Tasks (Recommended for Junior Developers)
+
+The repository includes two deployment tasks in `.vscode/tasks.json`:
+
+1. `Zendesk: Deploy Any Branch (Interactive)`
+   - Best for guided deployment.
+   - Lets you select branch and brand interactively.
+   - Asks for final deployment confirmation.
+
+1. `Zendesk: Deploy Current Branch (Non-Interactive)`
+   - Best for repeated deployment to the same target.
+   - Uses the currently checked-out branch.
+   - Uses default brand ID `36275984782609` unless `ZD_BRAND_ID` is set.
+   - Fails if uncommitted changes exist.
+
+Example overriding brand ID before running the non-interactive task:
+
+```bash
+export ZD_BRAND_ID=36275984782609
+```
 
 ---
 

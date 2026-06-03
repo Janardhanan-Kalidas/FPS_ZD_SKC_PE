@@ -3,14 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "version:theme": "node scripts/version-theme.mjs",
-    "version:theme:dry": "node scripts/version-theme.mjs --dry-run",
-    "version:theme:patch": "node scripts/version-theme.mjs --release-as patch",
-    "version:theme:minor": "node scripts/version-theme.mjs --release-as minor",
-    "version:theme:major": "node scripts/version-theme.mjs --release-as major",
-    "validate:theme": "bash scripts/validate-theme.sh",
-    "backup:theme": "bash scripts/backup-zendesk-theme.sh",
-    "deploy:theme": "bash scripts/deploy-zendesk-theme.sh",
-    "rollback:theme": "bash scripts/rollback-zendesk-theme.sh"
+    "version:theme": "node tooling/scripts/version-theme.mjs",
+    "version:theme:dry": "node tooling/scripts/version-theme.mjs --dry-run",
+    "version:theme:patch": "node tooling/scripts/version-theme.mjs --release-as patch",
+    "version:theme:minor": "node tooling/scripts/version-theme.mjs --release-as minor",
+    "version:theme:major": "node tooling/scripts/version-theme.mjs --release-as major",
+    "validate:theme": "bash tooling/scripts/validate-theme.sh",
+    "backup:theme": "bash tooling/scripts/backup-zendesk-theme.sh",
+    "deploy:theme": "bash tooling/scripts/deploy-zendesk-theme.sh",
+    "rollback:theme": "bash tooling/scripts/rollback-zendesk-theme.sh"
   }
 }
