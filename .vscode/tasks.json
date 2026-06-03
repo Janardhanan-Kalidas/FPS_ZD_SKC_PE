@@ -70,7 +70,7 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "tooling/scripts/deploy-any-branch-interactive.sh"
+        "tooling/scripts/deploy-current-branch-noninteractive.sh"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

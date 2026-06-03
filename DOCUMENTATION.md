@@ -32,6 +32,8 @@ Do not skip sections.
 1. Added production rollback instructions with explicit confirmation variables.
 1. Removed DNS troubleshooting content to keep troubleshooting focused on CI/CD and credential issues.
 1. Added CI/CD safety guidance for backup-first deploy and confirmation gates.
+1. Updated current-branch VS Code deployment task to a 4-step flow that updates an existing Zendesk theme by `themeId` instead of creating a new imported theme each run.
+1. Added `tooling/config/brand-theme-map.json` for brand name + brandId + themeId selection.
 
 ---
 
@@ -141,12 +143,12 @@ From Command Palette (`Cmd+Shift+P`):
    - `Zendesk: Preview Theme` for local preview while editing.
    - `Zendesk: List Themes` to view existing Zendesk themes.
    - `Zendesk: Deploy Any Branch (Interactive)` to pick branch, target brand, and deploy with confirmation prompts (runs `tooling/scripts/deploy-any-branch-interactive.sh`).
-   - `Zendesk: Deploy Current Branch (Non-Interactive)` to deploy the current checked-out branch directly using the default brand ID (runs `tooling/scripts/deploy-current-branch-noninteractive.sh`).
+   - `Zendesk: Deploy Current Branch (Non-Interactive)` to deploy the current checked-out branch with a minimal 4-step flow (runs `tooling/scripts/deploy-current-branch-noninteractive.sh`).
 
 Note for new developers:
 
 1. Use `Zendesk: Deploy Any Branch (Interactive)` if you are not sure which branch or brand to deploy.
-1. Use `Zendesk: Deploy Current Branch (Non-Interactive)` only when you are sure you are on the correct branch and target brand.
+1. Use `Zendesk: Deploy Current Branch (Non-Interactive)` as the default day-to-day deployment task for branch updates.
 
 ---
 
@@ -285,11 +287,33 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
    - Asks for final deployment confirmation.
 
 1. `Zendesk: Deploy Current Branch (Non-Interactive)`
-   - Now runs the same interactive deployment flow as above.
-   - Prompts for branch, brand, and theme name before import.
+   - Uses minimal 4-step flow:
+     1. Auto-select current branch.
+     1. Select Zendesk theme target by one of these options:
+        - mapped theme from `tooling/config/brand-theme-map.json`
+        - auto-fetch theme list from Zendesk and enter `themeId`
+        - manual `themeId` entry
+     1. Edit default theme name (max 50 chars).
+     1. Select brand option (brand name + brandId), confirm selected `themeId`, then final yes/no confirmation.
+   - Deploys using `zcli themes:update --themeId` so later deployments on the same branch update the existing target theme instead of importing a new one.
    - Keeps existing task label for compatibility with older team habits.
 
-Default theme name format used before import:
+Brand and theme mapping file:
+
+`tooling/config/brand-theme-map.json`
+
+Store entries for each brand and target theme you want to update:
+
+1. `brands[]`: `key`, `name`, `brandId`
+1. `themes[]`: `key`, `name`, `themeId`, `brandKey`, optional `default`
+
+Important:
+
+1. Replace placeholder `REPLACE_WITH_THEME_ID` with the actual Zendesk theme ID.
+1. If mapped `themeId` is missing, choose auto-fetch/manual mode in Step 2 and enter a valid `themeId`.
+1. Deployment asks you to confirm the resolved `themeId` before the final deploy confirmation.
+
+Default theme name format used before deployment:
 
 `Hilti [SKC] - PE FPSKB-xxx <current-version> <utc-timestamp>`
 
@@ -302,12 +326,6 @@ Examples:
 
 1. `Hilti [SKC] - PE FPSKB-201 0.5.8 2606031455`
 1. `Hilti [SKC] - PE FPSKB-117 1.2.0 2606031500`
-
-Example overriding brand ID before running the non-interactive task:
-
-```bash
-export ZD_BRAND_ID=36275984782609
-```
 
 Example overriding theme name for non-interactive deployment:
 

@@ -1,0 +1,19 @@
+{
+  "defaultBrandKey": "pe-support",
+  "brands": [
+    {
+      "key": "pe-support",
+      "name": "PE Support",
+      "brandId": "36275984782609"
+    }
+  ],
+  "themes": [
+    {
+      "key": "pe-fpskb-live",
+      "name": "PE FPSKB Live",
+      "themeId": "REPLACE_WITH_THEME_ID",
+      "brandKey": "pe-support",
+      "default": true
+    }
+  ]
+}
