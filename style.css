@@ -1767,7 +1767,8 @@ fieldset:disabled a.button {
 
 #article-submit-request-callout .article-submit-request-link {
   color: #d2051e;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
   text-decoration: none;
 }
 
