@@ -16,6 +16,17 @@ if [[ ! -f "manifest.json" ]]; then
   exit 1
 fi
 
+MAX_THEME_NAME_LEN=50
+normalize_theme_name() {
+  local raw="$1"
+  local name
+  name="$(printf '%s' "$raw" | tr -s ' ' | sed 's/^ //; s/ $//')"
+  if [[ ${#name} -gt ${MAX_THEME_NAME_LEN} ]]; then
+    name="${name:0:${MAX_THEME_NAME_LEN}}"
+  fi
+  printf '%s' "$name"
+}
+
 theme_version="$(node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.version||'unknown'));")"
 
 echo "Step 1/5: Current branch and local status"
@@ -66,9 +77,12 @@ echo "Step 5/6: Choose theme name"
 branch_key="$(echo "$(git branch --show-current)" | grep -Eo 'FPSKB-[0-9]+' | head -n 1 || true)"
 branch_label="${branch_key:-$(git branch --show-current)}"
 timestamp="$(date -u +"%Y%m%d-%H%M%SZ")"
-default_theme_name="Hilti [SKC] - PE Branch Name - ${branch_label} - ${theme_version} - ${timestamp}"
-read -r -p "Enter theme name [${default_theme_name}]: " theme_name
+timestamp="$(date -u +"%y%m%d%H%M")"
+default_theme_name="Hilti [SKC] - PE ${branch_label} ${theme_version} ${timestamp}"
+default_theme_name="$(normalize_theme_name "$default_theme_name")"
+read -r -p "Enter theme name (max ${MAX_THEME_NAME_LEN} chars) [${default_theme_name}]: " theme_name
 theme_name="${theme_name:-$default_theme_name}"
+theme_name="$(normalize_theme_name "$theme_name")"
 
 echo
 echo "Step 6/6: Confirm deployment"
@@ -79,6 +93,7 @@ else
   echo "Brand ID: interactive selection"
 fi
 echo "Theme name: $theme_name"
+echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 read -r -p "Type DEPLOY to continue: " deploy_confirm
 if [[ "$deploy_confirm" != "DEPLOY" ]]; then
   echo "Deployment cancelled."

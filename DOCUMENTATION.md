@@ -285,20 +285,23 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
    - Asks for final deployment confirmation.
 
 1. `Zendesk: Deploy Current Branch (Non-Interactive)`
-   - Best for repeated deployment to the same target.
-   - Uses the currently checked-out branch.
-   - Uses default brand ID `36275984782609` unless `ZD_BRAND_ID` is set.
-   - Uses default theme name format unless `ZD_THEME_NAME` is set.
-   - Fails if uncommitted changes exist.
+   - Now runs the same interactive deployment flow as above.
+   - Prompts for branch, brand, and theme name before import.
+   - Keeps existing task label for compatibility with older team habits.
 
 Default theme name format used before import:
 
-`Hilti [SKC] - PE Branch Name - FPSKB-xxx - <current-version> - <utc-timestamp>`
+`Hilti [SKC] - PE FPSKB-xxx <current-version> <utc-timestamp>`
+
+Zendesk limit applied automatically:
+
+1. Theme name is normalized and capped to 50 characters.
+1. If you enter a longer custom name, it is truncated safely before import.
 
 Examples:
 
-1. `Hilti [SKC] - PE Branch Name - FPSKB-201 - 0.5.8 - 20260603-145500Z`
-1. `Hilti [SKC] - PE Branch Name - FPSKB-117 - 1.2.0 - 20260603-150010Z`
+1. `Hilti [SKC] - PE FPSKB-201 0.5.8 2606031455`
+1. `Hilti [SKC] - PE FPSKB-117 1.2.0 2606031500`
 
 Example overriding brand ID before running the non-interactive task:
 

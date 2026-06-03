@@ -20,6 +20,17 @@ if [[ ! -f "manifest.json" ]]; then
   exit 1
 fi
 
+MAX_THEME_NAME_LEN=50
+normalize_theme_name() {
+  local raw="$1"
+  local name
+  name="$(printf '%s' "$raw" | tr -s ' ' | sed 's/^ //; s/ $//')"
+  if [[ ${#name} -gt ${MAX_THEME_NAME_LEN} ]]; then
+    name="${name:0:${MAX_THEME_NAME_LEN}}"
+  fi
+  printf '%s' "$name"
+}
+
 current_branch="$(git branch --show-current)"
 if [[ -z "$current_branch" ]]; then
   echo "Unable to detect current git branch."
@@ -35,13 +46,16 @@ fi
 theme_version="$(node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.version||'unknown'));")"
 branch_key="$(echo "$current_branch" | grep -Eo 'FPSKB-[0-9]+' | head -n 1 || true)"
 branch_label="${branch_key:-$current_branch}"
-timestamp="$(date -u +"%Y%m%d-%H%M%SZ")"
-default_theme_name="Hilti [SKC] - PE Branch Name - ${branch_label} - ${theme_version} - ${timestamp}"
+timestamp="$(date -u +"%y%m%d%H%M")"
+default_theme_name="Hilti [SKC] - PE ${branch_label} ${theme_version} ${timestamp}"
+default_theme_name="$(normalize_theme_name "$default_theme_name")"
 theme_name="${ZD_THEME_NAME:-$default_theme_name}"
+theme_name="$(normalize_theme_name "$theme_name")"
 
 echo "Deploying current branch: ${current_branch}"
 echo "Target brandId: ${BRAND_ID}"
 echo "Theme name: ${theme_name}"
+echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 echo "Latest commit: $(git --no-pager log -1 --pretty=format:'%h %s')"
 
 echo "Listing themes for reference..."

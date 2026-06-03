@@ -20,6 +20,17 @@ if [[ ! -f "manifest.json" ]]; then
   exit 1
 fi
 
+MAX_THEME_NAME_LEN=50
+normalize_theme_name() {
+  local raw="$1"
+  local name
+  name="$(printf '%s' "$raw" | tr -s ' ' | sed 's/^ //; s/ $//')"
+  if [[ ${#name} -gt ${MAX_THEME_NAME_LEN} ]]; then
+    name="${name:0:${MAX_THEME_NAME_LEN}}"
+  fi
+  printf '%s' "$name"
+}
+
 # Require at least one backup artifact generated in this pipeline before deploy.
 if ! ls backups/*.zip >/dev/null 2>&1; then
   echo "Deploy blocked: no backup artifact found in backups/."
@@ -33,9 +44,11 @@ theme_version="$(node -e "const fs=require('fs');const m=JSON.parse(fs.readFileS
 branch_name="${CI_COMMIT_BRANCH:-unknown}"
 branch_key="$(echo "$branch_name" | grep -Eo 'FPSKB-[0-9]+' | head -n 1 || true)"
 branch_label="${branch_key:-$branch_name}"
-timestamp="$(date -u +"%Y%m%d-%H%M%SZ")"
-default_theme_name="Hilti [SKC] - PE Branch Name - ${branch_label} - ${theme_version} - ${timestamp}"
+timestamp="$(date -u +"%y%m%d%H%M")"
+default_theme_name="Hilti [SKC] - PE ${branch_label} ${theme_version} ${timestamp}"
+default_theme_name="$(normalize_theme_name "$default_theme_name")"
 theme_name="${ZD_THEME_NAME:-$default_theme_name}"
+theme_name="$(normalize_theme_name "$theme_name")"
 
 original_manifest="$(mktemp)"
 cp manifest.json "$original_manifest"
@@ -54,6 +67,7 @@ fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
 echo "Theme name for import: ${theme_name}"
+echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 
 # NOTE: ZCLI option names may differ by version.
 # Current expected command: themes:import with credentials and theme root path.
