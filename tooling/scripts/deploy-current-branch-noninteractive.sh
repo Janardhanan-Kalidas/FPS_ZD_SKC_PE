@@ -74,6 +74,29 @@ for (const theme of themes) {
     isDefault,
   ].join('|'));
 }
+NODE
+}
+
+get_theme_name_from_list_output() {
+  local list_output="$1"
+  local target_theme_id="$2"
+  printf '%s' "$list_output" | node - "$target_theme_id" <<'NODE'
+const fs = require('fs');
+const targetThemeId = process.argv[2];
+const input = fs.readFileSync(0, 'utf8');
+
+const objectMatches = input.match(/\{[^}]*\}/g) || [];
+for (const objectText of objectMatches) {
+  const idMatch = objectText.match(/id:\s*'([^']+)'/);
+  const nameMatch = objectText.match(/name:\s*'([^']+)'/);
+  if (!idMatch || !nameMatch) continue;
+  if (idMatch[1] === targetThemeId) {
+    process.stdout.write(nameMatch[1]);
+    process.exit(0);
+  }
+}
+NODE
+}
 
 get_auto_theme_for_branch() {
   local target_brand_key="$1"
@@ -190,11 +213,15 @@ theme_name="$(normalize_theme_name "$theme_name")"
 theme_name_is_custom="false"
 
 echo
-echo "Step 3/4: Edit theme name (max ${MAX_THEME_NAME_LEN})"
-read -r -p "Theme name [${theme_name}]: " input_theme_name
-if [[ -n "$input_theme_name" ]]; then
-  theme_name="$(normalize_theme_name "$input_theme_name")"
-  theme_name_is_custom="true"
+if [[ "$deploy_mode" == "1" ]]; then
+  echo "Step 3/4: Edit theme name (max ${MAX_THEME_NAME_LEN})"
+  read -r -p "Theme name [${theme_name}]: " input_theme_name
+  if [[ -n "$input_theme_name" ]]; then
+    theme_name="$(normalize_theme_name "$input_theme_name")"
+    theme_name_is_custom="true"
+  fi
+else
+  echo "Step 3/4: Theme name will be auto-fetched from Zendesk in update mode"
 fi
 
 echo
@@ -238,7 +265,8 @@ if [[ "$deploy_mode" == "2" ]]; then
   echo
   echo "Update mode: auto-resolve theme from branch, then confirm"
   echo "Listing existing Zendesk themes for reference..."
-  zcli themes:list || true
+  ZENDESK_THEME_LIST_OUTPUT="$(zcli themes:list 2>&1 || true)"
+  echo "$ZENDESK_THEME_LIST_OUTPUT"
 
   auto_theme_row="$(get_auto_theme_for_branch "$selected_brand_key" "$current_branch" "$branch_key" || true)"
   if [[ -n "$auto_theme_row" ]]; then
@@ -260,8 +288,14 @@ if [[ "$deploy_mode" == "2" ]]; then
   fi
 
   if [[ -n "$selected_theme_id" && "$theme_name_is_custom" != "true" && -z "${ZD_THEME_NAME:-}" ]]; then
-    theme_name="$(normalize_theme_name "$selected_theme_name")"
-    echo "Theme name auto-set from resolved theme: ${theme_name}"
+    auto_theme_name="$(get_theme_name_from_list_output "$ZENDESK_THEME_LIST_OUTPUT" "$selected_theme_id" || true)"
+    if [[ -n "$auto_theme_name" ]]; then
+      theme_name="$(normalize_theme_name "$auto_theme_name")"
+      echo "Theme name auto-fetched from Zendesk: ${theme_name}"
+    else
+      theme_name="$(normalize_theme_name "$selected_theme_name")"
+      echo "Theme name auto-set from configured mapping: ${theme_name}"
+    fi
   fi
 
   if [[ -z "$selected_theme_id" ]]; then
@@ -307,6 +341,17 @@ if [[ "$deploy_mode" == "2" ]]; then
       selected_theme_name="${selected_theme_name:-Manual themeId}"
       selected_theme_key="manual"
       selected_theme_brand_key="$selected_brand_key"
+    fi
+  fi
+
+  if [[ "$theme_name_is_custom" != "true" && -z "${ZD_THEME_NAME:-}" && -n "$selected_theme_id" ]]; then
+    auto_theme_name="$(get_theme_name_from_list_output "$ZENDESK_THEME_LIST_OUTPUT" "$selected_theme_id" || true)"
+    if [[ -n "$auto_theme_name" ]]; then
+      theme_name="$(normalize_theme_name "$auto_theme_name")"
+      echo "Theme name auto-fetched from Zendesk: ${theme_name}"
+    elif [[ -n "$selected_theme_name" ]]; then
+      theme_name="$(normalize_theme_name "$selected_theme_name")"
+      echo "Theme name auto-set from selected theme: ${theme_name}"
     fi
   fi
 

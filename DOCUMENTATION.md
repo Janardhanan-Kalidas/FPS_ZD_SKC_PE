@@ -292,7 +292,8 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
      1. Choose deployment type:
         - Option 1: New theme deploy
         - Option 2: Update existing theme
-     1. Edit default theme name (max 50 chars).
+         1. For Option 1 only, edit default theme name (max 50 chars).
+         1. For Option 2, theme name is auto-fetched from Zendesk by selected `themeId`.
      1. Select brand option (brand name + brandId).
    - If Option 1 is selected, script imports a new theme using `zcli themes:import`.
    - If Option 2 is selected, script first tries to auto-resolve existing `themeId` and theme name based on current branch + selected brand and asks for confirmation.
