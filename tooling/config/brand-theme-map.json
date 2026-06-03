@@ -12,6 +12,7 @@
       "key": "pe-fpskb-live",
       "name": "PE FPSKB Live",
       "themeId": "REPLACE_WITH_THEME_ID",
+      "branchKey": "FPSKB-117",
       "brandKey": "pe-support",
       "default": true
     }

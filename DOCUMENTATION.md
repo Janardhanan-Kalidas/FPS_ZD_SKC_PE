@@ -295,7 +295,8 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
      1. Edit default theme name (max 50 chars).
      1. Select brand option (brand name + brandId).
    - If Option 1 is selected, script imports a new theme using `zcli themes:import`.
-   - If Option 2 is selected, script asks for an existing `themeId` to update and then runs `zcli themes:update --themeId`.
+   - If Option 2 is selected, script first tries to auto-resolve existing `themeId` and theme name based on current branch + selected brand and asks for confirmation.
+   - If auto-resolved theme is not accepted or not found, script asks for an existing `themeId` to update and then runs `zcli themes:update --themeId`.
    - For Option 2, script lists existing themes from Zendesk for reference before you confirm the final `themeId`.
    - Keeps existing task label for compatibility with older team habits.
 
@@ -307,6 +308,10 @@ Store entries for each brand and target theme you want to update:
 
 1. `brands[]`: `key`, `name`, `brandId`
 1. `themes[]`: `key`, `name`, `themeId`, `brandKey`, optional `default`
+1. Optional branch auto-match fields on `themes[]`:
+   - `branch`: exact branch name (example: `FPSKB-201-auth-ui-toggle`)
+   - `branchKey`: issue key extracted from branch (example: `FPSKB-201`)
+   - `branchPattern`: regex to match branch name (example: `FPSKB-201|auth-ui-toggle`)
 
 Important:
 

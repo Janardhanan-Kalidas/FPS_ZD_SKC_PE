@@ -74,6 +74,69 @@ for (const theme of themes) {
     isDefault,
   ].join('|'));
 }
+
+get_auto_theme_for_branch() {
+  local target_brand_key="$1"
+  local current_branch_name="$2"
+  local current_branch_key="$3"
+  node - "$CONFIG_FILE" "$target_brand_key" "$current_branch_name" "$current_branch_key" <<'NODE'
+const fs = require('fs');
+const path = process.argv[2];
+const brandKey = process.argv[3] || '';
+const branchName = process.argv[4] || '';
+const branchKey = process.argv[5] || '';
+const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+const themes = Array.isArray(data.themes) ? data.themes : [];
+
+function hasValidThemeId(theme) {
+  return theme.themeId && theme.themeId !== 'REPLACE_WITH_THEME_ID';
+}
+
+function branchMatch(theme) {
+  if (!hasValidThemeId(theme)) return false;
+  if (brandKey && theme.brandKey !== brandKey) return false;
+
+  if (theme.branch && theme.branch === branchName) return true;
+  if (theme.branchKey && branchKey && theme.branchKey === branchKey) return true;
+
+  if (theme.branchPattern && branchName) {
+    try {
+      if (new RegExp(theme.branchPattern, 'i').test(branchName)) return true;
+    } catch (error) {
+      // Ignore invalid regex in config entry.
+    }
+  }
+
+  return false;
+}
+
+const exact = themes.find(branchMatch);
+if (exact) {
+  console.log([
+    exact.key || '',
+    exact.name || '',
+    exact.themeId || '',
+    exact.brandKey || '',
+    'exact',
+  ].join('|'));
+  process.exit(0);
+}
+
+const fallback = themes.find((theme) => {
+  if (!hasValidThemeId(theme)) return false;
+  if (brandKey && theme.brandKey !== brandKey) return false;
+  return Boolean(theme.default);
+});
+
+if (fallback) {
+  console.log([
+    fallback.key || '',
+    fallback.name || '',
+    fallback.themeId || '',
+    fallback.brandKey || '',
+    'default',
+  ].join('|'));
+}
 NODE
 }
 
@@ -124,12 +187,14 @@ default_theme_name="Hilti [SKC] - PE ${branch_label} ${theme_version} ${timestam
 default_theme_name="$(normalize_theme_name "$default_theme_name")"
 theme_name="${ZD_THEME_NAME:-$default_theme_name}"
 theme_name="$(normalize_theme_name "$theme_name")"
+theme_name_is_custom="false"
 
 echo
 echo "Step 3/4: Edit theme name (max ${MAX_THEME_NAME_LEN})"
 read -r -p "Theme name [${theme_name}]: " input_theme_name
 if [[ -n "$input_theme_name" ]]; then
   theme_name="$(normalize_theme_name "$input_theme_name")"
+  theme_name_is_custom="true"
 fi
 
 echo
@@ -171,52 +236,78 @@ selected_theme_brand_key=""
 
 if [[ "$deploy_mode" == "2" ]]; then
   echo
-  echo "Update mode: choose existing theme ID"
+  echo "Update mode: auto-resolve theme from branch, then confirm"
   echo "Listing existing Zendesk themes for reference..."
   zcli themes:list || true
 
-  BRAND_THEME_ROWS=()
-  while IFS= read -r line; do
-    BRAND_THEME_ROWS+=("$line")
-  done < <(get_theme_rows_for_brand "$selected_brand_key")
-  if [[ ${#BRAND_THEME_ROWS[@]} -gt 0 ]]; then
-    echo
-    echo "Configured existing theme IDs for selected brand:"
-    default_theme_idx=1
-    for i in "${!BRAND_THEME_ROWS[@]}"; do
-      IFS='|' read -r theme_key theme_display_name theme_id theme_brand_key theme_is_default <<<"${BRAND_THEME_ROWS[$i]}"
-      echo "$((i + 1)). ${theme_display_name} | themeId=${theme_id}"
-      if [[ "$theme_is_default" == "true" ]]; then
-        default_theme_idx=$((i + 1))
+  auto_theme_row="$(get_auto_theme_for_branch "$selected_brand_key" "$current_branch" "$branch_key" || true)"
+  if [[ -n "$auto_theme_row" ]]; then
+    IFS='|' read -r auto_theme_key auto_theme_name auto_theme_id auto_theme_brand_key auto_theme_match <<<"$auto_theme_row"
+    if [[ -n "$auto_theme_id" ]]; then
+      echo
+      echo "Auto-resolved theme from branch '${current_branch}':"
+      echo "Theme target: ${auto_theme_name}"
+      echo "Theme ID: ${auto_theme_id}"
+      echo "Match type: ${auto_theme_match}"
+      read -r -p "Use this auto-resolved theme? (yes/no): " use_auto_theme
+      if [[ "$use_auto_theme" == "yes" ]]; then
+        selected_theme_key="$auto_theme_key"
+        selected_theme_name="$auto_theme_name"
+        selected_theme_id="$auto_theme_id"
+        selected_theme_brand_key="$auto_theme_brand_key"
       fi
-    done
-    echo "0. Enter themeId manually"
+    fi
+  fi
 
-    while true; do
-      read -r -p "Select existing theme [${default_theme_idx}]: " selected_theme_idx
-      selected_theme_idx="${selected_theme_idx:-$default_theme_idx}"
+  if [[ -n "$selected_theme_id" && "$theme_name_is_custom" != "true" && -z "${ZD_THEME_NAME:-}" ]]; then
+    theme_name="$(normalize_theme_name "$selected_theme_name")"
+    echo "Theme name auto-set from resolved theme: ${theme_name}"
+  fi
 
-      if [[ "$selected_theme_idx" == "0" ]]; then
-        read -r -p "Enter existing themeId: " selected_theme_id
-        selected_theme_name="Manual themeId"
-        selected_theme_key="manual"
-        selected_theme_brand_key="$selected_brand_key"
-        break
-      fi
+  if [[ -z "$selected_theme_id" ]]; then
+    BRAND_THEME_ROWS=()
+    while IFS= read -r line; do
+      BRAND_THEME_ROWS+=("$line")
+    done < <(get_theme_rows_for_brand "$selected_brand_key")
+    if [[ ${#BRAND_THEME_ROWS[@]} -gt 0 ]]; then
+      echo
+      echo "Configured existing theme IDs for selected brand:"
+      default_theme_idx=1
+      for i in "${!BRAND_THEME_ROWS[@]}"; do
+        IFS='|' read -r theme_key theme_display_name theme_id theme_brand_key theme_is_default <<<"${BRAND_THEME_ROWS[$i]}"
+        echo "$((i + 1)). ${theme_display_name} | themeId=${theme_id}"
+        if [[ "$theme_is_default" == "true" ]]; then
+          default_theme_idx=$((i + 1))
+        fi
+      done
+      echo "0. Enter themeId manually"
 
-      if [[ "$selected_theme_idx" =~ ^[0-9]+$ ]] && (( selected_theme_idx >= 1 && selected_theme_idx <= ${#BRAND_THEME_ROWS[@]} )); then
-        IFS='|' read -r selected_theme_key selected_theme_name selected_theme_id selected_theme_brand_key _ <<<"${BRAND_THEME_ROWS[$((selected_theme_idx - 1))]}"
-        break
-      fi
+      while true; do
+        read -r -p "Select existing theme [${default_theme_idx}]: " selected_theme_idx
+        selected_theme_idx="${selected_theme_idx:-$default_theme_idx}"
 
-      echo "Please choose a valid option."
-    done
-  else
-    read -r -p "Enter existing themeId to update: " selected_theme_id
-    read -r -p "Enter theme label (optional): " selected_theme_name
-    selected_theme_name="${selected_theme_name:-Manual themeId}"
-    selected_theme_key="manual"
-    selected_theme_brand_key="$selected_brand_key"
+        if [[ "$selected_theme_idx" == "0" ]]; then
+          read -r -p "Enter existing themeId: " selected_theme_id
+          selected_theme_name="Manual themeId"
+          selected_theme_key="manual"
+          selected_theme_brand_key="$selected_brand_key"
+          break
+        fi
+
+        if [[ "$selected_theme_idx" =~ ^[0-9]+$ ]] && (( selected_theme_idx >= 1 && selected_theme_idx <= ${#BRAND_THEME_ROWS[@]} )); then
+          IFS='|' read -r selected_theme_key selected_theme_name selected_theme_id selected_theme_brand_key _ <<<"${BRAND_THEME_ROWS[$((selected_theme_idx - 1))]}"
+          break
+        fi
+
+        echo "Please choose a valid option."
+      done
+    else
+      read -r -p "Enter existing themeId to update: " selected_theme_id
+      read -r -p "Enter theme label (optional): " selected_theme_name
+      selected_theme_name="${selected_theme_name:-Manual themeId}"
+      selected_theme_key="manual"
+      selected_theme_brand_key="$selected_brand_key"
+    fi
   fi
 
   if [[ -z "$selected_theme_id" ]]; then
