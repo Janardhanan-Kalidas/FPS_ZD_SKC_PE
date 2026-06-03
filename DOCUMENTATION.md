@@ -289,13 +289,14 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
 1. `Zendesk: Deploy Current Branch (Non-Interactive)`
    - Uses minimal 4-step flow:
      1. Auto-select current branch.
-     1. Select Zendesk theme target by one of these options:
-        - mapped theme from `tooling/config/brand-theme-map.json`
-        - auto-fetch theme list from Zendesk and enter `themeId`
-        - manual `themeId` entry
+     1. Choose deployment type:
+        - Option 1: New theme deploy
+        - Option 2: Update existing theme
      1. Edit default theme name (max 50 chars).
-     1. Select brand option (brand name + brandId), confirm selected `themeId`, then final yes/no confirmation.
-   - Deploys using `zcli themes:update --themeId` so later deployments on the same branch update the existing target theme instead of importing a new one.
+     1. Select brand option (brand name + brandId).
+   - If Option 1 is selected, script imports a new theme using `zcli themes:import`.
+   - If Option 2 is selected, script asks for an existing `themeId` to update and then runs `zcli themes:update --themeId`.
+   - For Option 2, script lists existing themes from Zendesk for reference before you confirm the final `themeId`.
    - Keeps existing task label for compatibility with older team habits.
 
 Brand and theme mapping file:
@@ -310,8 +311,8 @@ Store entries for each brand and target theme you want to update:
 Important:
 
 1. Replace placeholder `REPLACE_WITH_THEME_ID` with the actual Zendesk theme ID.
-1. If mapped `themeId` is missing, choose auto-fetch/manual mode in Step 2 and enter a valid `themeId`.
-1. Deployment asks you to confirm the resolved `themeId` before the final deploy confirmation.
+1. For update mode, if mapped `themeId` is missing, enter an existing `themeId` manually from the Zendesk list shown during deployment.
+1. Update mode asks you to confirm the resolved `themeId` before the final deploy confirmation.
 
 Default theme name format used before deployment:
 

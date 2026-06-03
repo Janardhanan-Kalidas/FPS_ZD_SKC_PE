@@ -33,25 +33,6 @@ normalize_theme_name() {
   printf '%s' "$name"
 }
 
-get_theme_rows() {
-  node - "$CONFIG_FILE" <<'NODE'
-const fs = require('fs');
-const path = process.argv[2];
-const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-const themes = Array.isArray(data.themes) ? data.themes : [];
-for (const theme of themes) {
-  const isDefault = theme.default ? 'true' : 'false';
-  console.log([
-    theme.key || '',
-    theme.name || '',
-    theme.themeId || '',
-    theme.brandKey || '',
-    isDefault,
-  ].join('|'));
-}
-NODE
-}
-
 get_brand_rows() {
   node - "$CONFIG_FILE" <<'NODE'
 const fs = require('fs');
@@ -65,6 +46,31 @@ for (const brand of brands) {
     brand.key || '',
     brand.name || '',
     brand.brandId || '',
+    isDefault,
+  ].join('|'));
+}
+NODE
+}
+
+get_theme_rows_for_brand() {
+  local target_brand_key="$1"
+  node - "$CONFIG_FILE" "$target_brand_key" <<'NODE'
+const fs = require('fs');
+const path = process.argv[2];
+const targetBrandKey = process.argv[3];
+const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+const themes = Array.isArray(data.themes) ? data.themes : [];
+for (const theme of themes) {
+  const matchesBrand = !targetBrandKey || theme.brandKey === targetBrandKey;
+  if (!matchesBrand) continue;
+  const hasValidThemeId = theme.themeId && theme.themeId !== 'REPLACE_WITH_THEME_ID';
+  if (!hasValidThemeId) continue;
+  const isDefault = theme.default ? 'true' : 'false';
+  console.log([
+    theme.key || '',
+    theme.name || '',
+    theme.themeId || '',
+    theme.brandKey || '',
     isDefault,
   ].join('|'));
 }
@@ -105,61 +111,10 @@ echo "Current branch: ${current_branch}"
 echo "Latest commit: $(git --no-pager log -1 --pretty=format:'%h %s')"
 echo
 
-echo "Step 2/4: Zendesk theme selection"
-echo "1. Use configured mapping (tooling/config/brand-theme-map.json)"
-echo "2. Auto-fetch from Zendesk and type Theme ID"
-echo "3. Enter Theme ID manually"
-theme_source_mode="$(pick_menu_index "Choose theme source" "1" "3")"
-
-selected_theme_key=""
-selected_theme_name=""
-selected_theme_id=""
-selected_theme_brand_key=""
-
-if [[ "$theme_source_mode" == "1" ]]; then
-  mapfile -t THEME_ROWS < <(get_theme_rows)
-  if [[ ${#THEME_ROWS[@]} -eq 0 ]]; then
-    echo "No themes found in tooling/config/brand-theme-map.json"
-    exit 1
-  fi
-
-  default_theme_idx=1
-  for i in "${!THEME_ROWS[@]}"; do
-    IFS='|' read -r theme_key theme_display_name theme_id theme_brand_key theme_is_default <<<"${THEME_ROWS[$i]}"
-    echo "$((i + 1)). ${theme_display_name} | themeId=${theme_id} | brandKey=${theme_brand_key}"
-    if [[ "$theme_is_default" == "true" ]]; then
-      default_theme_idx=$((i + 1))
-    fi
-  done
-
-  selected_theme_idx="$(pick_menu_index "Select mapped theme" "$default_theme_idx" "${#THEME_ROWS[@]}")"
-  IFS='|' read -r selected_theme_key selected_theme_name selected_theme_id selected_theme_brand_key _ <<<"${THEME_ROWS[$((selected_theme_idx - 1))]}"
-
-  if [[ -z "$selected_theme_id" || "$selected_theme_id" == "REPLACE_WITH_THEME_ID" ]]; then
-    echo "Selected mapped theme is not configured with a valid themeId."
-    echo "Update tooling/config/brand-theme-map.json and set themes[].themeId."
-    exit 1
-  fi
-elif [[ "$theme_source_mode" == "2" ]]; then
-  echo "Fetching themes from Zendesk..."
-  zcli themes:list
-  read -r -p "Enter Theme ID from the list: " selected_theme_id
-  read -r -p "Enter Theme Name label (optional): " selected_theme_name
-  selected_theme_name="${selected_theme_name:-Zendesk Listed Theme}"
-  selected_theme_key="zendesk-listed"
-  selected_theme_brand_key=""
-else
-  read -r -p "Enter Theme ID: " selected_theme_id
-  read -r -p "Enter Theme Name label (optional): " selected_theme_name
-  selected_theme_name="${selected_theme_name:-Manual Theme ID}"
-  selected_theme_key="manual"
-  selected_theme_brand_key=""
-fi
-
-if [[ -z "$selected_theme_id" ]]; then
-  echo "Theme ID is required. Deployment cancelled."
-  exit 1
-fi
+echo "Step 2/4: Choose deployment type"
+echo "1. New theme deploy (import as new Zendesk theme)"
+echo "2. Update existing theme (select existing themeId)"
+deploy_mode="$(pick_menu_index "Choose deploy mode" "2" "2")"
 
 theme_version="$(node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.version||'unknown'));")"
 branch_key="$(echo "$current_branch" | grep -Eo 'FPSKB-[0-9]+' | head -n 1 || true)"
@@ -205,24 +160,90 @@ if [[ -z "$selected_brand_id" ]]; then
   exit 1
 fi
 
+selected_theme_key=""
+selected_theme_name=""
+selected_theme_id=""
+selected_theme_brand_key=""
+
+if [[ "$deploy_mode" == "2" ]]; then
+  echo
+  echo "Update mode: choose existing theme ID"
+  echo "Listing existing Zendesk themes for reference..."
+  zcli themes:list || true
+
+  mapfile -t BRAND_THEME_ROWS < <(get_theme_rows_for_brand "$selected_brand_key")
+  if [[ ${#BRAND_THEME_ROWS[@]} -gt 0 ]]; then
+    echo
+    echo "Configured existing theme IDs for selected brand:"
+    default_theme_idx=1
+    for i in "${!BRAND_THEME_ROWS[@]}"; do
+      IFS='|' read -r theme_key theme_display_name theme_id theme_brand_key theme_is_default <<<"${BRAND_THEME_ROWS[$i]}"
+      echo "$((i + 1)). ${theme_display_name} | themeId=${theme_id}"
+      if [[ "$theme_is_default" == "true" ]]; then
+        default_theme_idx=$((i + 1))
+      fi
+    done
+    echo "0. Enter themeId manually"
+
+    while true; do
+      read -r -p "Select existing theme [${default_theme_idx}]: " selected_theme_idx
+      selected_theme_idx="${selected_theme_idx:-$default_theme_idx}"
+
+      if [[ "$selected_theme_idx" == "0" ]]; then
+        read -r -p "Enter existing themeId: " selected_theme_id
+        selected_theme_name="Manual themeId"
+        selected_theme_key="manual"
+        selected_theme_brand_key="$selected_brand_key"
+        break
+      fi
+
+      if [[ "$selected_theme_idx" =~ ^[0-9]+$ ]] && (( selected_theme_idx >= 1 && selected_theme_idx <= ${#BRAND_THEME_ROWS[@]} )); then
+        IFS='|' read -r selected_theme_key selected_theme_name selected_theme_id selected_theme_brand_key _ <<<"${BRAND_THEME_ROWS[$((selected_theme_idx - 1))]}"
+        break
+      fi
+
+      echo "Please choose a valid option."
+    done
+  else
+    read -r -p "Enter existing themeId to update: " selected_theme_id
+    read -r -p "Enter theme label (optional): " selected_theme_name
+    selected_theme_name="${selected_theme_name:-Manual themeId}"
+    selected_theme_key="manual"
+    selected_theme_brand_key="$selected_brand_key"
+  fi
+
+  if [[ -z "$selected_theme_id" ]]; then
+    echo "Theme ID is required for update mode. Deployment cancelled."
+    exit 1
+  fi
+fi
+
 echo
 echo "Deployment summary"
 echo "Branch: ${current_branch}"
-echo "Theme target: ${selected_theme_name}"
-echo "Theme ID: ${selected_theme_id}"
 echo "Brand: ${selected_brand_name}"
 echo "Brand ID: ${selected_brand_id}"
 echo "Theme name: ${theme_name}"
 echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 
-if [[ -n "$selected_theme_brand_key" && "$selected_brand_key" != "$selected_theme_brand_key" ]]; then
+if [[ "$deploy_mode" == "1" ]]; then
+  echo "Deploy mode: New theme deploy (import)"
+else
+  echo "Deploy mode: Update existing theme"
+  echo "Theme target: ${selected_theme_name}"
+  echo "Theme ID: ${selected_theme_id}"
+fi
+
+if [[ "$deploy_mode" == "2" && -n "$selected_theme_brand_key" && "$selected_brand_key" != "$selected_theme_brand_key" ]]; then
   echo "Warning: selected brand key and theme brand key differ."
 fi
 
-read -r -p "Confirm target Theme ID '${selected_theme_id}'? (yes/no): " confirm_theme_id
-if [[ "$confirm_theme_id" != "yes" ]]; then
-  echo "Deployment cancelled."
-  exit 1
+if [[ "$deploy_mode" == "2" ]]; then
+  read -r -p "Confirm target Theme ID '${selected_theme_id}'? (yes/no): " confirm_theme_id
+  if [[ "$confirm_theme_id" != "yes" ]]; then
+    echo "Deployment cancelled."
+    exit 1
+  fi
 fi
 
 read -r -p "Proceed with deployment? (yes/no): " deploy_confirm
@@ -247,8 +268,15 @@ manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
 fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
-echo "Updating existing Zendesk theme..."
-zcli themes:update . --themeId="$selected_theme_id"
+if [[ "$deploy_mode" == "1" ]]; then
+  echo "Importing as a new Zendesk theme..."
+  zcli themes:import . --brandId="$selected_brand_id"
+else
+  echo "Updating existing Zendesk theme..."
+  zcli themes:update . --themeId="$selected_theme_id"
+fi
 
 echo "Deployment finished for branch '${current_branch}'."
-echo "Updated themeId: ${selected_theme_id}"
+if [[ "$deploy_mode" == "2" ]]; then
+  echo "Updated themeId: ${selected_theme_id}"
+fi
