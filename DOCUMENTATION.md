@@ -8,6 +8,7 @@ Do not skip sections.
 
 ## Table of Contents
 
+1. [Release Notes](#release-notes)
 1. [How to Use This Guide](#how-to-use-this-guide)
 1. [What You Are Building](#what-you-are-building)
 1. [Basic Terms You Must Know](#basic-terms-you-must-know)
@@ -19,6 +20,18 @@ Do not skip sections.
 1. [Rollback Procedure (If Deployment Fails)](#rollback-procedure-if-deployment-fails)
 1. [Troubleshooting (Non-DNS)](#troubleshooting-non-dns)
 1. [Quick Command Reference](#quick-command-reference)
+
+---
+
+## Release Notes
+
+### 2026-06-03
+
+1. Reworked this documentation into a junior-friendly, step-by-step flow from onboarding to production deployment.
+1. Added a complete GitLab deployment walkthrough using branch `FPSKB-201-auth-ui-toggle`.
+1. Added production rollback instructions with explicit confirmation variables.
+1. Removed DNS troubleshooting content to keep troubleshooting focused on CI/CD and credential issues.
+1. Added CI/CD safety guidance for backup-first deploy and confirmation gates.
 
 ---
 
