@@ -11,10 +11,14 @@ workflow:
 stages:
   - validate
   - release
+  - backup
   - deploy
 
 variables:
   GIT_DEPTH: "0"
+  ZCLI_VERSION: "1.0.0-beta.56"
+  DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
+  ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
 
 default:
   tags:
@@ -23,7 +27,7 @@ default:
   before_script:
     - node --version
     - npm --version
-    - npx zcli --version 2>/dev/null || npm install -g @zendesk/zcli
+    - npx zcli --version 2>/dev/null || npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
 
 # ── Validate ────────────────────────────────────────────────────────────────
 # Runs on every push and every MR — acts as a smoke-test for versioning.
@@ -31,6 +35,12 @@ theme_version_dry_run:
   stage: validate
   script:
     - npm run version:theme:dry
+
+# Basic structural validation before any release/deploy jobs are attempted.
+theme_validate_structure:
+  stage: validate
+  script:
+    - npm run validate:theme
 
 # ── Release ─────────────────────────────────────────────────────────────────
 # Manual job — bumps manifest.json version. Trigger from the GitLab UI.
@@ -44,6 +54,27 @@ theme_version_release:
       when: manual
   allow_failure: false
 
+# ── Backup ──────────────────────────────────────────────────────────────────
+# Manual job — create a Zendesk theme backup before production deploy.
+# This is required to keep rollback available for every deployment.
+theme_backup_production:
+  stage: backup
+  needs:
+    - theme_version_dry_run
+    - theme_validate_structure
+  script:
+    - npm run backup:theme
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths:
+      - backups/
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+  allow_failure: false
+
+
 # ── Deploy ───────────────────────────────────────────────────────────────────
 # Manual job — imports the theme into Zendesk via zcli.
 # Required CI/CD variables (Settings → CI/CD → Variables):
@@ -52,9 +83,24 @@ theme_version_release:
 #   ZD_API_TOKEN  — Zendesk API token
 theme_deploy:
   stage: deploy
+  needs:
+    - theme_backup_production
   script:
-    - zcli themes:import --subdomain "$ZD_SUBDOMAIN" --username "$ZD_EMAIL" --password "$ZD_API_TOKEN" .
+    - npm run deploy:theme
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+  allow_failure: false
+
+# Manual rollback job — re-imports a backup ZIP artifact to production.
+# Requires ROLLBACK_CONFIRM=ROLLBACK_TO_PROD by default.
+theme_rollback_production:
+  stage: deploy
+  needs:
+    - theme_backup_production
+  script:
+    - npm run rollback:theme
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
       when: manual
   allow_failure: false
