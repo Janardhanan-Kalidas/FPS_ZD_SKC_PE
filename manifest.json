@@ -436,7 +436,7 @@
           "value": true
         },
         {
-          "identifier": "show_article_submit_request_cta",
+          "identifier": "show_article_submit_cta",
           "type": "checkbox",
           "description": "show_article_submit_request_cta_description",
           "label": "show_article_submit_request_cta_label",
