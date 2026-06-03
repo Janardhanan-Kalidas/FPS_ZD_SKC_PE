@@ -134,12 +134,16 @@ fi
 
 echo
 echo "Step 4/4: Choose brand option"
-mapfile -t BRAND_ROWS < <(get_brand_rows)
+BRAND_ROWS=()
+while IFS= read -r line; do
+  BRAND_ROWS+=("$line")
+done < <(get_brand_rows)
 if [[ ${#BRAND_ROWS[@]} -eq 0 ]]; then
   echo "No brands found in tooling/config/brand-theme-map.json"
   exit 1
 fi
 
+selected_theme_brand_key=""
 default_brand_idx=1
 for i in "${!BRAND_ROWS[@]}"; do
   IFS='|' read -r brand_key brand_name brand_id brand_is_default <<<"${BRAND_ROWS[$i]}"
@@ -171,7 +175,10 @@ if [[ "$deploy_mode" == "2" ]]; then
   echo "Listing existing Zendesk themes for reference..."
   zcli themes:list || true
 
-  mapfile -t BRAND_THEME_ROWS < <(get_theme_rows_for_brand "$selected_brand_key")
+  BRAND_THEME_ROWS=()
+  while IFS= read -r line; do
+    BRAND_THEME_ROWS+=("$line")
+  done < <(get_theme_rows_for_brand "$selected_brand_key")
   if [[ ${#BRAND_THEME_ROWS[@]} -gt 0 ]]; then
     echo
     echo "Configured existing theme IDs for selected brand:"
