@@ -9,6 +9,7 @@ Welcome! This comprehensive guide contains all documentation for the Zendesk the
 1. [Development Setup Guide](#development-setup-guide)
 2. [Local Theme Preview](#local-theme-preview)
 3. [Theme Versioning](#theme-versioning)
+4. [CI/CD Pipeline](#cicd-pipeline)
 
 ---
 
@@ -723,6 +724,343 @@ If you want fully automatic `minor` and `major` releases, your team needs to kee
 ## Local preview
 
 For local theme preview from VS Code, see [Local Theme Preview](#local-theme-preview)
+
+---
+
+---
+
+# CI/CD Pipeline
+
+This theme uses **GitLab CI/CD** to automate testing, version management, and deployment to Zendesk.
+
+## Pipeline Overview
+
+Your project has **3 automated stages**:
+
+| Stage | Job | Trigger | Purpose | Manual? |
+|-------|-----|---------|---------|----------|
+| **Validate** | `theme_version_dry_run` | Every push/MR | Smoke test — checks if version bumping will work | ❌ Automatic |
+| **Release** | `theme_version_release` | Main branch only | Bumps manifest.json version & creates git tag | ✅ Manual |
+| **Deploy** | `theme_deploy` | Main branch only | Imports theme into Zendesk via ZCLI | ✅ Manual |
+
+## How the Pipeline Works
+
+### 1. Automatic Validation (Every Push)
+
+When you push to any branch or create a merge request:
+
+```
+Your push to GitLab
+    ↓
+Pipeline starts on `.gitlab-ci.yml` rules
+    ↓
+theme_version_dry_run (automatic)
+  └─ Runs: npm run version:theme:dry
+  └─ Checks: Would version bump work?
+  └─ Result: ✅ Pass or ❌ Fail
+    ↓
+If FAILS: Fix your commits and push again
+If PASSES: Ready to merge
+```
+
+### 2. Manual Version Release (Main Branch Only)
+
+After merging your PR to `main` branch:
+
+```
+Your merge to main
+    ↓
+Pipeline created on main branch
+    ↓
+theme_version_release job available (manual trigger)
+    ↓
+You click "Run" in GitLab UI
+    ↓
+Script runs:
+  ├─ npm run version:theme
+  ├─ Updates manifest.json with new version
+  ├─ Creates git tag (e.g., theme-v2.3.0)
+  └─ Pushes tag to GitLab
+```
+
+### 3. Manual Deploy to Zendesk (Main Branch Only)
+
+After version is released:
+
+```
+Version bumped & tagged
+    ↓
+theme_deploy job available (manual trigger)
+    ↓
+You click "Run" in GitLab UI
+    ↓
+Script runs:
+  └─ zcli themes:import \
+       --subdomain $ZD_SUBDOMAIN \
+       --username $ZD_EMAIL \
+       --password $ZD_API_TOKEN \
+       .
+    ↓
+Theme imported into Zendesk Help Center
+```
+
+## Setting Up CI/CD Variables
+
+Before you can deploy, you must configure **3 secrets** in GitLab.
+
+### Go to Settings
+
+1. Open your GitLab project
+2. Navigate to **Settings → CI/CD → Variables**
+3. Click **Add variable**
+
+### Add ZD_SUBDOMAIN
+
+- **Key**: `ZD_SUBDOMAIN`
+- **Value**: Your Zendesk instance name (e.g., `hilti`)
+- **Protect variable**: ❌ Unchecked (not needed for subdomain)
+- **Mask variable**: ❌ Unchecked
+
+### Add ZD_EMAIL
+
+- **Key**: `ZD_EMAIL`
+- **Value**: Zendesk admin email (the account that will import the theme)
+- **Protect variable**: ✅ Checked (this is sensitive)
+- **Mask variable**: ✅ Checked (hide in logs)
+
+### Add ZD_API_TOKEN
+
+- **Key**: `ZD_API_TOKEN`
+- **Value**: Zendesk API token
+  - How to get it:
+    1. Log into your Zendesk account
+    2. Go to **Admin → Apps and Integrations → Zendesk API**
+    3. Click **Tokens**
+    4. Click **+ Add API token**
+    5. Copy the generated token (you'll never see it again)
+- **Protect variable**: ✅ Checked
+- **Mask variable**: ✅ Checked
+
+**⚠️ Important**: Never commit these secrets to git. GitLab CI/CD variables are encrypted and isolated.
+
+## Best Practices
+
+### 1. Use Conventional Commits
+Your commit messages determine the version bump:
+
+```bash
+fix: correct icon reference          # → PATCH (2.2.10 → 2.2.11)
+feat: add dark mode toggle           # → MINOR (2.2.10 → 2.3.0)
+feat!: redesign search page          # → MAJOR (2.2.10 → 3.0.0)
+BREAKING CHANGE: ...                 # → MAJOR
+chore: update docs                   # → No bump
+```
+
+### 2. Always Use Feature Branches
+
+```bash
+# ✅ DO
+git checkout -b FPSKB-105/fix-icon-issue
+
+# ❌ DON'T
+git commit -m "fix stuff" && git push origin main
+```
+
+### 3. Review Dry-Run Before Merging
+
+Before merging a PR, check what version would be released:
+
+```bash
+npm run version:theme:dry
+```
+
+Or wait for the CI pipeline to run `theme_version_dry_run` automatically.
+
+### 4. Release When Ready (Not on Every Push)
+
+- ✅ Release after code review is complete
+- ✅ Release when you want users to see changes in Zendesk
+- ❌ Don't release just because a commit was merged
+- ❌ Don't release multiple times per day unless critical bugs
+
+### 5. Manual Deploy = Approved Deployment
+
+The deploy job is **manual only** for a reason:
+
+- Gives you final approval before importing
+- Lets you stagger releases
+- Prevents accidental overwrites
+- Allows time to verify version is correct
+
+### 6. Use Git Tags for Rollback
+
+If something goes wrong after deployment:
+
+```bash
+# See all released versions
+git tag -l "theme-v*"
+
+# Output:
+# theme-v2.2.8
+# theme-v2.2.9
+# theme-v2.3.0
+
+# Check out a previous version locally
+git checkout theme-v2.2.9
+
+# Manually deploy that version:
+zcli themes:import --subdomain hilti --username admin@hilti.com --password $API_TOKEN .
+```
+
+## Recommended Workflow
+
+```
+1. Create feature branch
+   git checkout -b FPSKB-105/fix-icon-issue
+
+2. Make changes & test locally
+   zcli themes:preview
+
+3. Commit with conventional format
+   git commit -m "fix: correct icon spacing"
+
+4. Push & create GitLab MR
+   git push origin FPSKB-105/fix-icon-issue
+
+5. Wait for CI validation
+   └─ theme_version_dry_run runs automatically
+   └─ Check: ✅ Would bump to version 2.2.11 (PATCH)
+
+6. Get code review
+
+7. Merge to main
+   └─ Another pipeline on main branch
+   └─ theme_version_dry_run passes again
+
+8. Trigger manual release (if you want users to see this)
+   └─ Go to CI/CD → Pipelines → main branch
+   └─ Find theme_version_release job
+   └─ Click ▶️ Run
+   └─ Version becomes 2.2.11, git tag created
+
+9. Deploy to Zendesk (when ready)
+   └─ Click ▶️ Run on theme_deploy job
+   └─ Theme imports into Zendesk Help Center
+   └─ Users see new theme immediately
+```
+
+## Common Mistakes to Avoid
+
+| ❌ Mistake | ✅ Solution |
+|-----------|----------|
+| Pushing directly to main | Always use feature branch + MR |
+| Commit message format: `updated stuff` | Use `fix:`, `feat:`, or `chore:` prefixes |
+| Merging without CI passing | Wait for `theme_version_dry_run` to pass |
+| Deploying without releasing version first | Always run `theme_version_release` first |
+| Manually editing manifest.json version | Let the script handle it, use `npm run version:theme` |
+| Forgetting to set CI/CD variables | Test with `theme_version_dry_run` before deploy |
+| Releasing every small commit | Only release when you want users to see changes |
+
+## Troubleshooting CI/CD
+
+### theme_version_dry_run fails
+
+**Symptom**: Pipeline shows ❌ Failed on `theme_version_dry_run`
+
+**Causes**:
+- Invalid commit message format (not using `fix:`, `feat:`, etc.)
+- Git history is shallow (needs full history to calculate bumps)
+
+**Solutions**:
+```bash
+# Fetch full history
+git fetch --unshallow
+
+# Check your commits
+git log --oneline
+
+# Re-run locally
+npm run version:theme:dry
+```
+
+### theme_deploy fails with "Unauthorized"
+
+**Symptom**: Deploy job fails with error: `"Unauthorized"` or `"Authentication failed"`
+
+**Causes**:
+- `ZD_API_TOKEN` is incorrect or expired
+- `ZD_EMAIL` is not authorized to manage themes
+- Variable not properly set in GitLab
+
+**Solutions**:
+```bash
+# Test locally first
+zcli themes:import \
+  --subdomain hilti \
+  --username admin@hilti.com \
+  --password YOUR_API_TOKEN \
+  .
+
+# If this works, variables are set up wrong in GitLab
+# Go to Settings → CI/CD → Variables and verify
+```
+
+### Git tag already exists
+
+**Symptom**: `theme_version_release` fails with `"tag already exists"`
+
+**Cause**: You released the same version twice
+
+**Solution**:
+```bash
+# Delete the duplicate tag
+git push origin :refs/tags/theme-v2.2.10
+
+# Then re-run the release job
+```
+
+## Monitoring & Logs
+
+### View pipeline status
+
+1. Go to **CI/CD → Pipelines**
+2. Click the pipeline you want to inspect
+3. Click individual job name to see full logs
+
+### Debug a failed job
+
+Click the job name → scroll to bottom for error message
+
+Common errors to search for:
+- `fatal: not a git repository` — git not initialized
+- `ENOENT: no such file or directory` — missing manifest.json
+- `401 Unauthorized` — CI/CD variables not set
+
+## Advanced: Manual Version Bumping
+
+If you need to force a specific version (rare):
+
+```bash
+# Force PATCH bump (even if no commits)
+npm run version:theme -- --release-as patch
+
+# Force MINOR bump
+npm run version:theme -- --release-as minor
+
+# Force MAJOR bump
+npm run version:theme -- --release-as major
+
+# Create a git tag for the release
+npm run version:theme -- --tag
+```
+
+Then commit and push:
+
+```bash
+git add manifest.json
+git commit -m "chore: bump theme version"
+git push --follow-tags
+```
 
 ---
 
