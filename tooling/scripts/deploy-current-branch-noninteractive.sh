@@ -265,7 +265,7 @@ if [[ "$deploy_mode" == "2" ]]; then
   echo
   echo "Update mode: auto-resolve theme from branch, then confirm"
   echo "Listing existing Zendesk themes for reference..."
-  ZENDESK_THEME_LIST_OUTPUT="$(zcli themes:list 2>&1 || true)"
+  ZENDESK_THEME_LIST_OUTPUT="$(zcli themes:list --brandId="$selected_brand_id" 2>&1 || true)"
   echo "$ZENDESK_THEME_LIST_OUTPUT"
 
   auto_theme_row="$(get_auto_theme_for_branch "$selected_brand_key" "$current_branch" "$branch_key" || true)"
