@@ -247,9 +247,16 @@ Current jobs:
 1. `theme_version_dry_run` (automatic)
 1. `theme_validate_structure` (automatic)
 1. `theme_version_release` (manual, default branch only)
-1. `theme_backup_production` (manual, any branch)
-1. `theme_deploy` (manual, any branch)
-1. `theme_rollback_production` (manual, any branch)
+1. `theme_backup_production` (manual, default branch only)
+1. `theme_deploy` (manual, default branch only)
+1. `theme_rollback_production` (manual, default branch only)
+
+Pipeline behavior summary:
+
+1. Merge request pipelines are allowed.
+1. Manual pipelines started from GitLab UI (`CI_PIPELINE_SOURCE=web`) are allowed.
+1. Duplicate push pipelines are skipped when a branch already has an open merge request.
+1. Normal branch pipelines run otherwise.
 
 ### Required GitLab CI/CD Variables
 
@@ -258,7 +265,7 @@ Set these in GitLab: `Settings > CI/CD > Variables`
 1. `ZD_SUBDOMAIN`
 1. `ZD_EMAIL`
 1. `ZD_API_TOKEN`
-1. `ZD_THEME_ID`
+1. `ZD_THEME_ID` (required for backup job)
 1. `DEPLOY_CONFIRM_REQUIRED` with value `DEPLOY_TO_PROD`
 1. `ROLLBACK_CONFIRM_REQUIRED` with value `ROLLBACK_TO_PROD`
 1. `ZCLI_VERSION` (example: `1.0.0-beta.56`)
@@ -274,6 +281,11 @@ Deployment is blocked if:
 
 1. Confirmation variable is missing or wrong.
 1. Backup artifact does not exist in pipeline.
+1. Required Zendesk variables are missing.
+
+Rollback is blocked if:
+
+1. Confirmation variable is missing or wrong.
 1. Required Zendesk variables are missing.
 
 ### VS Code Deployment Tasks (Recommended for Junior Developers)
@@ -351,14 +363,15 @@ This example uses the current branch:
 ### Step 1: Push the Branch
 
 ```bash
-git checkout FPSKB-201-auth-ui-toggle
-git push origin FPSKB-201-auth-ui-toggle
+git checkout main
+git pull origin main
+git push origin main
 ```
 
 ### Step 2: Open Branch Pipeline in GitLab
 
 1. Go to `CI/CD > Pipelines`.
-1. Open the pipeline for `FPSKB-201-auth-ui-toggle`.
+1. Open the pipeline for the default branch (usually `main`).
 1. Confirm both validate jobs passed:
    - `theme_version_dry_run`
    - `theme_validate_structure`
