@@ -288,6 +288,21 @@ Rollback is blocked if:
 1. Confirmation variable is missing or wrong.
 1. Required Zendesk variables are missing.
 
+### Published Settings Auto-Refresh
+
+The theme now includes a settings fingerprint watcher for open tabs.
+
+Behavior:
+
+1. On tab focus, when tab becomes visible, and every 60 seconds, the page checks for updated published settings.
+1. If a change is detected (for example `hide_sign_in_link` or `show_submit_a_request_link`), the page auto-reloads with a cache-busting query parameter.
+1. A session guard prevents repeated reload loops for the same detected change.
+
+Limitations:
+
+1. Browsers do not expose a true scripted "hard refresh" API.
+1. This implementation uses a normal reload with cache-busting and `no-store` probing to pick up updates quickly.
+
 ### VS Code Deployment Tasks (Recommended for Junior Developers)
 
 The repository includes two deployment tasks in `.vscode/tasks.json`:

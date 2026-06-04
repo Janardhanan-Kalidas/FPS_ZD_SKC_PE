@@ -2059,3 +2059,134 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 })();
 
+/* ----------------------------------------------------------
+   Auto-refresh when published setting fingerprint changes
+   - Watches server-rendered fingerprint in <meta>
+   - Checks on focus, tab-visibility, and periodic polling
+   - Uses sessionStorage guard to avoid reload loops
+---------------------------------------------------------- */
+;(function () {
+  'use strict';
+
+  var FINGERPRINT_META_SELECTOR = 'meta[name="theme-settings-fingerprint"]';
+  var LAST_RELOAD_KEY = 'theme_settings_last_reload_fingerprint';
+  var POLL_INTERVAL_MS = 60 * 1000;
+  var CHECK_DEBOUNCE_MS = 500;
+
+  var checkTimer = null;
+  var checkInFlight = false;
+
+  function getCurrentFingerprint(doc) {
+    var targetDoc = doc || document;
+    var node = targetDoc.querySelector(FINGERPRINT_META_SELECTOR);
+    if (!node) return '';
+    return (node.getAttribute('content') || '').trim();
+  }
+
+  function getReloadedFingerprint() {
+    try {
+      return sessionStorage.getItem(LAST_RELOAD_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function setReloadedFingerprint(value) {
+    try {
+      sessionStorage.setItem(LAST_RELOAD_KEY, value);
+    } catch (e) {
+      // Ignore storage failures.
+    }
+  }
+
+  function extractFingerprintFromHtml(html) {
+    var parser = new DOMParser();
+    var parsedDoc = parser.parseFromString(html, 'text/html');
+    return getCurrentFingerprint(parsedDoc);
+  }
+
+  function buildRefreshUrl() {
+    var url = new URL(window.location.href);
+    url.searchParams.set('__theme_refresh', String(Date.now()));
+    return url.toString();
+  }
+
+  function fetchLatestFingerprint() {
+    var probeUrl = new URL(window.location.href);
+    probeUrl.searchParams.set('__theme_probe', String(Date.now()));
+
+    return fetch(probeUrl.toString(), {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        Accept: 'text/html'
+      }
+    })
+      .then(function (response) {
+        if (!response.ok) return '';
+        return response.text();
+      })
+      .then(function (html) {
+        if (!html) return '';
+        return extractFingerprintFromHtml(html);
+      })
+      .catch(function () {
+        return '';
+      });
+  }
+
+  function maybeReloadForFingerprintChange() {
+    if (checkInFlight) return;
+    checkInFlight = true;
+
+    var currentFingerprint = getCurrentFingerprint();
+    if (!currentFingerprint) {
+      checkInFlight = false;
+      return;
+    }
+
+    fetchLatestFingerprint()
+      .then(function (latestFingerprint) {
+        if (!latestFingerprint || latestFingerprint === currentFingerprint) return;
+
+        if (getReloadedFingerprint() === latestFingerprint) return;
+
+        setReloadedFingerprint(latestFingerprint);
+        window.location.replace(buildRefreshUrl());
+      })
+      .finally(function () {
+        checkInFlight = false;
+      });
+  }
+
+  function scheduleCheck(delayMs) {
+    if (checkTimer) window.clearTimeout(checkTimer);
+    checkTimer = window.setTimeout(maybeReloadForFingerprintChange, delayMs);
+  }
+
+  function initSettingsRefreshWatcher() {
+    if (!getCurrentFingerprint()) return;
+
+    window.addEventListener('focus', function () {
+      scheduleCheck(CHECK_DEBOUNCE_MS);
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        scheduleCheck(CHECK_DEBOUNCE_MS);
+      }
+    });
+
+    window.setInterval(function () {
+      maybeReloadForFingerprintChange();
+    }, POLL_INTERVAL_MS);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSettingsRefreshWatcher, { once: true });
+  } else {
+    initSettingsRefreshWatcher();
+  }
+})();
+

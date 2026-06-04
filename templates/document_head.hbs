@@ -1,4 +1,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+<meta
+  name="theme-settings-fingerprint"
+  content="hide_sign_in_link={{#if settings.hide_sign_in_link}}1{{else}}0{{/if}};show_submit_a_request_link={{#if settings.show_submit_a_request_link}}1{{else}}0{{/if}};show_article_submit_cta={{#if settings.show_article_submit_cta}}1{{else}}0{{/if}}">
 <script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
 <script type="text/javascript" src="{{asset 'util.min.js'}}"></script>
 
