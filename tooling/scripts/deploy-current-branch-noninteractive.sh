@@ -535,6 +535,18 @@ if [[ "$set_theme_live_choice" == "yes" ]]; then
   test_profile="production"
 fi
 
+playwright_visible_choice="${ZD_PLAYWRIGHT_VISIBLE:-}"
+if [[ -z "$playwright_visible_choice" ]]; then
+  playwright_visible_choice="$(pick_yes_no "Open visible browser for Playwright tests? (y/n)" "n")"
+fi
+
+playwright_headless="true"
+if [[ "$playwright_visible_choice" == "yes" ]]; then
+  playwright_headless="false"
+fi
+
+echo "Playwright browser mode: $([[ "$playwright_headless" == "false" ]] && echo "visible" || echo "headless")"
+
 test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-}"
 if [[ -z "$test_base_url" ]]; then
   if [[ "$test_profile" == "production" ]]; then
@@ -577,14 +589,14 @@ node tooling/scripts/run-deployment-tests.mjs \
   --output "$deployment_report"
 deployment_exit=$?
 
-node tooling/scripts/run-playwright-functional-tests.mjs \
+PLAYWRIGHT_HEADLESS="$playwright_headless" node tooling/scripts/run-playwright-functional-tests.mjs \
   --target-name "$safe_target_name" \
   --profile "$test_profile" \
   --base-url "$test_base_url" \
   --output "$functional_report"
 functional_exit=$?
 
-node tooling/scripts/run-performance-tests.mjs \
+PLAYWRIGHT_HEADLESS="$playwright_headless" node tooling/scripts/run-performance-tests.mjs \
   --target-name "$safe_target_name" \
   --base-url "$test_base_url" \
   --output "$performance_report"
