@@ -201,6 +201,49 @@ pick_yes_no() {
   done
 }
 
+get_active_zcli_subdomain() {
+  if [[ -n "${ZD_SUBDOMAIN:-}" ]]; then
+    printf '%s' "${ZD_SUBDOMAIN}"
+    return 0
+  fi
+
+  if [[ -n "${ZENDESK_SUBDOMAIN:-}" ]]; then
+    printf '%s' "${ZENDESK_SUBDOMAIN}"
+    return 0
+  fi
+
+  local zcli_state_file="${HOME}/.zcli"
+  if [[ -f "$zcli_state_file" ]]; then
+    local parsed_subdomain=""
+    parsed_subdomain="$(node - "$zcli_state_file" <<'NODE'
+const fs = require('fs');
+const filePath = process.argv[2];
+try {
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const subdomain = data?.activeProfile?.subdomain || '';
+  if (subdomain) process.stdout.write(String(subdomain));
+} catch {
+  // Ignore parse errors.
+}
+NODE
+)"
+    if [[ -n "$parsed_subdomain" ]]; then
+      printf '%s' "$parsed_subdomain"
+      return 0
+    fi
+  fi
+
+  local profiles_output=""
+  profiles_output="$(zcli profiles:list 2>/dev/null || true)"
+  local active_subdomain=""
+  active_subdomain="$(printf '%s\n' "$profiles_output" | sed -n 's/^[[:space:]]*\([^[:space:]]\+\)[[:space:]]*<= active[[:space:]]*$/\1/p' | head -n 1)"
+  printf '%s' "$active_subdomain"
+}
+
+get_manifest_default_locale() {
+  node -e "const fs=require('fs');try{const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.default_locale||'en-us'));}catch{process.stdout.write('en-us');}"
+}
+
 current_branch="$(git branch --show-current)"
 if [[ -z "$current_branch" ]]; then
   echo "Unable to detect current git branch."
@@ -474,8 +517,17 @@ if [[ -z "$test_base_url" ]]; then
 fi
 
 if [[ -z "$test_base_url" ]]; then
+  zcli_subdomain="$(get_active_zcli_subdomain)"
+  if [[ -n "$zcli_subdomain" ]]; then
+    manifest_locale="$(get_manifest_default_locale)"
+    test_base_url="https://${zcli_subdomain}.zendesk.com/hc/${manifest_locale}"
+  fi
+fi
+
+if [[ -z "$test_base_url" ]]; then
   echo "Unable to auto-resolve test base URL."
   echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
+  echo "or run 'zcli login -i' so the active subdomain can be auto-detected."
   exit 1
 fi
 

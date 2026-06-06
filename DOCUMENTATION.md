@@ -392,6 +392,7 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
    - After deployment, script automatically runs deployment, functional, and performance tests.
    - Script auto-resolves test base URL (no prompt) and stores reports under `tooling/reports/manual-post-deploy-<timestamp>/`.
    - Auto-resolution order uses `ZD_POST_DEPLOY_TEST_BASE_URL` first, then environment defaults (`ZD_PREVIEW_BASE_URL`, `ZD_FEATURE_PREVIEW_BASE_URL`, `ZD_PROD_BASE_URL`) based on live/non-live mode.
+   - If those are missing, script derives URL from active ZCLI subdomain and `manifest.json` locale: `https://<active-subdomain>.zendesk.com/hc/<default_locale>`.
    - Deployment task exits with failure if post-deployment tests fail.
    - After successful tests, script asks whether to publish Confluence functional and performance result pages (`y/n`).
    - If `y`, script creates a local quality-gate summary JSON and runs `publish-confluence-report.mjs`.
