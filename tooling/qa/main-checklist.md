@@ -69,6 +69,7 @@ This checklist defines the minimum deployment quality gates used by CI and Confl
 - `PLAYWRIGHT_STORAGE_STATE_PATH` to reuse an authenticated browser session
 - `TEST_COOKIE_HEADER` to pass session cookies for HTTP probes
 - `TEST_EXTRA_HEADERS_JSON` to pass custom headers (for gateways/access)
+- `TEST_HC_LOCALE` to override locale path mapping (for example `en-gb` instead of `en-us`)
 
 ## Test Traceability Matrix
 

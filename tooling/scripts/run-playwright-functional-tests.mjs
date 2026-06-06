@@ -20,6 +20,32 @@ function normalizeBaseUrl(baseUrl) {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 }
 
+function detectHelpCenterLocale(baseUrl) {
+  const envLocale = (process.env.TEST_HC_LOCALE || "").trim().toLowerCase();
+  if (/^[a-z]{2}-[a-z]{2}$/.test(envLocale)) {
+    return envLocale;
+  }
+
+  try {
+    const parsed = new URL(baseUrl);
+    const match = parsed.pathname.match(/\/hc\/([a-z]{2}-[a-z]{2})(?:\/|$)/i);
+    if (match?.[1]) {
+      return match[1].toLowerCase();
+    }
+  } catch {
+    // Ignore URL parse errors and fall back.
+  }
+
+  return "en-us";
+}
+
+function localizeHelpCenterPath(rawPath, locale) {
+  if (typeof rawPath !== "string" || !rawPath.startsWith("/hc/")) {
+    return rawPath;
+  }
+  return rawPath.replace(/^\/hc\/[a-z]{2}-[a-z]{2}(?=\/|$)/i, `/hc/${locale}`);
+}
+
 function getProfileConfig(scenarios, profileName) {
   if (scenarios?.profiles && typeof scenarios.profiles === "object") {
     const selected = scenarios.profiles[profileName];
@@ -203,9 +229,9 @@ async function runRouteCheck(page, baseUrl, route, required, screenshotDir) {
   }
 }
 
-async function collectCrawlRoutes(page, baseUrl, prefix, maxPages) {
+async function collectCrawlRoutes(page, baseUrl, prefix, maxPages, startRoute) {
   const discovered = new Set();
-  const queue = ["/hc/en-us"];
+  const queue = [startRoute];
 
   while (queue.length > 0 && discovered.size < maxPages) {
     const route = queue.shift();
@@ -239,8 +265,8 @@ async function collectCrawlRoutes(page, baseUrl, prefix, maxPages) {
   return Array.from(discovered);
 }
 
-async function evaluateToggleChecks(page, baseUrl, screenshotDir) {
-  const homeUrl = makeAbsolute(baseUrl, "/hc/en-us");
+async function evaluateToggleChecks(page, baseUrl, screenshotDir, locale) {
+  const homeUrl = makeAbsolute(baseUrl, `/hc/${locale}`);
   await page.goto(homeUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
 
   const fingerprintRaw = await page
@@ -298,10 +324,10 @@ async function evaluateToggleChecks(page, baseUrl, screenshotDir) {
   };
 }
 
-async function runSearchJourney(page, baseUrl, searchFlow, screenshotDir) {
+async function runSearchJourney(page, baseUrl, searchFlow, screenshotDir, locale) {
   const selector = searchFlow.searchInputSelector || "input[type='search'], input[name='query'], .search input";
   const resultsPathContains = searchFlow.resultsPathContains || "/search";
-  const homeUrl = makeAbsolute(baseUrl, "/hc/en-us");
+  const homeUrl = makeAbsolute(baseUrl, `/hc/${locale}`);
 
   try {
     await page.goto(homeUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -347,11 +373,11 @@ async function runSearchJourney(page, baseUrl, searchFlow, screenshotDir) {
   }
 }
 
-async function runBrowseJourney(page, baseUrl, browseFlow, screenshotDir) {
+async function runBrowseJourney(page, baseUrl, browseFlow, screenshotDir, locale) {
   const categorySelector = browseFlow.categoryLinkSelector || "a[href*='/categories/'], a[href*='/sections/']";
   const sectionSelector = browseFlow.sectionLinkSelector || "a[href*='/sections/']";
   const articleSelector = browseFlow.articleLinkSelector || "a[href*='/articles/']";
-  const homeUrl = makeAbsolute(baseUrl, "/hc/en-us");
+  const homeUrl = makeAbsolute(baseUrl, `/hc/${locale}`);
 
   try {
     await page.goto(homeUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -450,23 +476,25 @@ async function runPathJourney(page, baseUrl, journeyId, targetPath, screenshotDi
   }
 }
 
-async function runJourneyChecks(page, baseUrl, journeys = {}, screenshotDir) {
+async function runJourneyChecks(page, baseUrl, journeys = {}, screenshotDir, locale) {
   const checks = [];
 
   if (journeys.searchFlow?.enabled) {
-    checks.push(await runSearchJourney(page, baseUrl, journeys.searchFlow, screenshotDir));
+    checks.push(await runSearchJourney(page, baseUrl, journeys.searchFlow, screenshotDir, locale));
   }
 
   if (journeys.browseFlow?.enabled) {
-    checks.push(await runBrowseJourney(page, baseUrl, journeys.browseFlow, screenshotDir));
+    checks.push(await runBrowseJourney(page, baseUrl, journeys.browseFlow, screenshotDir, locale));
   }
 
   if (journeys.signInFlow?.enabled) {
-    checks.push(await runPathJourney(page, baseUrl, "journey-sign-in-route", journeys.signInFlow.signInPath || "/hc/en-us/signin", screenshotDir));
+    const signInPath = localizeHelpCenterPath(journeys.signInFlow.signInPath || "/hc/en-us/signin", locale);
+    checks.push(await runPathJourney(page, baseUrl, "journey-sign-in-route", signInPath, screenshotDir));
   }
 
   if (journeys.submitRequestFlow?.enabled) {
-    checks.push(await runPathJourney(page, baseUrl, "journey-submit-request-route", journeys.submitRequestFlow.submitRequestPath || "/hc/en-us/requests/new", screenshotDir));
+    const submitPath = localizeHelpCenterPath(journeys.submitRequestFlow.submitRequestPath || "/hc/en-us/requests/new", locale);
+    checks.push(await runPathJourney(page, baseUrl, "journey-submit-request-route", submitPath, screenshotDir));
   }
 
   return checks;
@@ -520,10 +548,16 @@ async function main() {
     throw new Error("Missing base URL. Set --base-url or TEST_BASE_URL.");
   }
 
+  const locale = detectHelpCenterLocale(baseUrl);
+
   const scenarios = JSON.parse(await fs.readFile(scenariosPath, "utf8"));
   const { selectedProfile, config } = getProfileConfig(scenarios, profileName);
-  const requiredRoutes = Array.isArray(config.requiredRoutes) ? config.requiredRoutes : [];
-  const optionalRoutes = Array.isArray(config.optionalRoutes) ? config.optionalRoutes : [];
+  const requiredRoutes = Array.isArray(config.requiredRoutes)
+    ? config.requiredRoutes.map((route) => localizeHelpCenterPath(route, locale))
+    : [];
+  const optionalRoutes = Array.isArray(config.optionalRoutes)
+    ? config.optionalRoutes.map((route) => localizeHelpCenterPath(route, locale))
+    : [];
   const strictOptionalRoutes = Boolean(config.strictOptionalRoutes);
   const detectChallenge = Boolean(config.detectAccessChallenge);
   const failOnChallenge = config.failOnChallenge !== false;
@@ -531,7 +565,8 @@ async function main() {
   const journeys = config.e2eJourneys || {};
   const maxCrawlPages = Number(config.maxCrawlPages || 40);
   const minCrawledRoutes = Number(config.minCrawledRoutes || 0);
-  const crawlPathPrefix = config.crawlPathPrefix || "/hc/";
+  const crawlPathPrefix = localizeHelpCenterPath(config.crawlPathPrefix || "/hc/", locale);
+  const headless = (process.env.PLAYWRIGHT_HEADLESS || "true").toLowerCase() !== "false";
 
   if (requiredRoutes.length === 0) {
     throw new Error("No requiredRoutes configured for Playwright functional tests.");
@@ -539,7 +574,7 @@ async function main() {
 
   await fs.mkdir(screenshotDir, { recursive: true });
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless });
   const storageStatePath = process.env.PLAYWRIGHT_STORAGE_STATE_PATH || "";
   const contextOptions = {};
   if (storageStatePath) {
@@ -582,7 +617,7 @@ async function main() {
 
   let initialChallenge = null;
   if (detectChallenge) {
-    await page.goto(makeAbsolute(baseUrl, "/hc/en-us"), { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.goto(makeAbsolute(baseUrl, `/hc/${locale}`), { waitUntil: "domcontentloaded", timeout: 30000 });
     initialChallenge = await detectAccessChallenge(page, challengeTitlePatterns);
   }
 
@@ -602,15 +637,15 @@ async function main() {
 
   const blockedByChallenge = Boolean(initialChallenge?.challengeDetected && failOnChallenge);
   if (!blockedByChallenge) {
-    crawledRoutes = await collectCrawlRoutes(page, baseUrl, crawlPathPrefix, maxCrawlPages);
+    crawledRoutes = await collectCrawlRoutes(page, baseUrl, crawlPathPrefix, maxCrawlPages, `/hc/${locale}`);
     const seen = new Set(routeChecks.map((r) => r.route));
     for (const route of crawledRoutes) {
       if (seen.has(route)) continue;
       routeChecks.push(await runRouteCheck(page, baseUrl, route, false, screenshotDir));
     }
 
-    toggle = await evaluateToggleChecks(page, baseUrl, screenshotDir);
-    journeyChecks = await runJourneyChecks(page, baseUrl, journeys, screenshotDir);
+    toggle = await evaluateToggleChecks(page, baseUrl, screenshotDir, locale);
+    journeyChecks = await runJourneyChecks(page, baseUrl, journeys, screenshotDir, locale);
   } else {
     let challengeScreenshotPath = null;
     try {
@@ -668,6 +703,7 @@ async function main() {
     targetName,
     profile: selectedProfile,
     baseUrl,
+    locale,
     blockedByChallenge,
     summary,
     fingerprint: toggle.fingerprint,

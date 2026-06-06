@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs/promises";
 import path from "node:path";
+import { chromium } from "playwright";
 
 function parseArgs(argv) {
   const args = {};
@@ -17,6 +18,32 @@ function parseArgs(argv) {
 
 function normalizeBaseUrl(baseUrl) {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+}
+
+function detectHelpCenterLocale(baseUrl) {
+  const envLocale = (process.env.TEST_HC_LOCALE || "").trim().toLowerCase();
+  if (/^[a-z]{2}-[a-z]{2}$/.test(envLocale)) {
+    return envLocale;
+  }
+
+  try {
+    const parsed = new URL(baseUrl);
+    const match = parsed.pathname.match(/\/hc\/([a-z]{2}-[a-z]{2})(?:\/|$)/i);
+    if (match?.[1]) {
+      return match[1].toLowerCase();
+    }
+  } catch {
+    // Ignore URL parse errors and fall back.
+  }
+
+  return "en-us";
+}
+
+function localizeHelpCenterPath(rawPath, locale) {
+  if (typeof rawPath !== "string" || !rawPath.startsWith("/hc/")) {
+    return rawPath;
+  }
+  return rawPath.replace(/^\/hc\/[a-z]{2}-[a-z]{2}(?=\/|$)/i, `/hc/${locale}`);
 }
 
 function buildScenarioUrl(baseUrl, scenarioPath) {
@@ -56,6 +83,38 @@ function buildRequestHeaders() {
   return headers;
 }
 
+function sanitizeFilePart(value) {
+  return String(value || "item")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "item";
+}
+
+function parseCookiePairs(cookieHeader) {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const idx = pair.indexOf("=");
+      if (idx === -1) return null;
+      const name = pair.slice(0, idx).trim();
+      const value = pair.slice(idx + 1).trim();
+      if (!name) return null;
+      return { name, value };
+    })
+    .filter(Boolean);
+}
+
+async function captureFailureScreenshot(page, screenshotDir, checkId) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const fileName = `${stamp}-${sanitizeFilePart(checkId)}.png`;
+  const filePath = path.join(screenshotDir, fileName);
+  await page.screenshot({ path: filePath, fullPage: true });
+  return filePath;
+}
+
 async function loadScenarios(filePath) {
   const raw = await fs.readFile(filePath, "utf8");
   const parsed = JSON.parse(raw);
@@ -78,7 +137,7 @@ function evaluateStatus(status, scenario) {
   return status >= 200 && status < 400;
 }
 
-async function runScenario(baseUrl, scenario) {
+async function runScenarioWithFetch(baseUrl, scenario) {
   const startedAt = new Date().toISOString();
   const fullUrl = buildScenarioUrl(baseUrl, scenario.path);
   const method = scenario.method || "GET";
@@ -126,6 +185,105 @@ async function runScenario(baseUrl, scenario) {
   };
 }
 
+async function runScenariosWithPlaywright(baseUrl, scenarios, screenshotDir) {
+  const results = [];
+  const headers = buildRequestHeaders();
+  const cookieHeader = process.env.TEST_COOKIE_HEADER || "";
+  const headless = (process.env.PLAYWRIGHT_HEADLESS || "true").toLowerCase() !== "false";
+
+  const browser = await chromium.launch({ headless });
+  try {
+    const context = await browser.newContext();
+    if (Object.keys(headers).length > 0) {
+      await context.setExtraHTTPHeaders(headers);
+    }
+
+    const cookies = parseCookiePairs(cookieHeader).map((cookie) => ({
+      ...cookie,
+      domain: new URL(baseUrl).hostname,
+      path: "/",
+      httpOnly: false,
+      secure: true,
+      sameSite: "Lax",
+    }));
+    if (cookies.length > 0) {
+      await context.addCookies(cookies);
+    }
+
+    const page = await context.newPage();
+
+    for (const scenario of scenarios) {
+      const startedAt = new Date().toISOString();
+      const fullUrl = buildScenarioUrl(baseUrl, scenario.path);
+      const method = scenario.method || "GET";
+      let status = 0;
+      let durationMs = 0;
+      let body = "";
+      let passed = false;
+      let error = null;
+      const timerStart = Date.now();
+
+      try {
+        if (method.toUpperCase() !== "GET") {
+          // Fallback to fetch flow for non-GET methods.
+          const fetchResult = await runScenarioWithFetch(baseUrl, scenario);
+          results.push(fetchResult);
+          continue;
+        }
+
+        const response = await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+        durationMs = Date.now() - timerStart;
+        status = response ? response.status() : 0;
+        body = await page.content();
+
+        const statusOk = evaluateStatus(status, scenario);
+        const includesOk = (scenario.bodyIncludes || []).every((snippet) => body.includes(snippet));
+        const notIncludesOk = (scenario.bodyNotIncludes || []).every((snippet) => !body.includes(snippet));
+        passed = statusOk && includesOk && notIncludesOk;
+
+        if (!passed) {
+          const reason = [];
+          if (!statusOk) reason.push(`unexpected status ${status}`);
+          if (!includesOk) reason.push("required content missing");
+          if (!notIncludesOk) reason.push("unexpected content found");
+          error = reason.join(", ");
+        }
+      } catch (err) {
+        durationMs = Date.now() - timerStart;
+        passed = false;
+        error = err instanceof Error ? err.message : String(err);
+      }
+
+      const result = {
+        ...scenario,
+        url: fullUrl,
+        method,
+        status,
+        durationMs,
+        startedAt,
+        passed,
+        error,
+      };
+
+      if (!result.passed) {
+        try {
+          result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, scenario.id || scenario.path);
+        } catch {
+          result.screenshotPath = null;
+        }
+      }
+
+      results.push(result);
+    }
+
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+
+  return results;
+}
+
 function summarize(results) {
   const byType = {};
   for (const result of results) {
@@ -155,22 +313,31 @@ async function main() {
   const baseUrl = normalizeBaseUrl(args["base-url"] || process.env.TEST_BASE_URL || "");
   const scenariosPath = args["scenarios-file"] || path.join(process.cwd(), "tooling/qa/scenarios.json");
   const outputPath = args.output || path.join(process.cwd(), "tooling/reports/deployment-tests.json");
+  const runnerMode = (args.runner || process.env.DEPLOYMENT_TEST_RUNNER || "playwright").toLowerCase();
+  const screenshotDir = args["screenshot-dir"] || process.env.TEST_SCREENSHOTS_DIR || path.join(path.dirname(outputPath), "screenshots", `${targetName}-deployment`);
 
   if (!baseUrl) {
     throw new Error("Missing base URL. Set --base-url or TEST_BASE_URL.");
   }
 
-  const scenarios = await loadScenarios(scenariosPath);
-  const results = [];
-  for (const scenario of scenarios) {
-    results.push(await runScenario(baseUrl, scenario));
-  }
+  const locale = detectHelpCenterLocale(baseUrl);
+  const scenarios = (await loadScenarios(scenariosPath)).map((scenario) => ({
+    ...scenario,
+    path: localizeHelpCenterPath(scenario.path, locale),
+  }));
+  await fs.mkdir(screenshotDir, { recursive: true });
+
+  const results = runnerMode === "fetch"
+    ? await Promise.all(scenarios.map((scenario) => runScenarioWithFetch(baseUrl, scenario)))
+    : await runScenariosWithPlaywright(baseUrl, scenarios, screenshotDir);
 
   const summary = summarize(results);
   const payload = {
     generatedAt: new Date().toISOString(),
     targetName,
     baseUrl,
+    locale,
+    runnerMode,
     summary,
     results,
   };

@@ -138,6 +138,102 @@ function buildFailureSection(report) {
   `;
 }
 
+function toAttachmentName(filePath) {
+  return path.basename(String(filePath || "")).trim();
+}
+
+function buildScreenshotEvidenceSection(title, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return `<h2>${htmlEscape(title)}</h2><p>No screenshots captured for this section.</p>`;
+  }
+
+  const tableRows = rows
+    .map((row) => {
+      const attachment = toAttachmentName(row.screenshotPath);
+      const imageMarkup = attachment
+        ? `<ac:image ac:width="900"><ri:attachment ri:filename="${htmlEscape(attachment)}"/></ac:image>`
+        : "No screenshot";
+      return `<tr><td>${htmlEscape(row.area)}</td><td>${htmlEscape(row.check)}</td><td>${htmlEscape(row.detail)}</td><td>${imageMarkup}</td></tr>`;
+    })
+    .join("");
+
+  return `
+    <h2>${htmlEscape(title)}</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Check</th><th>Detail</th><th>Screenshot</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  `;
+}
+
+function collectFunctionalScreenshotRows(report) {
+  const rows = [];
+  const deployment = report?.quality?.deployment || {};
+  const functional = report?.quality?.functional || {};
+
+  for (const item of deployment.results || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Deployment HTTP",
+        check: item.id || item.path || "deployment-check",
+        detail: item.error || `Status ${item.status || "n/a"}`,
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  for (const item of functional.routeChecks || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Functional Route",
+        check: item.route || item.id || "route-check",
+        detail: item.error || `${item.status || "n/a"} ${item.outcome || "failed"}`,
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  for (const item of functional.toggleChecks || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Functional Toggle",
+        check: item.id || "toggle-check",
+        detail: item.actual || "toggle mismatch",
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  for (const item of functional.journeyChecks || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Functional Journey",
+        check: item.id || "journey-check",
+        detail: item.actual || "journey failure",
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  return rows;
+}
+
+function collectPerformanceScreenshotRows(report) {
+  const rows = [];
+  const pages = report?.quality?.performance?.pageResults || [];
+  for (const page of pages) {
+    if (!page?.passed && page?.screenshotPath) {
+      rows.push({
+        area: "Performance",
+        check: page.pagePath || page.url || "page",
+        detail: page.error || "threshold failure",
+        screenshotPath: page.screenshotPath,
+      });
+    }
+  }
+  return rows;
+}
+
 async function readManifestVersion() {
   try {
     const raw = await fs.readFile(path.join(process.cwd(), "manifest.json"), "utf8");
@@ -245,6 +341,8 @@ function buildFunctionalPageBody(report, jiraBaseUrl, jiraProjectKey) {
       <tbody>${journeyRows || "<tr><td colspan='4'>No journey checks configured.</td></tr>"}</tbody>
     </table>
 
+    ${buildScreenshotEvidenceSection("Functional Failure Screenshots", collectFunctionalScreenshotRows(report))}
+
     ${buildFailureSection(report)}
 
     ${buildDefectPlaceholderSection(report, jiraBaseUrl, jiraProjectKey)}
@@ -261,6 +359,8 @@ function buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey) {
       <thead><tr><th>Page</th><th>Status</th><th>Perf Score</th><th>LCP (ms)</th><th>CLS</th><th>TBT (ms)</th></tr></thead>
       <tbody>${buildPerformanceRows(report.quality)}</tbody>
     </table>
+
+    ${buildScreenshotEvidenceSection("Performance Failure Screenshots", collectPerformanceScreenshotRows(report))}
 
     ${buildFailureSection(report)}
 
@@ -409,6 +509,7 @@ async function main() {
   const performanceBodyHtml = buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey);
 
   const functionalScreenshotCandidates = [
+    ...collectScreenshotPaths(report?.quality?.deployment?.results || []),
     ...collectScreenshotPaths(report?.quality?.functional?.routeChecks || []),
     ...collectScreenshotPaths(report?.quality?.functional?.toggleChecks || []),
     ...collectScreenshotPaths(report?.quality?.functional?.journeyChecks || []),

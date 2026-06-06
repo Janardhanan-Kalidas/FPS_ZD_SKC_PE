@@ -21,6 +21,32 @@ function normalizeBaseUrl(baseUrl) {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 }
 
+function detectHelpCenterLocale(baseUrl) {
+  const envLocale = (process.env.TEST_HC_LOCALE || "").trim().toLowerCase();
+  if (/^[a-z]{2}-[a-z]{2}$/.test(envLocale)) {
+    return envLocale;
+  }
+
+  try {
+    const parsed = new URL(baseUrl);
+    const match = parsed.pathname.match(/\/hc\/([a-z]{2}-[a-z]{2})(?:\/|$)/i);
+    if (match?.[1]) {
+      return match[1].toLowerCase();
+    }
+  } catch {
+    // Ignore URL parse errors and fall back.
+  }
+
+  return "en-us";
+}
+
+function localizeHelpCenterPath(rawPath, locale) {
+  if (typeof rawPath !== "string" || !rawPath.startsWith("/hc/")) {
+    return rawPath;
+  }
+  return rawPath.replace(/^\/hc\/[a-z]{2}-[a-z]{2}(?=\/|$)/i, `/hc/${locale}`);
+}
+
 function buildPageUrl(baseUrl, pagePath) {
   if (/^https?:\/\//i.test(pagePath)) {
     return pagePath;
@@ -117,7 +143,8 @@ async function captureFailureScreenshot(url, screenshotDir, checkId, headers, co
   const fileName = `${stamp}-${sanitizeFilePart(checkId)}.png`;
   const filePath = path.join(screenshotDir, fileName);
 
-  const browser = await chromium.launch({ headless: true });
+  const headless = (process.env.PLAYWRIGHT_HEADLESS || "true").toLowerCase() !== "false";
+  const browser = await chromium.launch({ headless });
   try {
     const context = await browser.newContext();
     if (headers && Object.keys(headers).length > 0) {
@@ -206,9 +233,13 @@ async function main() {
     throw new Error("Missing base URL. Set --base-url or TEST_BASE_URL.");
   }
 
+  const locale = detectHelpCenterLocale(baseUrl);
+
   const raw = await fs.readFile(thresholdsPath, "utf8");
   const config = JSON.parse(raw);
-  const pages = Array.isArray(config.pages) ? config.pages : [];
+  const pages = Array.isArray(config.pages)
+    ? config.pages.map((pagePath) => localizeHelpCenterPath(pagePath, locale))
+    : [];
   const thresholds = config.thresholds || {};
 
   if (pages.length === 0) {
@@ -338,6 +369,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     targetName,
     baseUrl,
+    locale,
     thresholds,
     summary,
     pageResults,
