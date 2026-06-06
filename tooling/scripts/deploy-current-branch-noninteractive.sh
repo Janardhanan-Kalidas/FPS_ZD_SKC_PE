@@ -180,6 +180,27 @@ pick_menu_index() {
   done
 }
 
+pick_yes_no() {
+  local prompt="$1"
+  local default_value="$2"
+  local input=""
+
+  while true; do
+    read -r -p "$prompt [${default_value}]: " input
+    input="${input:-$default_value}"
+    input="$(printf '%s' "$input" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$input" == "y" || "$input" == "yes" ]]; then
+      printf 'yes'
+      return 0
+    fi
+    if [[ "$input" == "n" || "$input" == "no" ]]; then
+      printf 'no'
+      return 0
+    fi
+    echo "Please answer y/n."
+  done
+}
+
 current_branch="$(git branch --show-current)"
 if [[ -z "$current_branch" ]]; then
   echo "Unable to detect current git branch."
@@ -389,6 +410,8 @@ if [[ "$deploy_mode" == "2" ]]; then
   fi
 fi
 
+set_theme_live_choice="$(pick_yes_no "Set theme live after deployment? (y/n)" "n")"
+
 read -r -p "Proceed with deployment? (yes/no): " deploy_confirm
 if [[ "$deploy_confirm" != "yes" ]]; then
   echo "Deployment cancelled."
@@ -417,6 +440,134 @@ if [[ "$deploy_mode" == "1" ]]; then
 else
   echo "Updating existing Zendesk theme..."
   zcli themes:update . --themeId="$selected_theme_id"
+fi
+
+if [[ "$set_theme_live_choice" == "yes" ]]; then
+  live_theme_id="${selected_theme_id:-}"
+  if [[ -z "$live_theme_id" ]]; then
+    read -r -p "Enter themeId to publish live: " live_theme_id
+  fi
+
+  if [[ -z "$live_theme_id" ]]; then
+    echo "No themeId provided for publish. Skipping live publish."
+  else
+    echo "Publishing themeId '${live_theme_id}' as live..."
+    zcli themes:publish --themeId="$live_theme_id"
+    selected_theme_id="$live_theme_id"
+  fi
+fi
+
+echo
+echo "Running automated post-deployment tests..."
+default_test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}"
+read -r -p "Test base URL [${default_test_base_url}]: " test_base_url
+test_base_url="${test_base_url:-$default_test_base_url}"
+
+if [[ -z "$test_base_url" ]]; then
+  echo "No test base URL provided; cannot run post-deployment tests."
+  exit 1
+fi
+
+test_profile="manual-on-demand"
+if [[ "$set_theme_live_choice" == "yes" ]]; then
+  test_profile="production"
+fi
+
+safe_target_name="$(echo "$current_branch" | tr '/ ' '--' | tr -cd '[:alnum:]_-')"
+run_id="manual-post-deploy-$(date -u +%Y%m%d%H%M%S)"
+report_dir="tooling/reports/${run_id}"
+mkdir -p "$report_dir"
+
+deployment_report="${report_dir}/${safe_target_name}-deployment.json"
+functional_report="${report_dir}/${safe_target_name}-functional-playwright.json"
+performance_report="${report_dir}/${safe_target_name}-performance.json"
+
+set +e
+node tooling/scripts/run-deployment-tests.mjs \
+  --target-name "$safe_target_name" \
+  --base-url "$test_base_url" \
+  --output "$deployment_report"
+deployment_exit=$?
+
+node tooling/scripts/run-playwright-functional-tests.mjs \
+  --target-name "$safe_target_name" \
+  --profile "$test_profile" \
+  --base-url "$test_base_url" \
+  --output "$functional_report"
+functional_exit=$?
+
+node tooling/scripts/run-performance-tests.mjs \
+  --target-name "$safe_target_name" \
+  --base-url "$test_base_url" \
+  --output "$performance_report"
+performance_exit=$?
+set -e
+
+echo "Post-deployment reports:"
+echo "- ${deployment_report}"
+echo "- ${functional_report}"
+echo "- ${performance_report}"
+
+if [[ $deployment_exit -ne 0 || $functional_exit -ne 0 || $performance_exit -ne 0 ]]; then
+  echo "Post-deployment tests failed."
+  exit 1
+fi
+
+echo "Post-deployment tests passed."
+
+publish_confluence_choice="$(pick_yes_no "Publish Confluence result pages now? (y/n)" "n")"
+if [[ "$publish_confluence_choice" == "yes" ]]; then
+  quality_report="${report_dir}/${safe_target_name}-quality-gate.json"
+  confluence_result="${report_dir}/${safe_target_name}-confluence-result.json"
+
+  QUALITY_REPORT_PATH="$quality_report" \
+  TARGET_NAME="$safe_target_name" \
+  BASE_URL="$test_base_url" \
+  CURRENT_BRANCH="$current_branch" \
+  node --input-type=commonjs <<'NODE'
+const fs = require('fs');
+const path = require('path');
+
+const reportPath = process.env.QUALITY_REPORT_PATH;
+const targetName = process.env.TARGET_NAME;
+const baseUrl = process.env.BASE_URL;
+const branch = process.env.CURRENT_BRANCH;
+
+const reportDir = path.dirname(reportPath);
+const deployment = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-deployment.json`), 'utf8'));
+const functional = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-functional-playwright.json`), 'utf8'));
+const performance = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-performance.json`), 'utf8'));
+
+const failed =
+  (deployment?.summary?.failed || 0) > 0 ||
+  (functional?.summary?.failed || 0) > 0 ||
+  (performance?.summary?.failed || 0) > 0;
+
+const payload = {
+  generatedAt: new Date().toISOString(),
+  environmentName: 'manual-post-deploy',
+  targetName,
+  baseUrl,
+  branch,
+  commit: 'local',
+  pipelineUrl: '',
+  failed,
+  quality: {
+    deployment,
+    functional,
+    performance,
+  },
+};
+
+fs.writeFileSync(reportPath, `${JSON.stringify(payload, null, 2)}\n`);
+NODE
+
+  echo "Publishing Confluence functional/performance pages..."
+  node tooling/scripts/publish-confluence-report.mjs \
+    --report-file "$quality_report" \
+    --output "$confluence_result"
+
+  echo "Confluence publish result: ${confluence_result}"
 fi
 
 echo "Deployment finished for branch '${current_branch}'."

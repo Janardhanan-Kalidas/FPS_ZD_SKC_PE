@@ -246,6 +246,7 @@ Current jobs:
 
 1. `theme_version_dry_run` (automatic)
 1. `theme_validate_structure` (automatic)
+1. `theme_quality_gate` (automatic, hard gate for all target environments)
 1. `theme_version_release` (manual, default branch only)
 1. `theme_backup_production` (manual, default branch only)
 1. `theme_deploy` (manual, default branch only)
@@ -266,9 +267,19 @@ Set these in GitLab: `Settings > CI/CD > Variables`
 1. `ZD_EMAIL`
 1. `ZD_API_TOKEN`
 1. `ZD_THEME_ID` (required for backup job)
+1. `ZD_PROD_BASE_URL` (production Help Center URL for quality gate)
+1. `ZD_PREVIEW_BASE_URL` (default branch preview or staging URL)
+1. `ZD_FEATURE_PREVIEW_BASE_URL` (feature preview base URL, optional but recommended)
 1. `DEPLOY_CONFIRM_REQUIRED` with value `DEPLOY_TO_PROD`
 1. `ROLLBACK_CONFIRM_REQUIRED` with value `ROLLBACK_TO_PROD`
 1. `ZCLI_VERSION` (example: `1.0.0-beta.56`)
+1. `ATLASSIAN_BASE_URL` (example: `https://hilti.atlassian.net`)
+1. `ATLASSIAN_USER_EMAIL` (Confluence/Jira service account)
+1. `ATLASSIAN_API_TOKEN` (service account API token)
+1. `CONFLUENCE_SPACE_KEY` (set to `BFS`)
+1. `CONFLUENCE_PARENT_PAGE_ID` (set to `2900984544`)
+1. `JIRA_PROJECT_KEY` (set to `FPSKB`)
+1. `REQUIRE_CONFLUENCE_REPORT` (set to `true` to fail pipeline if reporting fails)
 
 Security rules:
 
@@ -282,11 +293,66 @@ Deployment is blocked if:
 1. Confirmation variable is missing or wrong.
 1. Backup artifact does not exist in pipeline.
 1. Required Zendesk variables are missing.
+1. Any quality-gate test fails (sanity, functional, positive, negative, performance).
+1. Confluence reporting fails when `REQUIRE_CONFLUENCE_REPORT=true`.
 
 Rollback is blocked if:
 
 1. Confirmation variable is missing or wrong.
 1. Required Zendesk variables are missing.
+
+### Deployment Testing and Reporting
+
+Automated testing now runs in `theme_quality_gate` before backup and deployment jobs.
+
+What `theme_quality_gate` does:
+
+1. Runs HTTP-based scenario checks from `tooling/qa/scenarios.json`.
+1. Runs Playwright functional checks from `tooling/qa/playwright-scenarios.json` using environment-specific profiles.
+1. Runs Playwright E2E user journeys (search flow, browse flow, sign-in route, submit-request route).
+1. Runs Lighthouse performance checks using `tooling/qa/performance-thresholds.json`.
+1. Creates two Confluence child pages per pipeline run under the configured BFS parent page:
+   - Functional Test Results
+   - Performance Test Results
+1. Adds a Jira defect placeholder section when a failure is detected.
+
+Playwright profile behavior:
+
+1. `production` profile: strict optional routes + higher crawl minimum.
+1. `default-preview` profile: strict optional routes + medium crawl minimum.
+1. `feature-preview` profile: non-strict optional routes + lower crawl minimum.
+1. `manual-on-demand` profile: same as feature-friendly defaults unless overridden.
+1. Each profile can define E2E journey selectors and access challenge detection rules.
+
+Profiles are configured in:
+
+`tooling/qa/playwright-scenarios.json`
+
+Master checklist for test intent and scope:
+
+`tooling/qa/main-checklist.md`
+
+Traceability matrix coverage (test objective -> source -> script -> artifact -> auth requirement) is defined in the same checklist file under:
+
+`Test Traceability Matrix`
+
+Authentication requirement summary:
+
+1. Public endpoints without challenge can run without auth inputs.
+1. Protected endpoints require auth context for valid functional/performance results.
+1. Deployment and performance probe layers use `TEST_COOKIE_HEADER` and/or `TEST_EXTRA_HEADERS_JSON`.
+1. Playwright functional/journey checks should use `PLAYWRIGHT_STORAGE_STATE_PATH` (plus optional `TEST_EXTRA_HEADERS_JSON`).
+1. If challenge page is still detected, classify as environment-access failure.
+
+Generated artifacts:
+
+1. `tooling/reports/<pipeline-id>/<target>-deployment.json`
+1. `tooling/reports/<pipeline-id>/<target>-functional-playwright.json`
+1. `tooling/reports/<pipeline-id>/<target>-performance.json`
+1. `tooling/reports/<pipeline-id>/<target>-quality-gate.json`
+1. `tooling/reports/<pipeline-id>/<target>-confluence-result.json`
+
+Confluence publish output now contains both functional and performance page URLs.
 
 ### Published Settings Auto-Refresh
 
@@ -322,9 +388,16 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
          1. For Option 1 only, edit default theme name (max 50 chars).
          1. For Option 2, theme name is auto-fetched from Zendesk by selected `themeId`.
      1. Select brand option (brand name + brandId).
+   - After target confirmation, script asks if you want to set the theme live (`y/n`).
+   - After deployment, script automatically runs deployment, functional, and performance tests.
+   - Script asks for test base URL and stores reports under `tooling/reports/manual-post-deploy-<timestamp>/`.
+   - Deployment task exits with failure if post-deployment tests fail.
+   - After successful tests, script asks whether to publish Confluence functional and performance result pages (`y/n`).
+   - If `y`, script creates a local quality-gate summary JSON and runs `publish-confluence-report.mjs`.
    - If Option 1 is selected, script imports a new theme using `zcli themes:import`.
    - If Option 2 is selected, script first tries to auto-resolve existing `themeId` and theme name based on current branch + selected brand and asks for confirmation.
    - If auto-resolved theme is not accepted or not found, script asks for an existing `themeId` to update and then runs `zcli themes:update --themeId`.
+   - If live option is `yes`, script runs `zcli themes:publish --themeId=<id>`.
    - For Option 2, script lists existing themes from Zendesk for reference before you confirm the final `themeId`.
    - Keeps existing task label for compatibility with older team habits.
 
@@ -427,6 +500,131 @@ git push origin main
 1. Provide variable:
 
 `ROLLBACK_CONFIRM=ROLLBACK_TO_PROD`
+
+---
+
+## Manual Verification: End-To-End Test and Reporting Flow
+
+Use this section to manually validate the full implementation after deploying a branch to Zendesk.
+
+### Step 1: Deploy your branch to Zendesk preview
+
+1. Checkout your branch locally.
+1. Run VS Code task `Zendesk: Deploy Current Branch (Non-Interactive)` or run your standard deploy script.
+1. Confirm the preview URL is reachable in browser.
+
+### Step 2: Prepare local test runtime
+
+```bash
+npm install
+npx playwright install chromium
+```
+
+If your Help Center is behind WAF/access controls, run tests with one of these optional inputs:
+
+1. `PLAYWRIGHT_STORAGE_STATE_PATH` for an authenticated Playwright session file.
+1. `TEST_COOKIE_HEADER` for HTTP probes (deployment/performance checks).
+1. `TEST_EXTRA_HEADERS_JSON` for gateway-specific headers.
+
+### Step 3: Run deployment HTTP checks
+
+```bash
+RUN_ID="manual-preview-prod-$(date -u +%Y%m%d%H%M%S)"
+TARGET="preview-as-production"
+BASE_URL="https://<your-preview-host>"
+mkdir -p "tooling/reports/$RUN_ID"
+
+node tooling/scripts/run-deployment-tests.mjs \
+   --target-name "$TARGET" \
+   --base-url "$BASE_URL" \
+   --output "tooling/reports/$RUN_ID/${TARGET}-deployment.json"
+```
+
+### Step 4: Run Playwright functional + E2E user journey checks
+
+```bash
+node tooling/scripts/run-playwright-functional-tests.mjs \
+   --target-name "$TARGET" \
+   --profile production \
+   --base-url "$BASE_URL" \
+   --output "tooling/reports/$RUN_ID/${TARGET}-functional-playwright.json"
+```
+
+Authenticated functional run example:
+
+```bash
+PLAYWRIGHT_STORAGE_STATE_PATH="tooling/qa/storage-state.json" \
+TEST_EXTRA_HEADERS_JSON='{"x-test-runner":"playwright"}' \
+node tooling/scripts/run-playwright-functional-tests.mjs \
+   --target-name "$TARGET" \
+   --profile production \
+   --base-url "$BASE_URL" \
+   --output "tooling/reports/$RUN_ID/${TARGET}-functional-playwright.json"
+```
+
+What this validates:
+
+1. Required Help Center routes.
+1. Optional routes according to environment strictness profile.
+1. Crawl coverage minimum.
+1. Sign in and submit request toggle behavior.
+1. End-to-end user journeys (search, browse, sign-in route, submit-request route).
+1. Access challenge detection (bot/WAF challenge pages fail the gate).
+
+### Step 5: Run Lighthouse performance checks
+
+```bash
+node tooling/scripts/run-performance-tests.mjs \
+   --target-name "$TARGET" \
+   --base-url "$BASE_URL" \
+   --output "tooling/reports/$RUN_ID/${TARGET}-performance.json"
+```
+
+Authenticated deployment/performance probe example:
+
+```bash
+TEST_COOKIE_HEADER='name=value; another=value' \
+TEST_EXTRA_HEADERS_JSON='{"x-test-runner":"qa-gate"}' \
+node tooling/scripts/run-deployment-tests.mjs \
+   --target-name "$TARGET" \
+   --base-url "$BASE_URL" \
+   --output "tooling/reports/$RUN_ID/${TARGET}-deployment.json"
+```
+
+### Step 6: Publish Confluence child pages
+
+Pipeline mode (recommended in CI):
+
+```bash
+export ATLASSIAN_BASE_URL="https://hilti.atlassian.net"
+export ATLASSIAN_USER_EMAIL="<service-account-email>"
+export ATLASSIAN_API_TOKEN="<service-account-token>"
+export CONFLUENCE_SPACE_KEY="BFS"
+export CONFLUENCE_PARENT_PAGE_ID="2900984544"
+export JIRA_PROJECT_KEY="FPSKB"
+
+node tooling/scripts/publish-confluence-report.mjs \
+   --report-file "tooling/reports/$RUN_ID/${TARGET}-quality-gate.json" \
+   --output "tooling/reports/$RUN_ID/${TARGET}-confluence-result.json"
+```
+
+Publish behavior:
+
+1. Creates one **Functional Test Results** child page under checklist parent.
+1. Creates one **Performance Test Results** child page under checklist parent.
+1. Adds Jira defect placeholder sections when failures exist.
+
+### Step 7: Verify Confluence output
+
+1. Open the created functional page and confirm route/toggle/journey sections are present.
+1. Open the created performance page and confirm all threshold metrics are shown.
+1. If failed, confirm Jira placeholder section is present in both pages.
+
+### Step 8: Validate pipeline hard-gate behavior
+
+1. Trigger pipeline and verify `theme_quality_gate` runs before backup/deploy.
+1. Confirm `theme_backup_production` is blocked when test failures exist.
+1. Confirm deployment proceeds only when quality gates pass.
 
 1. Optional: if you want a specific backup ZIP, provide:
 

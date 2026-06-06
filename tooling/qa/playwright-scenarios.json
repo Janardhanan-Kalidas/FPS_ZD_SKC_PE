@@ -1,0 +1,173 @@
+{
+  "defaultProfile": "default-preview",
+  "profiles": {
+    "production": {
+      "requiredRoutes": [
+        "/hc/en-us",
+        "/hc/en-us/search?query=help",
+        "/hc/en-us/requests/new",
+        "/hc/en-us/requests",
+        "/hc/en-us/contributions",
+        "/hc/en-us/subscriptions",
+        "/hc/en-us/signin"
+      ],
+      "optionalRoutes": [
+        "/hc/en-us/community/topics",
+        "/hc/en-us/community/posts"
+      ],
+      "strictOptionalRoutes": true,
+      "maxCrawlPages": 60,
+      "minCrawledRoutes": 20,
+      "crawlPathPrefix": "/hc/",
+      "detectAccessChallenge": true,
+      "challengeTitlePatterns": ["Just a moment", "Attention Required"],
+      "e2eJourneys": {
+        "searchFlow": {
+          "enabled": true,
+          "searchInputSelector": "input[type='search'], input[name='query'], .search input",
+          "resultsPathContains": "/search"
+        },
+        "browseFlow": {
+          "enabled": true,
+          "categoryLinkSelector": ".content-blocks a[href*='/sections/'], .content-blocks a[href*='/categories/'], main a[href*='/categories/']",
+          "sectionLinkSelector": "a[href*='/sections/'], main a[href*='/sections/']",
+          "articleLinkSelector": "a[href*='/articles/'], .article-list a[href*='/articles/']"
+        },
+        "signInFlow": {
+          "enabled": true,
+          "signInPath": "/hc/en-us/signin"
+        },
+        "submitRequestFlow": {
+          "enabled": true,
+          "submitRequestPath": "/hc/en-us/requests/new"
+        }
+      }
+    },
+    "default-preview": {
+      "requiredRoutes": [
+        "/hc/en-us",
+        "/hc/en-us/search?query=help",
+        "/hc/en-us/requests/new",
+        "/hc/en-us/requests",
+        "/hc/en-us/contributions",
+        "/hc/en-us/subscriptions",
+        "/hc/en-us/signin"
+      ],
+      "optionalRoutes": [
+        "/hc/en-us/community/topics",
+        "/hc/en-us/community/posts"
+      ],
+      "strictOptionalRoutes": true,
+      "maxCrawlPages": 50,
+      "minCrawledRoutes": 15,
+      "crawlPathPrefix": "/hc/",
+      "detectAccessChallenge": true,
+      "challengeTitlePatterns": ["Just a moment", "Attention Required"],
+      "e2eJourneys": {
+        "searchFlow": {
+          "enabled": true,
+          "searchInputSelector": "input[type='search'], input[name='query'], .search input",
+          "resultsPathContains": "/search"
+        },
+        "browseFlow": {
+          "enabled": true,
+          "categoryLinkSelector": ".content-blocks a[href*='/sections/'], .content-blocks a[href*='/categories/'], main a[href*='/categories/']",
+          "sectionLinkSelector": "a[href*='/sections/'], main a[href*='/sections/']",
+          "articleLinkSelector": "a[href*='/articles/'], .article-list a[href*='/articles/']"
+        },
+        "signInFlow": {
+          "enabled": true,
+          "signInPath": "/hc/en-us/signin"
+        },
+        "submitRequestFlow": {
+          "enabled": true,
+          "submitRequestPath": "/hc/en-us/requests/new"
+        }
+      }
+    },
+    "feature-preview": {
+      "requiredRoutes": [
+        "/hc/en-us",
+        "/hc/en-us/search?query=help",
+        "/hc/en-us/requests/new",
+        "/hc/en-us/requests",
+        "/hc/en-us/signin"
+      ],
+      "optionalRoutes": [
+        "/hc/en-us/contributions",
+        "/hc/en-us/subscriptions",
+        "/hc/en-us/community/topics",
+        "/hc/en-us/community/posts"
+      ],
+      "strictOptionalRoutes": false,
+      "maxCrawlPages": 40,
+      "minCrawledRoutes": 10,
+      "crawlPathPrefix": "/hc/",
+      "detectAccessChallenge": true,
+      "challengeTitlePatterns": ["Just a moment", "Attention Required"],
+      "e2eJourneys": {
+        "searchFlow": {
+          "enabled": true,
+          "searchInputSelector": "input[type='search'], input[name='query'], .search input",
+          "resultsPathContains": "/search"
+        },
+        "browseFlow": {
+          "enabled": true,
+          "categoryLinkSelector": ".content-blocks a[href*='/sections/'], .content-blocks a[href*='/categories/'], main a[href*='/categories/']",
+          "sectionLinkSelector": "a[href*='/sections/'], main a[href*='/sections/']",
+          "articleLinkSelector": "a[href*='/articles/'], .article-list a[href*='/articles/']"
+        },
+        "signInFlow": {
+          "enabled": true,
+          "signInPath": "/hc/en-us/signin"
+        },
+        "submitRequestFlow": {
+          "enabled": true,
+          "submitRequestPath": "/hc/en-us/requests/new"
+        }
+      }
+    },
+    "manual-on-demand": {
+      "requiredRoutes": [
+        "/hc/en-us",
+        "/hc/en-us/search?query=help",
+        "/hc/en-us/requests/new",
+        "/hc/en-us/requests",
+        "/hc/en-us/signin"
+      ],
+      "optionalRoutes": [
+        "/hc/en-us/contributions",
+        "/hc/en-us/subscriptions",
+        "/hc/en-us/community/topics",
+        "/hc/en-us/community/posts"
+      ],
+      "strictOptionalRoutes": false,
+      "maxCrawlPages": 40,
+      "minCrawledRoutes": 10,
+      "crawlPathPrefix": "/hc/",
+      "detectAccessChallenge": true,
+      "challengeTitlePatterns": ["Just a moment", "Attention Required"],
+      "e2eJourneys": {
+        "searchFlow": {
+          "enabled": true,
+          "searchInputSelector": "input[type='search'], input[name='query'], .search input",
+          "resultsPathContains": "/search"
+        },
+        "browseFlow": {
+          "enabled": true,
+          "categoryLinkSelector": ".content-blocks a[href*='/sections/'], .content-blocks a[href*='/categories/'], main a[href*='/categories/']",
+          "sectionLinkSelector": "a[href*='/sections/'], main a[href*='/sections/']",
+          "articleLinkSelector": "a[href*='/articles/'], .article-list a[href*='/articles/']"
+        },
+        "signInFlow": {
+          "enabled": true,
+          "signInPath": "/hc/en-us/signin"
+        },
+        "submitRequestFlow": {
+          "enabled": true,
+          "submitRequestPath": "/hc/en-us/requests/new"
+        }
+      }
+    }
+  }
+}

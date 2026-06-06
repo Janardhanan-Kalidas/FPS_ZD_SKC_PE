@@ -22,6 +22,10 @@ variables:
   ZCLI_VERSION: "1.0.0-beta.56"
   DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
   ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
+  CONFLUENCE_SPACE_KEY: "BFS"
+  CONFLUENCE_PARENT_PAGE_ID: "2900984544"
+  JIRA_PROJECT_KEY: "FPSKB"
+  REQUIRE_CONFLUENCE_REPORT: "true"
 
 default:
   tags:
@@ -64,6 +68,59 @@ theme_validate_structure:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
 
+# Hard quality gate for all deployment targets. This job runs deployment checks,
+# performance checks, and creates a Confluence child page for each run.
+theme_quality_gate:
+  stage: validate
+  script:
+    - |
+      TARGETS="[]"
+
+      add_target() {
+        local current_json="$1"
+        local target_name="$2"
+        local target_url="$3"
+        local target_env="$4"
+        node -e '
+          const current = JSON.parse(process.argv[1]);
+          const target = { name: process.argv[2], baseUrl: process.argv[3], environment: process.argv[4] };
+          current.push(target);
+          process.stdout.write(JSON.stringify(current));
+        ' "$current_json" "$target_name" "$target_url" "$target_env"
+      }
+
+      if [[ -n "${ZD_PROD_BASE_URL:-}" ]]; then
+        TARGETS="$(add_target "$TARGETS" "production" "$ZD_PROD_BASE_URL" "production")"
+      fi
+
+      if [[ -n "${ZD_PREVIEW_BASE_URL:-}" ]]; then
+        TARGETS="$(add_target "$TARGETS" "default-preview" "$ZD_PREVIEW_BASE_URL" "default-preview")"
+      fi
+
+      if [[ -n "${ZD_FEATURE_PREVIEW_BASE_URL:-}" ]]; then
+        TARGETS="$(add_target "$TARGETS" "feature-preview" "$ZD_FEATURE_PREVIEW_BASE_URL" "feature-preview")"
+      fi
+
+      if [[ "${TARGETS}" == "[]" ]]; then
+        echo "Quality gate blocked: provide at least one URL in ZD_PROD_BASE_URL, ZD_PREVIEW_BASE_URL, or ZD_FEATURE_PREVIEW_BASE_URL"
+        exit 1
+      fi
+
+      export TEST_TARGETS_JSON="$TARGETS"
+      export ATLASSIAN_BASE_URL="${ATLASSIAN_BASE_URL:-https://hilti.atlassian.net}"
+      export JIRA_BASE_URL="${JIRA_BASE_URL:-${ATLASSIAN_BASE_URL}}"
+      npm run test:quality:gate
+  artifacts:
+    name: "quality-gate-${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_ID}"
+    when: always
+    expire_in: 14 days
+    paths:
+      - tooling/reports/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
 # ── Release ─────────────────────────────────────────────────────────────────
 # Manual job — bumps manifest.json version. Trigger from the GitLab UI.
 theme_version_release:
@@ -84,6 +141,7 @@ theme_backup_production:
   needs:
     - theme_version_dry_run
     - theme_validate_structure
+    - theme_quality_gate
   script:
     - npm run backup:theme
   artifacts:
