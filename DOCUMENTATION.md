@@ -390,10 +390,14 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
      1. Select brand option (brand name + brandId).
    - After target confirmation, script asks if you want to set the theme live (`y/n`).
    - After deployment, script automatically runs deployment, functional, and performance tests.
-   - Script asks for test base URL and stores reports under `tooling/reports/manual-post-deploy-<timestamp>/`.
+   - Script auto-resolves test base URL (no prompt) and stores reports under `tooling/reports/manual-post-deploy-<timestamp>/`.
+   - Auto-resolution order uses `ZD_POST_DEPLOY_TEST_BASE_URL` first, then environment defaults (`ZD_PREVIEW_BASE_URL`, `ZD_FEATURE_PREVIEW_BASE_URL`, `ZD_PROD_BASE_URL`) based on live/non-live mode.
    - Deployment task exits with failure if post-deployment tests fail.
    - After successful tests, script asks whether to publish Confluence functional and performance result pages (`y/n`).
    - If `y`, script creates a local quality-gate summary JSON and runs `publish-confluence-report.mjs`.
+   - Confluence pages are created even when tests fail (if you choose publish) so failures are documented.
+   - Published page titles follow format: `[Version]-[Deployed branch]-[YYYYMMDD-HHMMSSZ]-[Test Type]-[Environment]-[Status]`.
+   - Failure sections include failed checks and possible resolution guidance.
    - If Option 1 is selected, script imports a new theme using `zcli themes:import`.
    - If Option 2 is selected, script first tries to auto-resolve existing `themeId` and theme name based on current branch + selected brand and asks for confirmation.
    - If auto-resolved theme is not accepted or not found, script asks for an existing `themeId` to update and then runs `zcli themes:update --themeId`.

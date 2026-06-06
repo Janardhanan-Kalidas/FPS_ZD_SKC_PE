@@ -24,6 +24,130 @@ function htmlEscape(value) {
     .replaceAll("'", "&#39;");
 }
 
+function compactValue(value) {
+  return String(value || "unknown").replace(/\s+/g, "-");
+}
+
+function buildTimestampKey() {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  const hh = String(now.getUTCHours()).padStart(2, "0");
+  const mi = String(now.getUTCMinutes()).padStart(2, "0");
+  const ss = String(now.getUTCSeconds()).padStart(2, "0");
+  return `${yyyy}${mm}${dd}-${hh}${mi}${ss}Z`;
+}
+
+function buildFailureEntries(report) {
+  const entries = [];
+  const deploymentResults = report?.quality?.deployment?.results || [];
+  const functional = report?.quality?.functional || {};
+  const performancePages = report?.quality?.performance?.pageResults || [];
+
+  for (const item of deploymentResults) {
+    if (!item?.passed) {
+      entries.push({
+        area: "Deployment HTTP",
+        check: item.id || item.description || item.path || "unknown",
+        detail: item.error || `Status ${item.status || "n/a"}`,
+      });
+    }
+  }
+
+  for (const item of functional.toggleChecks || []) {
+    if (!item?.passed) {
+      entries.push({
+        area: "Functional Toggle",
+        check: item.id || "toggle-check",
+        detail: item.actual || "toggle mismatch",
+      });
+    }
+  }
+
+  for (const item of functional.journeyChecks || []) {
+    if (!item?.passed) {
+      entries.push({
+        area: "Functional Journey",
+        check: item.id || "journey-check",
+        detail: item.actual || "journey failure",
+      });
+    }
+  }
+
+  for (const page of performancePages) {
+    if (!page?.passed) {
+      entries.push({
+        area: "Performance",
+        check: page.pagePath || page.url || "page",
+        detail: page.error || "threshold failure",
+      });
+    }
+  }
+
+  return entries;
+}
+
+function buildResolutionGuidance(report) {
+  const suggestions = [];
+  const failureEntries = buildFailureEntries(report);
+  const hasChallengeFailure = failureEntries.some((entry) => /challenge|just a moment|403|verify you are human/i.test(entry.detail));
+  const hasFunctionalFailure = failureEntries.some((entry) => entry.area.includes("Functional"));
+  const hasPerformanceFailure = failureEntries.some((entry) => entry.area === "Performance");
+  const hasDeploymentFailure = failureEntries.some((entry) => entry.area === "Deployment HTTP");
+
+  if (hasChallengeFailure) {
+    suggestions.push("Environment access challenge detected. Re-run with authentication context (`PLAYWRIGHT_STORAGE_STATE_PATH`, `TEST_COOKIE_HEADER`, `TEST_EXTRA_HEADERS_JSON`) and verify WAF/SSO allow-listing for automation traffic.");
+  }
+  if (hasFunctionalFailure) {
+    suggestions.push("Functional checks failed. Verify route availability, settings toggles (`hide_sign_in_link`, `show_submit_a_request_link`), and selector stability in templates before re-running Playwright checks.");
+  }
+  if (hasPerformanceFailure) {
+    suggestions.push("Performance checks failed. Review Lighthouse output for LCP/TBT bottlenecks, optimize heavy assets/scripts, and confirm measurements are taken on real pages (not challenge pages).");
+  }
+  if (hasDeploymentFailure) {
+    suggestions.push("Deployment HTTP checks failed. Validate base URL, locale paths, and expected status codes/content assertions in `tooling/qa/scenarios.json`.");
+  }
+  if (suggestions.length === 0) {
+    suggestions.push("No failures detected. Keep this run as a baseline and monitor regression in subsequent deployments.");
+  }
+  return suggestions;
+}
+
+function buildFailureSection(report) {
+  if (!report.failed) {
+    return "<h2>Failed Checks</h2><p>No failed checks in this run.</p>";
+  }
+
+  const rows = buildFailureEntries(report)
+    .map((entry) => `<tr><td>${htmlEscape(entry.area)}</td><td>${htmlEscape(entry.check)}</td><td>${htmlEscape(entry.detail)}</td></tr>`)
+    .join("");
+
+  const guidance = buildResolutionGuidance(report)
+    .map((item) => `<li>${htmlEscape(item)}</li>`)
+    .join("");
+
+  return `
+    <h2>Failed Checks</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Check</th><th>Failure Detail</th></tr></thead>
+      <tbody>${rows || "<tr><td colspan='3'>No failure details available.</td></tr>"}</tbody>
+    </table>
+    <h2>Possible Solutions</h2>
+    <ol>${guidance}</ol>
+  `;
+}
+
+async function readManifestVersion() {
+  try {
+    const raw = await fs.readFile(path.join(process.cwd(), "manifest.json"), "utf8");
+    const manifest = JSON.parse(raw);
+    return String(manifest.version || "unknown");
+  } catch {
+    return "unknown";
+  }
+}
+
 function buildStatusTableRows(quality) {
   const byType = quality?.deployment?.summary?.byType || {};
   const knownTypes = ["sanity", "functional", "positive", "negative"];
@@ -121,6 +245,8 @@ function buildFunctionalPageBody(report, jiraBaseUrl, jiraProjectKey) {
       <tbody>${journeyRows || "<tr><td colspan='4'>No journey checks configured.</td></tr>"}</tbody>
     </table>
 
+    ${buildFailureSection(report)}
+
     ${buildDefectPlaceholderSection(report, jiraBaseUrl, jiraProjectKey)}
   `;
 }
@@ -135,6 +261,8 @@ function buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey) {
       <thead><tr><th>Page</th><th>Status</th><th>Perf Score</th><th>LCP (ms)</th><th>CLS</th><th>TBT (ms)</th></tr></thead>
       <tbody>${buildPerformanceRows(report.quality)}</tbody>
     </table>
+
+    ${buildFailureSection(report)}
 
     ${buildDefectPlaceholderSection(report, jiraBaseUrl, jiraProjectKey)}
   `;
@@ -200,9 +328,13 @@ async function main() {
 
   const reportRaw = await fs.readFile(reportPath, "utf8");
   const report = JSON.parse(reportRaw);
-  const timeKey = new Date().toISOString().replace(/[:.]/g, "-");
-  const functionalTitle = `[${report.environmentName}] Functional Test Results - ${report.branch || "unknown"} - ${timeKey}`;
-  const performanceTitle = `[${report.environmentName}] Performance Test Results - ${report.branch || "unknown"} - ${timeKey}`;
+  const version = await readManifestVersion();
+  const timeKey = buildTimestampKey();
+  const branchKey = compactValue(report.branch || "unknown");
+  const envKey = compactValue(report.environmentName || "unknown");
+  const statusKey = report.failed ? "FAILED" : "PASSED";
+  const functionalTitle = `[${version}]-[${branchKey}]-[${timeKey}]-[Functional]-[${envKey}]-[${statusKey}]`;
+  const performanceTitle = `[${version}]-[${branchKey}]-[${timeKey}]-[Performance]-[${envKey}]-[${statusKey}]`;
 
   const functionalBodyHtml = buildFunctionalPageBody(report, jiraBaseUrl, jiraProjectKey);
   const performanceBodyHtml = buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey);

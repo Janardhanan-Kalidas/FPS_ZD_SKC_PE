@@ -459,19 +459,27 @@ fi
 
 echo
 echo "Running automated post-deployment tests..."
-default_test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}"
-read -r -p "Test base URL [${default_test_base_url}]: " test_base_url
-test_base_url="${test_base_url:-$default_test_base_url}"
-
-if [[ -z "$test_base_url" ]]; then
-  echo "No test base URL provided; cannot run post-deployment tests."
-  exit 1
-fi
-
 test_profile="manual-on-demand"
 if [[ "$set_theme_live_choice" == "yes" ]]; then
   test_profile="production"
 fi
+
+test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-}"
+if [[ -z "$test_base_url" ]]; then
+  if [[ "$test_profile" == "production" ]]; then
+    test_base_url="${ZD_PROD_BASE_URL:-${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-}}}"
+  else
+    test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}}"
+  fi
+fi
+
+if [[ -z "$test_base_url" ]]; then
+  echo "Unable to auto-resolve test base URL."
+  echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
+  exit 1
+fi
+
+echo "Auto-selected test base URL: ${test_base_url}"
 
 safe_target_name="$(echo "$current_branch" | tr '/ ' '--' | tr -cd '[:alnum:]_-')"
 run_id="manual-post-deploy-$(date -u +%Y%m%d%H%M%S)"
@@ -508,12 +516,13 @@ echo "- ${deployment_report}"
 echo "- ${functional_report}"
 echo "- ${performance_report}"
 
+tests_failed="false"
 if [[ $deployment_exit -ne 0 || $functional_exit -ne 0 || $performance_exit -ne 0 ]]; then
+  tests_failed="true"
   echo "Post-deployment tests failed."
-  exit 1
+else
+  echo "Post-deployment tests passed."
 fi
-
-echo "Post-deployment tests passed."
 
 publish_confluence_choice="$(pick_yes_no "Publish Confluence result pages now? (y/n)" "n")"
 if [[ "$publish_confluence_choice" == "yes" ]]; then
@@ -568,6 +577,11 @@ NODE
     --output "$confluence_result"
 
   echo "Confluence publish result: ${confluence_result}"
+fi
+
+if [[ "$tests_failed" == "true" ]]; then
+  echo "Deployment completed, but post-deployment tests failed."
+  exit 1
 fi
 
 echo "Deployment finished for branch '${current_branch}'."
