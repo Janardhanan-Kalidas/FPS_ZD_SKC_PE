@@ -77,6 +77,22 @@ function isAuthLikeStatus(status) {
   return status === 401 || status === 403;
 }
 
+function sanitizeFilePart(value) {
+  return String(value || "item")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "item";
+}
+
+async function captureFailureScreenshot(page, screenshotDir, checkId) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const fileName = `${stamp}-${sanitizeFilePart(checkId)}.png`;
+  const filePath = path.join(screenshotDir, fileName);
+  await page.screenshot({ path: filePath, fullPage: true });
+  return filePath;
+}
+
 function buildExtraHttpHeaders() {
   const headers = {};
   const extraHeadersJson = process.env.TEST_EXTRA_HEADERS_JSON || "";
@@ -118,7 +134,7 @@ async function detectAccessChallenge(page, titlePatterns = []) {
   };
 }
 
-async function runRouteCheck(page, baseUrl, route, required) {
+async function runRouteCheck(page, baseUrl, route, required, screenshotDir) {
   const url = makeAbsolute(baseUrl, route);
   const startedAt = new Date().toISOString();
   const t0 = Date.now();
@@ -139,7 +155,7 @@ async function runRouteCheck(page, baseUrl, route, required) {
       passed = outcome === "passed" || outcome === "auth" || outcome === "not_found";
     }
 
-    return {
+    const result = {
       route,
       required,
       url,
@@ -152,8 +168,18 @@ async function runRouteCheck(page, baseUrl, route, required) {
       durationMs,
       error: null,
     };
+
+    if (!result.passed) {
+      try {
+        result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, `route-${route}`);
+      } catch {
+        result.screenshotPath = null;
+      }
+    }
+
+    return result;
   } catch (error) {
-    return {
+    const result = {
       route,
       required,
       url,
@@ -166,6 +192,14 @@ async function runRouteCheck(page, baseUrl, route, required) {
       durationMs: Date.now() - t0,
       error: error instanceof Error ? error.message : String(error),
     };
+
+    try {
+      result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, `route-${route}`);
+    } catch {
+      result.screenshotPath = null;
+    }
+
+    return result;
   }
 }
 
@@ -205,7 +239,7 @@ async function collectCrawlRoutes(page, baseUrl, prefix, maxPages) {
   return Array.from(discovered);
 }
 
-async function evaluateToggleChecks(page, baseUrl) {
+async function evaluateToggleChecks(page, baseUrl, screenshotDir) {
   const homeUrl = makeAbsolute(baseUrl, "/hc/en-us");
   await page.goto(homeUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
 
@@ -228,26 +262,43 @@ async function evaluateToggleChecks(page, baseUrl) {
   const signInPassed = hideSignIn ? signInCount === 0 : signInCount > 0;
   const submitPassed = showSubmit ? submitCount > 0 : submitCount === 0;
 
+  const checks = [
+    {
+      id: "toggle-hide-sign-in-link",
+      expected: hideSignIn ? "sign-in hidden" : "sign-in visible",
+      actual: signInCount > 0 ? "sign-in visible" : "sign-in hidden",
+      passed: signInPassed,
+    },
+    {
+      id: "toggle-show-submit-request-link",
+      expected: showSubmit ? "submit-request visible" : "submit-request hidden",
+      actual: submitCount > 0 ? "submit-request visible" : "submit-request hidden",
+      passed: submitPassed,
+    },
+  ];
+
+  if (checks.some((check) => !check.passed)) {
+    let screenshotPath = null;
+    try {
+      screenshotPath = await captureFailureScreenshot(page, screenshotDir, "toggle-checks");
+    } catch {
+      screenshotPath = null;
+    }
+
+    for (const check of checks) {
+      if (!check.passed) {
+        check.screenshotPath = screenshotPath;
+      }
+    }
+  }
+
   return {
     fingerprint,
-    checks: [
-      {
-        id: "toggle-hide-sign-in-link",
-        expected: hideSignIn ? "sign-in hidden" : "sign-in visible",
-        actual: signInCount > 0 ? "sign-in visible" : "sign-in hidden",
-        passed: signInPassed,
-      },
-      {
-        id: "toggle-show-submit-request-link",
-        expected: showSubmit ? "submit-request visible" : "submit-request hidden",
-        actual: submitCount > 0 ? "submit-request visible" : "submit-request hidden",
-        passed: submitPassed,
-      },
-    ],
+    checks,
   };
 }
 
-async function runSearchJourney(page, baseUrl, searchFlow) {
+async function runSearchJourney(page, baseUrl, searchFlow, screenshotDir) {
   const selector = searchFlow.searchInputSelector || "input[type='search'], input[name='query'], .search input";
   const resultsPathContains = searchFlow.resultsPathContains || "/search";
   const homeUrl = makeAbsolute(baseUrl, "/hc/en-us");
@@ -262,23 +313,41 @@ async function runSearchJourney(page, baseUrl, searchFlow) {
 
     const currentUrl = page.url();
     const passed = currentUrl.includes(resultsPathContains);
-    return {
+    const result = {
       id: "journey-search-flow",
       expected: `URL contains ${resultsPathContains}`,
       actual: currentUrl,
       passed,
     };
+
+    if (!result.passed) {
+      try {
+        result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, result.id);
+      } catch {
+        result.screenshotPath = null;
+      }
+    }
+
+    return result;
   } catch (error) {
-    return {
+    const result = {
       id: "journey-search-flow",
       expected: `URL contains ${resultsPathContains}`,
       actual: error instanceof Error ? error.message : String(error),
       passed: false,
     };
+
+    try {
+      result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, result.id);
+    } catch {
+      result.screenshotPath = null;
+    }
+
+    return result;
   }
 }
 
-async function runBrowseJourney(page, baseUrl, browseFlow) {
+async function runBrowseJourney(page, baseUrl, browseFlow, screenshotDir) {
   const categorySelector = browseFlow.categoryLinkSelector || "a[href*='/categories/'], a[href*='/sections/']";
   const sectionSelector = browseFlow.sectionLinkSelector || "a[href*='/sections/']";
   const articleSelector = browseFlow.articleLinkSelector || "a[href*='/articles/']";
@@ -306,62 +375,98 @@ async function runBrowseJourney(page, baseUrl, browseFlow) {
 
     const currentUrl = page.url();
     const passed = /\/hc\/[a-z]{2}-[a-z]{2}\/(categories|sections|articles)\//i.test(currentUrl);
-    return {
+    const result = {
       id: "journey-browse-category-section-article",
       expected: "navigate to category/section/article route",
       actual: currentUrl,
       passed,
     };
+
+    if (!result.passed) {
+      try {
+        result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, result.id);
+      } catch {
+        result.screenshotPath = null;
+      }
+    }
+
+    return result;
   } catch (error) {
-    return {
+    const result = {
       id: "journey-browse-category-section-article",
       expected: "navigate to category/section/article route",
       actual: error instanceof Error ? error.message : String(error),
       passed: false,
     };
+
+    try {
+      result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, result.id);
+    } catch {
+      result.screenshotPath = null;
+    }
+
+    return result;
   }
 }
 
-async function runPathJourney(page, baseUrl, journeyId, targetPath) {
+async function runPathJourney(page, baseUrl, journeyId, targetPath, screenshotDir) {
   const url = makeAbsolute(baseUrl, targetPath);
   try {
     const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     const status = response ? response.status() : 0;
     const currentUrl = page.url();
     const passed = (status >= 200 && status < 400) || isAuthLikeStatus(status);
-    return {
+    const result = {
       id: journeyId,
       expected: `reachable path ${targetPath}`,
       actual: `${status} ${currentUrl}`,
       passed,
     };
+
+    if (!result.passed) {
+      try {
+        result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, result.id);
+      } catch {
+        result.screenshotPath = null;
+      }
+    }
+
+    return result;
   } catch (error) {
-    return {
+    const result = {
       id: journeyId,
       expected: `reachable path ${targetPath}`,
       actual: error instanceof Error ? error.message : String(error),
       passed: false,
     };
+
+    try {
+      result.screenshotPath = await captureFailureScreenshot(page, screenshotDir, result.id);
+    } catch {
+      result.screenshotPath = null;
+    }
+
+    return result;
   }
 }
 
-async function runJourneyChecks(page, baseUrl, journeys = {}) {
+async function runJourneyChecks(page, baseUrl, journeys = {}, screenshotDir) {
   const checks = [];
 
   if (journeys.searchFlow?.enabled) {
-    checks.push(await runSearchJourney(page, baseUrl, journeys.searchFlow));
+    checks.push(await runSearchJourney(page, baseUrl, journeys.searchFlow, screenshotDir));
   }
 
   if (journeys.browseFlow?.enabled) {
-    checks.push(await runBrowseJourney(page, baseUrl, journeys.browseFlow));
+    checks.push(await runBrowseJourney(page, baseUrl, journeys.browseFlow, screenshotDir));
   }
 
   if (journeys.signInFlow?.enabled) {
-    checks.push(await runPathJourney(page, baseUrl, "journey-sign-in-route", journeys.signInFlow.signInPath || "/hc/en-us/signin"));
+    checks.push(await runPathJourney(page, baseUrl, "journey-sign-in-route", journeys.signInFlow.signInPath || "/hc/en-us/signin", screenshotDir));
   }
 
   if (journeys.submitRequestFlow?.enabled) {
-    checks.push(await runPathJourney(page, baseUrl, "journey-submit-request-route", journeys.submitRequestFlow.submitRequestPath || "/hc/en-us/requests/new"));
+    checks.push(await runPathJourney(page, baseUrl, "journey-submit-request-route", journeys.submitRequestFlow.submitRequestPath || "/hc/en-us/requests/new", screenshotDir));
   }
 
   return checks;
@@ -409,6 +514,7 @@ async function main() {
   const baseUrl = normalizeBaseUrl(args["base-url"] || process.env.TEST_BASE_URL || "");
   const scenariosPath = args["scenarios-file"] || path.join(process.cwd(), "tooling/qa/playwright-scenarios.json");
   const outputPath = args.output || path.join(process.cwd(), "tooling/reports/playwright-functional-tests.json");
+  const screenshotDir = args["screenshot-dir"] || process.env.TEST_SCREENSHOTS_DIR || path.join(path.dirname(outputPath), "screenshots", `${targetName}-functional`);
 
   if (!baseUrl) {
     throw new Error("Missing base URL. Set --base-url or TEST_BASE_URL.");
@@ -430,6 +536,8 @@ async function main() {
   if (requiredRoutes.length === 0) {
     throw new Error("No requiredRoutes configured for Playwright functional tests.");
   }
+
+  await fs.mkdir(screenshotDir, { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
   const storageStatePath = process.env.PLAYWRIGHT_STORAGE_STATE_PATH || "";
@@ -481,11 +589,11 @@ async function main() {
   const routeChecks = [];
 
   for (const route of requiredRoutes) {
-    routeChecks.push(await runRouteCheck(page, baseUrl, route, true));
+    routeChecks.push(await runRouteCheck(page, baseUrl, route, true, screenshotDir));
   }
 
   for (const route of optionalRoutes) {
-    routeChecks.push(await runRouteCheck(page, baseUrl, route, strictOptionalRoutes));
+    routeChecks.push(await runRouteCheck(page, baseUrl, route, strictOptionalRoutes, screenshotDir));
   }
 
   let crawledRoutes = [];
@@ -498,18 +606,25 @@ async function main() {
     const seen = new Set(routeChecks.map((r) => r.route));
     for (const route of crawledRoutes) {
       if (seen.has(route)) continue;
-      routeChecks.push(await runRouteCheck(page, baseUrl, route, false));
+      routeChecks.push(await runRouteCheck(page, baseUrl, route, false, screenshotDir));
     }
 
-    toggle = await evaluateToggleChecks(page, baseUrl);
-    journeyChecks = await runJourneyChecks(page, baseUrl, journeys);
+    toggle = await evaluateToggleChecks(page, baseUrl, screenshotDir);
+    journeyChecks = await runJourneyChecks(page, baseUrl, journeys, screenshotDir);
   } else {
+    let challengeScreenshotPath = null;
+    try {
+      challengeScreenshotPath = await captureFailureScreenshot(page, screenshotDir, "blocked-by-challenge");
+    } catch {
+      challengeScreenshotPath = null;
+    }
     journeyChecks = [
       {
         id: "journey-checks-skipped-due-to-challenge",
         expected: "real user flows executable",
         actual: "skipped due to WAF/bot challenge page",
         passed: false,
+        screenshotPath: challengeScreenshotPath,
       },
     ];
   }
@@ -525,6 +640,13 @@ async function main() {
         : "no challenge detected",
       passed: !challenge.challengeDetected,
     };
+    if (challenge.challengeDetected) {
+      try {
+        accessChallengeCheck.screenshotPath = await captureFailureScreenshot(page, screenshotDir, accessChallengeCheck.id);
+      } catch {
+        accessChallengeCheck.screenshotPath = null;
+      }
+    }
   }
   await browser.close();
 

@@ -6,6 +6,20 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 CONFIG_FILE="${REPO_ROOT}/tooling/config/brand-theme-map.json"
 cd "$REPO_ROOT"
 
+load_local_env_file() {
+  local env_file="$1"
+  if [[ -f "$env_file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$env_file"
+    set +a
+  fi
+}
+
+# Support local secret loading in VS Code task shells where direnv may not be initialized.
+load_local_env_file ".env"
+load_local_env_file ".env.local"
+
 if ! command -v zcli >/dev/null 2>&1; then
   echo "zcli is not installed. Run: npm install -g @zendesk/zcli"
   exit 1
@@ -244,6 +258,40 @@ get_manifest_default_locale() {
   node -e "const fs=require('fs');try{const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.default_locale||'en-us'));}catch{process.stdout.write('en-us');}"
 }
 
+resolve_confluence_email() {
+  if [[ -n "${ATLASSIAN_USER_EMAIL:-}" ]]; then
+    printf '%s' "${ATLASSIAN_USER_EMAIL}"
+    return 0
+  fi
+
+  local git_email=""
+  git_email="$(git config --get user.email 2>/dev/null || true)"
+  if [[ -n "$git_email" ]]; then
+    printf '%s' "$git_email"
+    return 0
+  fi
+
+  printf '%s' ""
+}
+
+resolve_confluence_api_token() {
+  if [[ -n "${ATLASSIAN_API_TOKEN:-}" ]]; then
+    printf '%s' "${ATLASSIAN_API_TOKEN}"
+    return 0
+  fi
+
+  if ! command -v security >/dev/null 2>&1; then
+    printf '%s' ""
+    return 0
+  fi
+
+  local service_name="${ATLASSIAN_KEYCHAIN_SERVICE_NAME:-atlassian_api_token_hilti}"
+  local account_name="${ATLASSIAN_KEYCHAIN_ACCOUNT_NAME:-${USER}}"
+  local token=""
+  token="$(security find-generic-password -s "$service_name" -a "$account_name" -w 2>/dev/null || true)"
+  printf '%s' "$token"
+}
+
 current_branch="$(git branch --show-current)"
 if [[ -z "$current_branch" ]]; then
   echo "Unable to detect current git branch."
@@ -272,8 +320,7 @@ branch_label="${branch_key:-$current_branch}"
 timestamp="$(date -u +"%y%m%d%H%M")"
 default_theme_name="Hilti [SKC] - PE ${branch_label} ${theme_version} ${timestamp}"
 default_theme_name="$(normalize_theme_name "$default_theme_name")"
-theme_name="${ZD_THEME_NAME:-$default_theme_name}"
-theme_name="$(normalize_theme_name "$theme_name")"
+theme_name="$default_theme_name"
 theme_name_is_custom="false"
 
 echo
@@ -285,7 +332,7 @@ if [[ "$deploy_mode" == "1" ]]; then
     theme_name_is_custom="true"
   fi
 else
-  echo "Step 3/4: Theme name will be auto-fetched from Zendesk in update mode"
+  echo "Step 3/4: Theme name is locked in update mode (no rename prompts)"
 fi
 
 echo
@@ -351,17 +398,6 @@ if [[ "$deploy_mode" == "2" ]]; then
     fi
   fi
 
-  if [[ -n "$selected_theme_id" && "$theme_name_is_custom" != "true" && -z "${ZD_THEME_NAME:-}" ]]; then
-    auto_theme_name="$(get_theme_name_from_list_output "$ZENDESK_THEME_LIST_OUTPUT" "$selected_theme_id" || true)"
-    if [[ -n "$auto_theme_name" ]]; then
-      theme_name="$(normalize_theme_name "$auto_theme_name")"
-      echo "Theme name auto-fetched from Zendesk: ${theme_name}"
-    else
-      theme_name="$(normalize_theme_name "$selected_theme_name")"
-      echo "Theme name auto-set from configured mapping: ${theme_name}"
-    fi
-  fi
-
   if [[ -z "$selected_theme_id" ]]; then
     BRAND_THEME_ROWS=()
     while IFS= read -r line; do
@@ -408,17 +444,6 @@ if [[ "$deploy_mode" == "2" ]]; then
     fi
   fi
 
-  if [[ "$theme_name_is_custom" != "true" && -z "${ZD_THEME_NAME:-}" && -n "$selected_theme_id" ]]; then
-    auto_theme_name="$(get_theme_name_from_list_output "$ZENDESK_THEME_LIST_OUTPUT" "$selected_theme_id" || true)"
-    if [[ -n "$auto_theme_name" ]]; then
-      theme_name="$(normalize_theme_name "$auto_theme_name")"
-      echo "Theme name auto-fetched from Zendesk: ${theme_name}"
-    elif [[ -n "$selected_theme_name" ]]; then
-      theme_name="$(normalize_theme_name "$selected_theme_name")"
-      echo "Theme name auto-set from selected theme: ${theme_name}"
-    fi
-  fi
-
   if [[ -z "$selected_theme_id" ]]; then
     echo "Theme ID is required for update mode. Deployment cancelled."
     exit 1
@@ -430,13 +455,14 @@ echo "Deployment summary"
 echo "Branch: ${current_branch}"
 echo "Brand: ${selected_brand_name}"
 echo "Brand ID: ${selected_brand_id}"
-echo "Theme name: ${theme_name}"
-echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 
 if [[ "$deploy_mode" == "1" ]]; then
   echo "Deploy mode: New theme deploy (import)"
+  echo "Theme name: ${theme_name}"
+  echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 else
   echo "Deploy mode: Update existing theme"
+  echo "Theme name: unchanged (kept from existing Zendesk theme)"
   echo "Theme target: ${selected_theme_name}"
   echo "Theme ID: ${selected_theme_id}"
 fi
@@ -469,13 +495,15 @@ restore_manifest() {
 }
 trap restore_manifest EXIT
 
-ZD_DEPLOY_THEME_NAME="$theme_name" node <<'NODE'
+if [[ "$deploy_mode" == "1" ]]; then
+  ZD_DEPLOY_THEME_NAME="$theme_name" node <<'NODE'
 const fs = require('fs');
 const path = 'manifest.json';
 const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
 manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
 fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
+fi
 
 if [[ "$deploy_mode" == "1" ]]; then
   echo "Importing as a new Zendesk theme..."
@@ -627,12 +655,18 @@ NODE
   confluence_space_key="${CONFLUENCE_SPACE_KEY:-BFS}"
   confluence_parent_page_id="${CONFLUENCE_PARENT_PAGE_ID:-2900984544}"
 
-  if [[ -z "${ATLASSIAN_USER_EMAIL:-}" || -z "${ATLASSIAN_API_TOKEN:-}" ]]; then
-    echo "Skipping Confluence publish: missing ATLASSIAN_USER_EMAIL and/or ATLASSIAN_API_TOKEN."
-    echo "Set credentials in your terminal and rerun if you want result pages published."
+  resolved_atlassian_email="$(resolve_confluence_email)"
+  resolved_atlassian_token="$(resolve_confluence_api_token)"
+
+  if [[ -z "$resolved_atlassian_email" || -z "$resolved_atlassian_token" ]]; then
+    echo "Skipping Confluence publish: missing Atlassian credentials."
+    echo "Checked: ATLASSIAN_USER_EMAIL, git user.email, ATLASSIAN_API_TOKEN, macOS Keychain."
+    echo "Tip: save token in Keychain with: security add-generic-password -s atlassian_api_token_hilti -a ${USER} -w"
   else
     echo "Publishing Confluence functional/performance pages..."
     ATLASSIAN_BASE_URL="$confluence_base_url" \
+    ATLASSIAN_USER_EMAIL="$resolved_atlassian_email" \
+    ATLASSIAN_API_TOKEN="$resolved_atlassian_token" \
     CONFLUENCE_SPACE_KEY="$confluence_space_key" \
     CONFLUENCE_PARENT_PAGE_ID="$confluence_parent_page_id" \
     REQUIRE_CONFLUENCE_REPORT="false" \

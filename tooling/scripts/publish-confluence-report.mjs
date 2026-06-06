@@ -303,6 +303,75 @@ async function createConfluencePage({ baseUrl, email, apiToken, spaceKey, parent
   return JSON.parse(text);
 }
 
+function collectScreenshotPaths(items = []) {
+  const paths = [];
+  for (const item of items) {
+    if (item?.screenshotPath) {
+      paths.push(String(item.screenshotPath));
+    }
+  }
+  return paths;
+}
+
+async function existingFilePaths(pathsInput = []) {
+  const unique = Array.from(new Set(pathsInput.filter(Boolean)));
+  const existing = [];
+  for (const p of unique) {
+    const resolved = path.isAbsolute(p) ? p : path.join(process.cwd(), p);
+    try {
+      await fs.access(resolved);
+      existing.push(resolved);
+    } catch {
+      // Skip non-existent files.
+    }
+  }
+  return existing;
+}
+
+async function uploadConfluenceAttachment({ baseUrl, email, apiToken, pageId, filePath }) {
+  const endpoint = `${baseUrl.replace(/\/$/, "")}/wiki/rest/api/content/${pageId}/child/attachment`;
+  const auth = Buffer.from(`${email}:${apiToken}`).toString("base64");
+  const fileBuffer = await fs.readFile(filePath);
+  const form = new FormData();
+  form.append("file", new Blob([fileBuffer]), path.basename(filePath));
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      Accept: "application/json",
+      "X-Atlassian-Token": "no-check",
+    },
+    body: form,
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Attachment upload failed (${response.status}): ${text}`);
+  }
+
+  return JSON.parse(text);
+}
+
+async function uploadAttachmentsForPage({ baseUrl, email, apiToken, pageId, filePaths }) {
+  const uploaded = [];
+  const failed = [];
+
+  for (const filePath of filePaths) {
+    try {
+      await uploadConfluenceAttachment({ baseUrl, email, apiToken, pageId, filePath });
+      uploaded.push(path.basename(filePath));
+    } catch (error) {
+      failed.push({
+        filePath,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return { uploaded, failed };
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   const reportPath = args["report-file"] || path.join(process.cwd(), "tooling/reports/quality-gate-report.json");
@@ -339,6 +408,16 @@ async function main() {
   const functionalBodyHtml = buildFunctionalPageBody(report, jiraBaseUrl, jiraProjectKey);
   const performanceBodyHtml = buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey);
 
+  const functionalScreenshotCandidates = [
+    ...collectScreenshotPaths(report?.quality?.functional?.routeChecks || []),
+    ...collectScreenshotPaths(report?.quality?.functional?.toggleChecks || []),
+    ...collectScreenshotPaths(report?.quality?.functional?.journeyChecks || []),
+  ];
+  const performanceScreenshotCandidates = collectScreenshotPaths(report?.quality?.performance?.pageResults || []);
+
+  const functionalScreenshots = await existingFilePaths(functionalScreenshotCandidates);
+  const performanceScreenshots = await existingFilePaths(performanceScreenshotCandidates);
+
   const functionalPage = await createConfluencePage({
     baseUrl,
     email,
@@ -361,24 +440,43 @@ async function main() {
 
   const functionalPageUrl = `${baseUrl.replace(/\/$/, "")}/wiki/spaces/${spaceKey}/pages/${functionalPage.id}`;
   const performancePageUrl = `${baseUrl.replace(/\/$/, "")}/wiki/spaces/${spaceKey}/pages/${performancePage.id}`;
+  const functionalAttachmentUpload = await uploadAttachmentsForPage({
+    baseUrl,
+    email,
+    apiToken,
+    pageId: functionalPage.id,
+    filePaths: functionalScreenshots,
+  });
+  const performanceAttachmentUpload = await uploadAttachmentsForPage({
+    baseUrl,
+    email,
+    apiToken,
+    pageId: performancePage.id,
+    filePaths: performanceScreenshots,
+  });
+
   const result = {
     createdAt: new Date().toISOString(),
     functionalPage: {
       pageId: functionalPage.id,
       title: functionalTitle,
       pageUrl: functionalPageUrl,
+      attachments: functionalAttachmentUpload,
     },
     performancePage: {
       pageId: performancePage.id,
       title: performanceTitle,
       pageUrl: performancePageUrl,
+      attachments: performanceAttachmentUpload,
     },
   };
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
   console.log(`Confluence functional page created: ${functionalPageUrl}`);
+  console.log(`Functional screenshots attached: ${functionalAttachmentUpload.uploaded.length}`);
   console.log(`Confluence performance page created: ${performancePageUrl}`);
+  console.log(`Performance screenshots attached: ${performanceAttachmentUpload.uploaded.length}`);
 }
 
 main().catch((error) => {

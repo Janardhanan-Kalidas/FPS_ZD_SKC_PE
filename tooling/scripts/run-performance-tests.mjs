@@ -2,6 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { chromium } from "playwright";
 
 function parseArgs(argv) {
   const args = {};
@@ -87,6 +88,65 @@ function buildRequestHeaders() {
   return headers;
 }
 
+function sanitizeFilePart(value) {
+  return String(value || "item")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "item";
+}
+
+function parseCookiePairs(cookieHeader) {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const idx = pair.indexOf("=");
+      if (idx === -1) return null;
+      const name = pair.slice(0, idx).trim();
+      const value = pair.slice(idx + 1).trim();
+      if (!name) return null;
+      return { name, value };
+    })
+    .filter(Boolean);
+}
+
+async function captureFailureScreenshot(url, screenshotDir, checkId, headers, cookieHeader) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const fileName = `${stamp}-${sanitizeFilePart(checkId)}.png`;
+  const filePath = path.join(screenshotDir, fileName);
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext();
+    if (headers && Object.keys(headers).length > 0) {
+      await context.setExtraHTTPHeaders(headers);
+    }
+
+    const cookies = parseCookiePairs(cookieHeader).map((cookie) => ({
+      ...cookie,
+      domain: new URL(url).hostname,
+      path: "/",
+      httpOnly: false,
+      secure: true,
+      sameSite: "Lax",
+    }));
+    if (cookies.length > 0) {
+      await context.addCookies(cookies);
+    }
+
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.screenshot({ path: filePath, fullPage: true });
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+
+  return filePath;
+}
+
 async function detectAccessChallengeUrl(url) {
   try {
     const headers = buildRequestHeaders();
@@ -140,6 +200,7 @@ async function main() {
   const thresholdsPath = args["thresholds-file"] || path.join(process.cwd(), "tooling/qa/performance-thresholds.json");
   const outputPath = args.output || path.join(process.cwd(), "tooling/reports/performance-tests.json");
   const lighthouseTimeoutMs = Number(args["lighthouse-timeout-ms"] || process.env.LIGHTHOUSE_TIMEOUT_MS || 180000);
+  const screenshotDir = args["screenshot-dir"] || process.env.TEST_SCREENSHOTS_DIR || path.join(path.dirname(outputPath), "screenshots", `${targetName}-performance`);
 
   if (!baseUrl) {
     throw new Error("Missing base URL. Set --base-url or TEST_BASE_URL.");
@@ -156,6 +217,10 @@ async function main() {
 
   const workDir = path.dirname(outputPath);
   await fs.mkdir(workDir, { recursive: true });
+  await fs.mkdir(screenshotDir, { recursive: true });
+
+  const requestHeaders = buildRequestHeaders();
+  const cookieHeader = process.env.TEST_COOKIE_HEADER || "";
 
   const pageResults = [];
   for (const pagePath of pages) {
@@ -165,11 +230,19 @@ async function main() {
 
     const challengeProbe = await detectAccessChallengeUrl(url);
     if (challengeProbe.challengeDetected) {
+      let screenshotPath = null;
+      try {
+        screenshotPath = await captureFailureScreenshot(url, screenshotDir, `challenge-${pagePath}`, requestHeaders, cookieHeader);
+      } catch {
+        screenshotPath = null;
+      }
+
       pageResults.push({
         pagePath,
         url,
         passed: false,
         skippedMetrics: true,
+        screenshotPath,
         error: `challenge page detected (status ${challengeProbe.status}); skipping Lighthouse threshold assertions`,
         checks: [
           {
@@ -200,10 +273,18 @@ async function main() {
 
     const cmd = await runCommand("npx", commandArgs, process.cwd(), lighthouseTimeoutMs);
     if (cmd.code !== 0) {
+      let screenshotPath = null;
+      try {
+        screenshotPath = await captureFailureScreenshot(url, screenshotDir, `lighthouse-command-${pagePath}`, requestHeaders, cookieHeader);
+      } catch {
+        screenshotPath = null;
+      }
+
       pageResults.push({
         pagePath,
         url,
         passed: false,
+        screenshotPath,
         command: `npx ${commandArgs.join(" ")}`,
         error: cmd.timedOut
           ? `lighthouse timeout after ${lighthouseTimeoutMs}ms`
@@ -226,11 +307,21 @@ async function main() {
     const checks = evaluateThresholds(metrics, thresholds);
     const passed = checks.every((item) => item.passed);
 
+    let screenshotPath = null;
+    if (!passed) {
+      try {
+        screenshotPath = await captureFailureScreenshot(url, screenshotDir, `threshold-failure-${pagePath}`, requestHeaders, cookieHeader);
+      } catch {
+        screenshotPath = null;
+      }
+    }
+
     pageResults.push({
       pagePath,
       url,
       reportFile,
       passed,
+      screenshotPath,
       metrics,
       checks,
     });

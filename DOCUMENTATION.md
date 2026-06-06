@@ -35,6 +35,11 @@ Do not skip sections.
 1. Updated current-branch VS Code deployment task to a 4-step flow that updates an existing Zendesk theme by `themeId` instead of creating a new imported theme each run.
 1. Added `tooling/config/brand-theme-map.json` for brand name + brandId + themeId selection.
 
+### 2026-06-07
+
+1. Added local `.env` support for deployment scripts so VS Code task runs can resolve Atlassian credentials without manual export.
+1. Added direnv onboarding files (`.envrc`, `.env.example`) for team-friendly local secret loading.
+
 ---
 
 ## How to Use This Guide
@@ -149,6 +154,41 @@ Note for new developers:
 
 1. Use `Zendesk: Deploy Any Branch (Interactive)` if you are not sure which branch or brand to deploy.
 1. Use `Zendesk: Deploy Current Branch (Non-Interactive)` as the default day-to-day deployment task for branch updates.
+
+### Step 5: Optional Local Secret Automation with direnv
+
+Use this if you want Confluence publishing to work locally without exporting secrets every terminal session.
+
+1. Install direnv.
+
+```bash
+brew install direnv
+```
+
+1. Enable direnv in your shell startup file.
+
+```bash
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+1. Create your local env file from template.
+
+```bash
+cp .env.example .env.local
+```
+
+1. Fill `ATLASSIAN_USER_EMAIL` and `ATLASSIAN_API_TOKEN` in `.env.local`.
+1. Allow direnv for this repository.
+
+```bash
+direnv allow
+```
+
+Notes:
+
+1. `.env.local` is ignored by git and should never be committed.
+1. `tooling/scripts/deploy-current-branch-noninteractive.sh` also loads `.env` and `.env.local` directly, so VS Code task shells work even when direnv hook is not active.
 
 ---
 
