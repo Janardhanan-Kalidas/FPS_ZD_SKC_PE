@@ -623,12 +623,25 @@ const payload = {
 fs.writeFileSync(reportPath, `${JSON.stringify(payload, null, 2)}\n`);
 NODE
 
-  echo "Publishing Confluence functional/performance pages..."
-  node tooling/scripts/publish-confluence-report.mjs \
-    --report-file "$quality_report" \
-    --output "$confluence_result"
+  confluence_base_url="${ATLASSIAN_BASE_URL:-https://hilti.atlassian.net}"
+  confluence_space_key="${CONFLUENCE_SPACE_KEY:-BFS}"
+  confluence_parent_page_id="${CONFLUENCE_PARENT_PAGE_ID:-2900984544}"
 
-  echo "Confluence publish result: ${confluence_result}"
+  if [[ -z "${ATLASSIAN_USER_EMAIL:-}" || -z "${ATLASSIAN_API_TOKEN:-}" ]]; then
+    echo "Skipping Confluence publish: missing ATLASSIAN_USER_EMAIL and/or ATLASSIAN_API_TOKEN."
+    echo "Set credentials in your terminal and rerun if you want result pages published."
+  else
+    echo "Publishing Confluence functional/performance pages..."
+    ATLASSIAN_BASE_URL="$confluence_base_url" \
+    CONFLUENCE_SPACE_KEY="$confluence_space_key" \
+    CONFLUENCE_PARENT_PAGE_ID="$confluence_parent_page_id" \
+    REQUIRE_CONFLUENCE_REPORT="false" \
+    node tooling/scripts/publish-confluence-report.mjs \
+      --report-file "$quality_report" \
+      --output "$confluence_result"
+
+    echo "Confluence publish result: ${confluence_result}"
+  fi
 fi
 
 if [[ "$tests_failed" == "true" ]]; then

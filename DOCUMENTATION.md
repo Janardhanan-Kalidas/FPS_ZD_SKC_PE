@@ -396,6 +396,8 @@ The repository includes two deployment tasks in `.vscode/tasks.json`:
    - Deployment task exits with failure if post-deployment tests fail.
    - After successful tests, script asks whether to publish Confluence functional and performance result pages (`y/n`).
    - If `y`, script creates a local quality-gate summary JSON and runs `publish-confluence-report.mjs`.
+   - In local runs, if `ATLASSIAN_USER_EMAIL` or `ATLASSIAN_API_TOKEN` is missing, publish is skipped with guidance (non-fatal).
+   - For convenience, local publish uses defaults when unset: `ATLASSIAN_BASE_URL=https://hilti.atlassian.net`, `CONFLUENCE_SPACE_KEY=BFS`, `CONFLUENCE_PARENT_PAGE_ID=2900984544`.
    - Confluence pages are created even when tests fail (if you choose publish) so failures are documented.
    - Published page titles follow format: `[Version]-[Deployed branch]-[YYYYMMDD-HHMMSSZ]-[Test Type]-[Environment]-[Status]`.
    - Failure sections include failed checks and possible resolution guidance.
