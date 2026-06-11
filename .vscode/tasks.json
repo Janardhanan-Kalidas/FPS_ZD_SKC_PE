@@ -47,6 +47,40 @@
         "panel": "shared"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Deploy Any Branch (Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/deploy-any-branch-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Deploy Current Branch (Non-Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/deploy-current-branch-noninteractive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
     }
   ]
 }

@@ -143,8 +143,13 @@
   "header_link_4_text_description": "The text to display for the fourth link",
   "header_link_4_url_label": "Header link 4 URL",
   "header_link_4_url_description": "The URL of the fourth link",
-  "show_submit_a_request_link_label": "Submit a Request link",
-  "show_submit_a_request_link_description": "Show a Submit a Request link",
+  "support_visibility_group_label": "Support visibility",
+  "show_submit_a_request_link_label": "Hide Submit Request buttons",
+  "show_submit_a_request_link_description": "When checked, Submit Request buttons are hidden across footer and sidebar CTA placements",
+  "hide_sign_in_link_label": "Hide Sign In links",
+  "hide_sign_in_link_description": "When checked, Sign In links are hidden in the header and error page",
+  "hide_article_downvote_cta_label": "Hide article downvote CTA",
+  "hide_article_downvote_cta_description": "When checked, the article downvote request callout and feedback form are hidden",
   "category_dropdown_style_label": "Category list style",
   "category_dropdown_style_description": "The style of category list to show in the header",
   "general_page_group_label": "General page elements",
@@ -499,5 +504,7 @@
   "read_more_text_label": "Read more text",
   "read_more_text_description": "The Read More button label to display when excerpts are used with the Toggles list style",
   "back_link_text_label": "'Back to' text",
-  "back_link_text_description": "The text to use with the 'Back to' link"
+  "back_link_text_description": "The text to use with the 'Back to' link",
+  "show_article_submit_request_cta_label": "Show Submit a request link in articles",
+  "show_article_submit_request_cta_description": "When checked, the inline \"Have more questions? Submit a request\" link is shown below article voting for signed-in users"
 }

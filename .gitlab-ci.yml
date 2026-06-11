@@ -1,20 +1,31 @@
+# Author: Kalidas, Janardhanan
+# Date: 2026-06-04
+
 # Prevent duplicate pipelines: when a branch has an open MR,
 # only run the MR pipeline (not a separate push pipeline).
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
       when: never
     - if: '$CI_COMMIT_BRANCH'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
 
 stages:
   - validate
   - release
+  - backup
   - deploy
 
 variables:
   GIT_DEPTH: "0"
+  ZCLI_VERSION: "1.0.0-beta.56"
+  DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
+  ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
+  CONFLUENCE_SPACE_KEY: "BFS"
+  CONFLUENCE_PARENT_PAGE_ID: "2900984544"
+  JIRA_PROJECT_KEY: "FPSKB"
+  REQUIRE_CONFLUENCE_REPORT: "true"
 
 default:
   tags:
@@ -23,14 +34,92 @@ default:
   before_script:
     - node --version
     - npm --version
-    - npx zcli --version 2>/dev/null || npm install -g @zendesk/zcli
+    - |
+      if [[ -f package-lock.json ]]; then
+        npm ci
+      else
+        npm install
+      fi
+    - |
+      INSTALLED_ZCLI="$(npx zcli --version 2>/dev/null || true)"
+      if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
+        npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
+      fi
+      npx zcli --version
 
 # ── Validate ────────────────────────────────────────────────────────────────
-# Runs on every push and every MR — acts as a smoke-test for versioning.
+# Runs automatically on push, merge requests, and manually triggered web pipelines.
 theme_version_dry_run:
   stage: validate
   script:
     - npm run version:theme:dry
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+# Basic structural validation before any release/deploy jobs are attempted.
+theme_validate_structure:
+  stage: validate
+  script:
+    - npm run validate:theme
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+# Hard quality gate for all deployment targets. This job runs deployment checks,
+# performance checks, and creates a Confluence child page for each run.
+theme_quality_gate:
+  stage: validate
+  script:
+    - |
+      TARGETS="[]"
+
+      add_target() {
+        local current_json="$1"
+        local target_name="$2"
+        local target_url="$3"
+        local target_env="$4"
+        node -e '
+          const current = JSON.parse(process.argv[1]);
+          const target = { name: process.argv[2], baseUrl: process.argv[3], environment: process.argv[4] };
+          current.push(target);
+          process.stdout.write(JSON.stringify(current));
+        ' "$current_json" "$target_name" "$target_url" "$target_env"
+      }
+
+      if [[ -n "${ZD_PROD_BASE_URL:-}" ]]; then
+        TARGETS="$(add_target "$TARGETS" "production" "$ZD_PROD_BASE_URL" "production")"
+      fi
+
+      if [[ -n "${ZD_PREVIEW_BASE_URL:-}" ]]; then
+        TARGETS="$(add_target "$TARGETS" "default-preview" "$ZD_PREVIEW_BASE_URL" "default-preview")"
+      fi
+
+      if [[ -n "${ZD_FEATURE_PREVIEW_BASE_URL:-}" ]]; then
+        TARGETS="$(add_target "$TARGETS" "feature-preview" "$ZD_FEATURE_PREVIEW_BASE_URL" "feature-preview")"
+      fi
+
+      if [[ "${TARGETS}" == "[]" ]]; then
+        echo "Quality gate blocked: provide at least one URL in ZD_PROD_BASE_URL, ZD_PREVIEW_BASE_URL, or ZD_FEATURE_PREVIEW_BASE_URL"
+        exit 1
+      fi
+
+      export TEST_TARGETS_JSON="$TARGETS"
+      export ATLASSIAN_BASE_URL="${ATLASSIAN_BASE_URL:-https://hilti.atlassian.net}"
+      export JIRA_BASE_URL="${JIRA_BASE_URL:-${ATLASSIAN_BASE_URL}}"
+      npm run test:quality:gate
+  artifacts:
+    name: "quality-gate-${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_ID}"
+    when: always
+    expire_in: 14 days
+    paths:
+      - tooling/reports/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
 
 # ── Release ─────────────────────────────────────────────────────────────────
 # Manual job — bumps manifest.json version. Trigger from the GitLab UI.
@@ -44,16 +133,80 @@ theme_version_release:
       when: manual
   allow_failure: false
 
+# ── Backup ──────────────────────────────────────────────────────────────────
+# Manual job — create a Zendesk theme backup before production deploy.
+# This is required to keep rollback available for every deployment.
+theme_backup_production:
+  stage: backup
+  needs:
+    - theme_version_dry_run
+    - theme_validate_structure
+    - theme_quality_gate
+  script:
+    - npm run backup:theme
+  artifacts:
+    name: "theme-backup-${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_ID}"
+    when: always
+    expire_in: 14 days
+    paths:
+      - backups/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+
 # ── Deploy ───────────────────────────────────────────────────────────────────
 # Manual job — imports the theme into Zendesk via zcli.
-# Required CI/CD variables (Settings → CI/CD → Variables):
+# Required CI/CD variables (Settings -> CI/CD -> Variables):
 #   ZD_SUBDOMAIN  — e.g. hilti
 #   ZD_EMAIL      — Zendesk admin email
 #   ZD_API_TOKEN  — Zendesk API token
 theme_deploy:
   stage: deploy
+  needs:
+    - theme_backup_production
+  resource_group: production
   script:
-    - zcli themes:import --subdomain "$ZD_SUBDOMAIN" --username "$ZD_EMAIL" --password "$ZD_API_TOKEN" .
+    - |
+      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+      for name in "${required[@]}"; do
+        if [[ -z "${!name:-}" ]]; then
+          echo "Deploy blocked: missing required variable '$name'"
+          exit 1
+        fi
+      done
+      if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
+        echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
+        exit 1
+      fi
+    - npm run deploy:theme
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+# Manual rollback job — re-imports a backup ZIP artifact to production.
+# Requires ROLLBACK_CONFIRM=ROLLBACK_TO_PROD by default.
+theme_rollback_production:
+  stage: deploy
+  needs:
+    - theme_backup_production
+  resource_group: production
+  script:
+    - |
+      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+      for name in "${required[@]}"; do
+        if [[ -z "${!name:-}" ]]; then
+          echo "Rollback blocked: missing required variable '$name'"
+          exit 1
+        fi
+      done
+      if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
+        echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
+        exit 1
+      fi
+    - npm run rollback:theme
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: manual

@@ -252,37 +252,43 @@
       {{!-- Vote helper label (we hide via CSS later) --}}
       {{vote 'label' class='block text-gray-600 font-size-sm mb-4'}}
 
-      <p class="my-5">
-        {{../request_callout}}
-      </p>
-
       {{#if ../settings.enable_downvote_feedback_modal}}
-        <!-- Downvote feedback (inline, shown below Yes/No buttons) -->
-        <div id="downvote-feedback" class="hidden mt-4" aria-hidden="true" data-article-id="{{id}}" data-article-title="{{title}}">
-          <textarea
-            id="downvote-text"
-            class="w-full border p-3"
-            rows="4"
-            placeholder="Sorry this wasn’t helpful. Please tell us what we can improve."></textarea>
+        {{#unless ../settings.hide_article_downvote_cta}}
+          <!-- Downvote feedback (inline, shown below Yes/No buttons) -->
+          <div id="downvote-feedback" class="hidden mt-4" aria-hidden="true" data-article-id="{{id}}" data-article-title="{{title}}">
+            <textarea
+              id="downvote-text"
+              class="w-full border p-3 rounded-none"
+              rows="4"
+              placeholder="Sorry this wasn’t helpful. Please tell us what we can improve."></textarea>
 
-          <div class="mt-3">
-            <button id="submit-downvote-feedback" class="button button-primary">Submit Feedback</button>
-            <button id="cancel-downvote-feedback" class="button button-outline-primary ml-2">Cancel</button>
+            <div class="mt-3">
+              <button id="submit-downvote-feedback" class="button button-primary">Submit Feedback</button>
+              <button id="cancel-downvote-feedback" class="button button-outline-primary ml-2">Cancel</button>
+            </div>
+            <p id="downvote-success" class="text-green-600 mt-3 hidden">
+              Thank you! Your feedback has been submitted.
+            </p>
+            <p id="downvote-error" class="text-red-600 mt-3 hidden" role="alert">
+              Sorry, we couldn't submit your feedback. Please try again later.
+            </p>
           </div>
+        {{/unless}}
+      {{/if}}
 
-          <p id="downvote-success" class="text-green-600 mt-3 hidden">
-            Thank you! Your feedback has been submitted.
-          </p>
-          <p id="downvote-error" class="text-red-600 mt-3 hidden" role="alert">
-            Sorry, we couldn't submit your feedback. Please try again later.
-          </p>
-        </div>
+      {{! Article submit request callout inside voting block }}
+      {{#if ../settings.show_article_submit_cta}}
+        <p id="article-submit-request-callout" class="mt-4 mb-0">
+          <span>Have more questions? </span>
+          <a href="{{page_path 'new_request'}}" class="article-submit-request-link" data-requires-auth>
+            {{t 'submit_a_request'}}
+          </a>
+        </p>
       {{/if}}
     </div>
   {{/with}}
 {{/if}}
       {{!-- end of article voting --}}
-      
 
       {{! Recent and related articles }}
       <footer class="row my-6{{#unless settings.show_recently_viewed_articles}}{{#unless settings.show_related_articles}} hidden{{/unless}}{{/unless}}">

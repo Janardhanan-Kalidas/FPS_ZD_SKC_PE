@@ -1,0 +1,586 @@
+#!/usr/bin/env node
+import fs from "node:fs/promises";
+import path from "node:path";
+
+function parseArgs(argv) {
+  const args = {};
+  for (let i = 2; i < argv.length; i += 1) {
+    const key = argv[i];
+    const next = argv[i + 1];
+    if (key.startsWith("--")) {
+      args[key.slice(2)] = next && !next.startsWith("--") ? next : "true";
+      if (next && !next.startsWith("--")) i += 1;
+    }
+  }
+  return args;
+}
+
+function htmlEscape(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function compactValue(value) {
+  return String(value || "unknown").replace(/\s+/g, "-");
+}
+
+function buildTimestampKey() {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  const hh = String(now.getUTCHours()).padStart(2, "0");
+  const mi = String(now.getUTCMinutes()).padStart(2, "0");
+  const ss = String(now.getUTCSeconds()).padStart(2, "0");
+  return `${yyyy}${mm}${dd}-${hh}${mi}${ss}Z`;
+}
+
+function buildFailureEntries(report) {
+  const entries = [];
+  const deploymentResults = report?.quality?.deployment?.results || [];
+  const functional = report?.quality?.functional || {};
+  const performancePages = report?.quality?.performance?.pageResults || [];
+
+  for (const item of deploymentResults) {
+    if (!item?.passed) {
+      entries.push({
+        area: "Deployment HTTP",
+        check: item.id || item.description || item.path || "unknown",
+        detail: item.error || `Status ${item.status || "n/a"}`,
+      });
+    }
+  }
+
+  for (const item of functional.toggleChecks || []) {
+    if (!item?.passed) {
+      entries.push({
+        area: "Functional Toggle",
+        check: item.id || "toggle-check",
+        detail: item.actual || "toggle mismatch",
+      });
+    }
+  }
+
+  for (const item of functional.journeyChecks || []) {
+    if (!item?.passed) {
+      entries.push({
+        area: "Functional Journey",
+        check: item.id || "journey-check",
+        detail: item.actual || "journey failure",
+      });
+    }
+  }
+
+  for (const page of performancePages) {
+    if (!page?.passed) {
+      entries.push({
+        area: "Performance",
+        check: page.pagePath || page.url || "page",
+        detail: page.error || "threshold failure",
+      });
+    }
+  }
+
+  return entries;
+}
+
+function buildResolutionGuidance(report) {
+  const suggestions = [];
+  const failureEntries = buildFailureEntries(report);
+  const hasChallengeFailure = failureEntries.some((entry) => /challenge|just a moment|403|verify you are human/i.test(entry.detail));
+  const hasFunctionalFailure = failureEntries.some((entry) => entry.area.includes("Functional"));
+  const hasPerformanceFailure = failureEntries.some((entry) => entry.area === "Performance");
+  const hasDeploymentFailure = failureEntries.some((entry) => entry.area === "Deployment HTTP");
+
+  if (hasChallengeFailure) {
+    suggestions.push("Environment access challenge detected. Re-run with authentication context (`PLAYWRIGHT_STORAGE_STATE_PATH`, `TEST_COOKIE_HEADER`, `TEST_EXTRA_HEADERS_JSON`) and verify WAF/SSO allow-listing for automation traffic.");
+  }
+  if (hasFunctionalFailure) {
+    suggestions.push("Functional checks failed. Verify route availability, settings toggles (`hide_sign_in_link`, `show_submit_a_request_link`), and selector stability in templates before re-running Playwright checks.");
+  }
+  if (hasPerformanceFailure) {
+    suggestions.push("Performance checks failed. Review Lighthouse output for LCP/TBT bottlenecks, optimize heavy assets/scripts, and confirm measurements are taken on real pages (not challenge pages).");
+  }
+  if (hasDeploymentFailure) {
+    suggestions.push("Deployment HTTP checks failed. Validate base URL, locale paths, and expected status codes/content assertions in `tooling/qa/scenarios.json`.");
+  }
+  if (suggestions.length === 0) {
+    suggestions.push("No failures detected. Keep this run as a baseline and monitor regression in subsequent deployments.");
+  }
+  return suggestions;
+}
+
+function buildFailureSection(report) {
+  if (!report.failed) {
+    return "<h2>Failed Checks</h2><p>No failed checks in this run.</p>";
+  }
+
+  const rows = buildFailureEntries(report)
+    .map((entry) => `<tr><td>${htmlEscape(entry.area)}</td><td>${htmlEscape(entry.check)}</td><td>${htmlEscape(entry.detail)}</td></tr>`)
+    .join("");
+
+  const guidance = buildResolutionGuidance(report)
+    .map((item) => `<li>${htmlEscape(item)}</li>`)
+    .join("");
+
+  return `
+    <h2>Failed Checks</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Check</th><th>Failure Detail</th></tr></thead>
+      <tbody>${rows || "<tr><td colspan='3'>No failure details available.</td></tr>"}</tbody>
+    </table>
+    <h2>Possible Solutions</h2>
+    <ol>${guidance}</ol>
+  `;
+}
+
+function toAttachmentName(filePath) {
+  return path.basename(String(filePath || "")).trim();
+}
+
+function buildScreenshotEvidenceSection(title, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return `<h2>${htmlEscape(title)}</h2><p>No screenshots captured for this section.</p>`;
+  }
+
+  const tableRows = rows
+    .map((row) => {
+      const attachment = toAttachmentName(row.screenshotPath);
+      const imageMarkup = attachment
+        ? `<ac:image ac:width="900"><ri:attachment ri:filename="${htmlEscape(attachment)}"/></ac:image>`
+        : "No screenshot";
+      return `<tr><td>${htmlEscape(row.area)}</td><td>${htmlEscape(row.check)}</td><td>${htmlEscape(row.detail)}</td><td>${imageMarkup}</td></tr>`;
+    })
+    .join("");
+
+  return `
+    <h2>${htmlEscape(title)}</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Check</th><th>Detail</th><th>Screenshot</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  `;
+}
+
+function collectFunctionalScreenshotRows(report) {
+  const rows = [];
+  const deployment = report?.quality?.deployment || {};
+  const functional = report?.quality?.functional || {};
+
+  for (const item of deployment.results || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Deployment HTTP",
+        check: item.id || item.path || "deployment-check",
+        detail: item.error || `Status ${item.status || "n/a"}`,
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  for (const item of functional.routeChecks || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Functional Route",
+        check: item.route || item.id || "route-check",
+        detail: item.error || `${item.status || "n/a"} ${item.outcome || "failed"}`,
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  for (const item of functional.toggleChecks || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Functional Toggle",
+        check: item.id || "toggle-check",
+        detail: item.actual || "toggle mismatch",
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  for (const item of functional.journeyChecks || []) {
+    if (!item?.passed && item?.screenshotPath) {
+      rows.push({
+        area: "Functional Journey",
+        check: item.id || "journey-check",
+        detail: item.actual || "journey failure",
+        screenshotPath: item.screenshotPath,
+      });
+    }
+  }
+
+  return rows;
+}
+
+function collectPerformanceScreenshotRows(report) {
+  const rows = [];
+  const pages = report?.quality?.performance?.pageResults || [];
+  for (const page of pages) {
+    if (!page?.passed && page?.screenshotPath) {
+      rows.push({
+        area: "Performance",
+        check: page.pagePath || page.url || "page",
+        detail: page.error || "threshold failure",
+        screenshotPath: page.screenshotPath,
+      });
+    }
+  }
+  return rows;
+}
+
+async function readManifestVersion() {
+  try {
+    const raw = await fs.readFile(path.join(process.cwd(), "manifest.json"), "utf8");
+    const manifest = JSON.parse(raw);
+    return String(manifest.version || "unknown");
+  } catch {
+    return "unknown";
+  }
+}
+
+function buildStatusTableRows(quality) {
+  const byType = quality?.deployment?.summary?.byType || {};
+  const knownTypes = ["sanity", "functional", "positive", "negative"];
+  return knownTypes
+    .map((type) => {
+      const entry = byType[type] || { total: 0, passed: 0, failed: 0 };
+      const status = entry.failed > 0 ? "FAILED" : "PASSED";
+      return `<tr><td>${type}</td><td>${entry.total}</td><td>${entry.passed}</td><td>${entry.failed}</td><td>${status}</td></tr>`;
+    })
+    .join("");
+}
+
+function buildFunctionalCoverageRows(quality) {
+  const summary = quality?.functional?.summary || {};
+  const routeCoverage = summary.routeCoverage || { total: 0, passed: 0, failed: 0 };
+  const toggleCoverage = summary.toggleCoverage || { total: 0, passed: 0, failed: 0 };
+
+  return [
+    `<tr><td>Route coverage</td><td>${routeCoverage.total}</td><td>${routeCoverage.passed}</td><td>${routeCoverage.failed}</td></tr>`,
+    `<tr><td>Toggle checks (sign in / submit request)</td><td>${toggleCoverage.total}</td><td>${toggleCoverage.passed}</td><td>${toggleCoverage.failed}</td></tr>`,
+  ].join("");
+}
+
+function buildPerformanceRows(quality) {
+  const pages = quality?.performance?.pageResults || [];
+  return pages
+    .map((page) => {
+      const status = page.passed ? "PASSED" : "FAILED";
+      const m = page.metrics || {};
+      return `<tr><td>${htmlEscape(page.pagePath || "")}</td><td>${status}</td><td>${htmlEscape(m.performanceScore ?? "n/a")}</td><td>${htmlEscape(m.lcpMs ?? "n/a")}</td><td>${htmlEscape(m.cls ?? "n/a")}</td><td>${htmlEscape(m.tbtMs ?? "n/a")}</td></tr>`;
+    })
+    .join("");
+}
+
+function buildDefectPlaceholderSection(report, jiraBaseUrl, jiraProjectKey) {
+  if (!report.failed) return "";
+  const jiraProjectUrl = `${jiraBaseUrl.replace(/\/$/, "")}/browse/${jiraProjectKey}`;
+  return `
+    <h2>Defect Required Placeholder</h2>
+    <p>At least one deployment quality gate failed. Create a Jira defect in project <strong>${htmlEscape(jiraProjectKey)}</strong>.</p>
+    <table>
+      <tbody>
+        <tr><th>Summary</th><td>[Placeholder] Failed deployment tests for ${htmlEscape(report.targetName)} - ${htmlEscape(report.environmentName)}</td></tr>
+        <tr><th>Severity</th><td>[Placeholder] Major</td></tr>
+        <tr><th>Environment</th><td>${htmlEscape(report.environmentName)}</td></tr>
+        <tr><th>Repro Steps</th><td>[Placeholder] Add exact repro steps from pipeline logs and Confluence tables.</td></tr>
+        <tr><th>Expected</th><td>[Placeholder] All quality checks pass before deployment.</td></tr>
+        <tr><th>Actual</th><td>[Placeholder] One or more checks failed.</td></tr>
+        <tr><th>Evidence Links</th><td>[Placeholder] Add pipeline URL and test artifact links.</td></tr>
+      </tbody>
+    </table>
+    <p><a href="${htmlEscape(jiraProjectUrl)}">Open Jira project (${htmlEscape(jiraProjectKey)})</a></p>
+  `;
+}
+
+function buildCommonMetaTable(report) {
+  const metaRows = `
+    <tr><th>Environment</th><td>${htmlEscape(report.environmentName)}</td></tr>
+    <tr><th>Target Name</th><td>${htmlEscape(report.targetName)}</td></tr>
+    <tr><th>Base URL</th><td>${htmlEscape(report.baseUrl)}</td></tr>
+    <tr><th>Branch</th><td>${htmlEscape(report.branch || "unknown")}</td></tr>
+    <tr><th>Commit</th><td>${htmlEscape(report.commit || "unknown")}</td></tr>
+    <tr><th>Pipeline</th><td>${htmlEscape(report.pipelineUrl || "n/a")}</td></tr>
+    <tr><th>Generated At</th><td>${htmlEscape(report.generatedAt)}</td></tr>
+    <tr><th>Overall Status</th><td>${report.failed ? "FAILED" : "PASSED"}</td></tr>
+  `;
+
+  return `<h2>Metadata</h2><table><tbody>${metaRows}</tbody></table>`;
+}
+
+function buildFunctionalPageBody(report, jiraBaseUrl, jiraProjectKey) {
+  const journeyRows = (report.quality?.functional?.journeyChecks || [])
+    .map((check) => `<tr><td>${htmlEscape(check.id || "")}</td><td>${check.passed ? "PASSED" : "FAILED"}</td><td>${htmlEscape(check.expected || "")}</td><td>${htmlEscape(check.actual || "")}</td></tr>`)
+    .join("");
+
+  return `
+    <h1>Functional Test Results: ${htmlEscape(report.environmentName)}</h1>
+    ${buildCommonMetaTable(report)}
+
+    <h2>HTTP Scenario Summary</h2>
+    <table>
+      <thead><tr><th>Type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr></thead>
+      <tbody>${buildStatusTableRows(report.quality)}</tbody>
+    </table>
+
+    <h2>Functional Coverage (Playwright)</h2>
+    <table>
+      <thead><tr><th>Scope</th><th>Total</th><th>Passed</th><th>Failed</th></tr></thead>
+      <tbody>${buildFunctionalCoverageRows(report.quality)}</tbody>
+    </table>
+
+    <h2>End-To-End User Journeys</h2>
+    <table>
+      <thead><tr><th>Journey</th><th>Status</th><th>Expected</th><th>Actual</th></tr></thead>
+      <tbody>${journeyRows || "<tr><td colspan='4'>No journey checks configured.</td></tr>"}</tbody>
+    </table>
+
+    ${buildScreenshotEvidenceSection("Functional Failure Screenshots", collectFunctionalScreenshotRows(report))}
+
+    ${buildFailureSection(report)}
+
+    ${buildDefectPlaceholderSection(report, jiraBaseUrl, jiraProjectKey)}
+  `;
+}
+
+function buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey) {
+  return `
+    <h1>Performance Test Results: ${htmlEscape(report.environmentName)}</h1>
+    ${buildCommonMetaTable(report)}
+
+    <h2>Performance Summary</h2>
+    <table>
+      <thead><tr><th>Page</th><th>Status</th><th>Perf Score</th><th>LCP (ms)</th><th>CLS</th><th>TBT (ms)</th></tr></thead>
+      <tbody>${buildPerformanceRows(report.quality)}</tbody>
+    </table>
+
+    ${buildScreenshotEvidenceSection("Performance Failure Screenshots", collectPerformanceScreenshotRows(report))}
+
+    ${buildFailureSection(report)}
+
+    ${buildDefectPlaceholderSection(report, jiraBaseUrl, jiraProjectKey)}
+  `;
+}
+
+async function createConfluencePage({ baseUrl, email, apiToken, spaceKey, parentPageId, title, bodyHtml }) {
+  const endpoint = `${baseUrl.replace(/\/$/, "")}/wiki/rest/api/content`;
+  const auth = Buffer.from(`${email}:${apiToken}`).toString("base64");
+
+  const payload = {
+    type: "page",
+    title,
+    ancestors: [{ id: String(parentPageId) }],
+    space: { key: spaceKey },
+    body: {
+      storage: {
+        value: bodyHtml,
+        representation: "storage",
+      },
+    },
+  };
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Confluence page creation failed (${response.status}): ${text}`);
+  }
+
+  return JSON.parse(text);
+}
+
+function collectScreenshotPaths(items = []) {
+  const paths = [];
+  for (const item of items) {
+    if (item?.screenshotPath) {
+      paths.push(String(item.screenshotPath));
+    }
+  }
+  return paths;
+}
+
+async function existingFilePaths(pathsInput = []) {
+  const unique = Array.from(new Set(pathsInput.filter(Boolean)));
+  const existing = [];
+  for (const p of unique) {
+    const resolved = path.isAbsolute(p) ? p : path.join(process.cwd(), p);
+    try {
+      await fs.access(resolved);
+      existing.push(resolved);
+    } catch {
+      // Skip non-existent files.
+    }
+  }
+  return existing;
+}
+
+async function uploadConfluenceAttachment({ baseUrl, email, apiToken, pageId, filePath }) {
+  const endpoint = `${baseUrl.replace(/\/$/, "")}/wiki/rest/api/content/${pageId}/child/attachment`;
+  const auth = Buffer.from(`${email}:${apiToken}`).toString("base64");
+  const fileBuffer = await fs.readFile(filePath);
+  const form = new FormData();
+  form.append("file", new Blob([fileBuffer]), path.basename(filePath));
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      Accept: "application/json",
+      "X-Atlassian-Token": "no-check",
+    },
+    body: form,
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Attachment upload failed (${response.status}): ${text}`);
+  }
+
+  return JSON.parse(text);
+}
+
+async function uploadAttachmentsForPage({ baseUrl, email, apiToken, pageId, filePaths }) {
+  const uploaded = [];
+  const failed = [];
+
+  for (const filePath of filePaths) {
+    try {
+      await uploadConfluenceAttachment({ baseUrl, email, apiToken, pageId, filePath });
+      uploaded.push(path.basename(filePath));
+    } catch (error) {
+      failed.push({
+        filePath,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return { uploaded, failed };
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+  const reportPath = args["report-file"] || path.join(process.cwd(), "tooling/reports/quality-gate-report.json");
+  const outputPath = args.output || path.join(process.cwd(), "tooling/reports/confluence-publish-result.json");
+
+  const baseUrl = process.env.ATLASSIAN_BASE_URL || "";
+  const email = process.env.ATLASSIAN_USER_EMAIL || "";
+  const apiToken = process.env.ATLASSIAN_API_TOKEN || "";
+  const spaceKey = process.env.CONFLUENCE_SPACE_KEY || "";
+  const parentPageId = process.env.CONFLUENCE_PARENT_PAGE_ID || "";
+  const jiraBaseUrl = process.env.JIRA_BASE_URL || baseUrl;
+  const jiraProjectKey = process.env.JIRA_PROJECT_KEY || "FPSKB";
+  const requirePublish = (process.env.REQUIRE_CONFLUENCE_REPORT || "true").toLowerCase() === "true";
+
+  if (!baseUrl || !email || !apiToken || !spaceKey || !parentPageId) {
+    const message = "Missing Confluence publishing env vars. Required: ATLASSIAN_BASE_URL, ATLASSIAN_USER_EMAIL, ATLASSIAN_API_TOKEN, CONFLUENCE_SPACE_KEY, CONFLUENCE_PARENT_PAGE_ID.";
+    if (requirePublish) {
+      throw new Error(message);
+    }
+    console.warn(message);
+    return;
+  }
+
+  const reportRaw = await fs.readFile(reportPath, "utf8");
+  const report = JSON.parse(reportRaw);
+  const version = await readManifestVersion();
+  const timeKey = buildTimestampKey();
+  const branchKey = compactValue(report.branch || "unknown");
+  const envKey = compactValue(report.environmentName || "unknown");
+  const statusKey = report.failed ? "FAILED" : "PASSED";
+  const functionalTitle = `[${version}]-[${branchKey}]-[${timeKey}]-[Functional]-[${envKey}]-[${statusKey}]`;
+  const performanceTitle = `[${version}]-[${branchKey}]-[${timeKey}]-[Performance]-[${envKey}]-[${statusKey}]`;
+
+  const functionalBodyHtml = buildFunctionalPageBody(report, jiraBaseUrl, jiraProjectKey);
+  const performanceBodyHtml = buildPerformancePageBody(report, jiraBaseUrl, jiraProjectKey);
+
+  const functionalScreenshotCandidates = [
+    ...collectScreenshotPaths(report?.quality?.deployment?.results || []),
+    ...collectScreenshotPaths(report?.quality?.functional?.routeChecks || []),
+    ...collectScreenshotPaths(report?.quality?.functional?.toggleChecks || []),
+    ...collectScreenshotPaths(report?.quality?.functional?.journeyChecks || []),
+  ];
+  const performanceScreenshotCandidates = collectScreenshotPaths(report?.quality?.performance?.pageResults || []);
+
+  const functionalScreenshots = await existingFilePaths(functionalScreenshotCandidates);
+  const performanceScreenshots = await existingFilePaths(performanceScreenshotCandidates);
+
+  const functionalPage = await createConfluencePage({
+    baseUrl,
+    email,
+    apiToken,
+    spaceKey,
+    parentPageId,
+    title: functionalTitle,
+    bodyHtml: functionalBodyHtml,
+  });
+
+  const performancePage = await createConfluencePage({
+    baseUrl,
+    email,
+    apiToken,
+    spaceKey,
+    parentPageId,
+    title: performanceTitle,
+    bodyHtml: performanceBodyHtml,
+  });
+
+  const functionalPageUrl = `${baseUrl.replace(/\/$/, "")}/wiki/spaces/${spaceKey}/pages/${functionalPage.id}`;
+  const performancePageUrl = `${baseUrl.replace(/\/$/, "")}/wiki/spaces/${spaceKey}/pages/${performancePage.id}`;
+  const functionalAttachmentUpload = await uploadAttachmentsForPage({
+    baseUrl,
+    email,
+    apiToken,
+    pageId: functionalPage.id,
+    filePaths: functionalScreenshots,
+  });
+  const performanceAttachmentUpload = await uploadAttachmentsForPage({
+    baseUrl,
+    email,
+    apiToken,
+    pageId: performancePage.id,
+    filePaths: performanceScreenshots,
+  });
+
+  const result = {
+    createdAt: new Date().toISOString(),
+    functionalPage: {
+      pageId: functionalPage.id,
+      title: functionalTitle,
+      pageUrl: functionalPageUrl,
+      attachments: functionalAttachmentUpload,
+    },
+    performancePage: {
+      pageId: performancePage.id,
+      title: performanceTitle,
+      pageUrl: performancePageUrl,
+      attachments: performanceAttachmentUpload,
+    },
+  };
+
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  await fs.writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+  console.log(`Confluence functional page created: ${functionalPageUrl}`);
+  console.log(`Functional screenshots attached: ${functionalAttachmentUpload.uploaded.length}`);
+  console.log(`Confluence performance page created: ${performancePageUrl}`);
+  console.log(`Performance screenshots attached: ${performanceAttachmentUpload.uploaded.length}`);
+}
+
+main().catch((error) => {
+  console.error(`Confluence publish failed: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});
