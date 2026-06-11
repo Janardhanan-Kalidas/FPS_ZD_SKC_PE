@@ -43,6 +43,19 @@ Before starting, ensure you have:
 - ✅ Access to GitLab repository (fork or clone permission)
 - ✅ Zendesk Help Center account access
 
+### Workspace Hygiene (Important)
+
+Keep the repository source-only. Do not commit local runtime artifacts.
+
+Local-only files/folders to keep out of git:
+- `.env.local`
+- `node_modules/`
+- `.venv/`
+- `tooling/reports/`
+- `.DS_Store`
+
+If any of these appear locally, remove them before pushing changes.
+
 ### Step 1: Clone the Repository
 
 ```bash
@@ -235,12 +248,12 @@ FPS_ZD_SKC_PE/
 Always create a branch for your work:
 
 ```bash
-git checkout -b FPSKB-XXX/feature-name
+git checkout -b feature/short-description
 ```
 
 Example:
 ```bash
-git checkout -b FPSKB-105/add-dark-mode
+git checkout -b feature/add-dark-mode
 ```
 
 #### Make commits with Conventional Commits format
@@ -304,7 +317,7 @@ ghi9012 fix: resolve breadcrumb styling
 #### Push to GitLab
 
 ```bash
-git push origin FPSKB-XXX/feature-name
+git push origin feature/short-description
 ```
 
 ### Step 8: Local Theme Preview
@@ -423,7 +436,7 @@ For detailed versioning rules, see the [Theme Versioning](#theme-versioning) sec
 
 ```bash
 # 1. Create a branch
-git checkout -b FPSKB-105/fix-icon-issue
+git checkout -b fix/fix-icon-issue
 
 # 2. Make your changes in VS Code
 # (Edit script.js, style.css, etc.)
@@ -435,7 +448,7 @@ git checkout -b FPSKB-105/fix-icon-issue
 git commit -m "fix: correct empty state icon reference"
 
 # 5. Push to GitLab
-git push origin FPSKB-105/fix-icon-issue
+git push origin fix/fix-icon-issue
 
 # 6. Create Pull Request on GitLab
 # - GitLab CI runs version:dry-run
@@ -453,7 +466,7 @@ git push origin FPSKB-105/fix-icon-issue
 
 ```bash
 # 1. Create a branch
-git checkout -b FPSKB-106/add-newsletter-widget
+git checkout -b feature/add-newsletter-widget
 
 # 2. Make changes (create new templates, JS, CSS)
 
@@ -474,7 +487,7 @@ git commit -m "fix: correct widget alignment on mobile"
 
 ```bash
 # 1. Create a branch
-git checkout -b FPSKB-107/redesign-search
+git checkout -b feature/redesign-search
 
 # 2. Make changes
 

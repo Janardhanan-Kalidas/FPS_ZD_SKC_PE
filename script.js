@@ -313,7 +313,6 @@
  *
  * Updated by : Kalidas, Janardhanan
  * Updated on : 13 Apr 2026, 18:07 IST
- * Jira Ref   : FPSKB-128
  * ---------------------------------------------------------
  */
 
