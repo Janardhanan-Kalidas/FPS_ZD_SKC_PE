@@ -2393,11 +2393,11 @@
           "value": false
         },
         {
-          "identifier": "share_title",
-          "type": "text",
-          "description": "share_title_description",
-          "label": "share_title_label",
-          "value": ""
+          "identifier": "enable_downvote_feedback_modal",
+          "type": "checkbox",
+          "description": "enable_downvote_feedback_modal_description",
+          "label": "enable_downvote_feedback_modal_label",
+          "value": true
         },
         {
           "identifier": "show_recently_viewed_articles",

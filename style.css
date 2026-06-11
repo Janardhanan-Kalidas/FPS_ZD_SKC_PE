@@ -16434,8 +16434,8 @@ a:hover .icon-circle {
   margin-top: 16px;
   padding: 20px;
   background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border: 1px solid #CFCCC5;
+  border-radius: 0;
 }
 
 #downvote-feedback.is-visible {
@@ -16468,17 +16468,17 @@ a:hover .icon-circle {
   padding: 10px 12px;
   font-size: 0.9rem;
   font-family: inherit;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid #CFCCC5;
+  border-radius: 0;
   resize: vertical;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 #downvote-text:focus {
   outline: none;
-  border-color: #d22630;
-  box-shadow: 0 0 0 3px rgba(210, 38, 48, 0.15);
+  border-color: #d2051e;
+  box-shadow: none;
 }
 
 
@@ -16494,11 +16494,11 @@ a:hover .icon-circle {
 }
 
 #submit-downvote-feedback {
-  background: #d22630;
+  background: #d2051e;
   color: #fff;
   border: none;
   padding: 9px 22px;
-  border-radius: 4px;
+  border-radius: 0;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -16516,18 +16516,18 @@ a:hover .icon-circle {
 
 #cancel-downvote-feedback {
   background: transparent;
-  color: #555;
-  border: 1px solid #ccc;
+  color: #524f53;
+  border: 1px solid #CFCCC5;
   padding: 9px 22px;
-  border-radius: 4px;
+  border-radius: 0;
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 #cancel-downvote-feedback:hover {
-  border-color: #999;
-  color: #222;
+  border-color: #d2051e;
+  color: #d2051e;
 }
 
 
@@ -16588,6 +16588,15 @@ a:hover .icon-circle {
   opacity: 0;
   transform: translateY(-3px);
   pointer-events: none;
+}
+
+/* Article vote buttons: custom labels with text-fit width and square corners */
+#article-voting .button-group > .button {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  border-radius: 0;
 }
 
 
@@ -19313,6 +19322,7 @@ button.hc-page-btn {
 
 .article-meta-follow {
   margin-left: auto;
+  display: none;
 }
 
 .article-meta-follow .subscribe-article button {
@@ -19336,6 +19346,12 @@ button.hc-page-btn {
   color:#757275;
 }
 
+.article-meta-author {
+  color: #757275;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
 .article-author-link {
   color: #524f53 !important;
   font-weight: 300;
@@ -19357,6 +19373,7 @@ button.hc-page-btn {
   gap: 1rem;
   margin-top: 0.5rem;
   padding-bottom: 0.75rem;
+  border-bottom: 1px solid #CFCCC5;
   font-size: 0.8125rem;
   color: #737373;
 }
@@ -19422,6 +19439,123 @@ button.hc-page-btn {
   display: block;
 }
 
+.article-share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: none;
+}
+
+.article-share-modal[aria-hidden="false"] {
+  display: block;
+}
+
+.article-share-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.article-share-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(520px, calc(100vw - 2rem));
+  margin: 8vh auto 0;
+  background: #fff;
+  border: 1px solid #CFCCC5;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+}
+
+.article-share-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #CFCCC5;
+}
+
+.article-share-modal__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #524f53;
+}
+
+.article-share-modal__close {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #524f53;
+  cursor: pointer;
+}
+
+.article-share-modal__body {
+  padding: 1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.article-share-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #CFCCC5;
+  text-decoration: none;
+  color: #524f53;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.article-share-option:hover,
+.article-share-option:focus {
+  border-color: #d2051e;
+  color: #d2051e;
+  outline: none;
+}
+
+.article-share-option__icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.article-share-option__icon--text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.article-share-option__icon-img {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.article-share-option--copy {
+  text-align: left;
+}
+
+.article-share-open {
+  overflow: hidden;
+}
+
+.article-page hr {
+  border: 0;
+  border-top: 1px solid #CFCCC5;
+}
+
 .article-vote-btn {
   background: none;
   border: none;
@@ -19485,10 +19619,49 @@ button.hc-page-btn {
 }
 
 /* ----------------------------------------------------------
+   Article voting heading
+---------------------------------------------------------- */
+.article-page #article-voting h4,
+.article-page #article-voting h4.font-medium {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #524f53;
+  margin: 0 0 0.75rem;
+}
+
+body.downvote-feedback-open {
+  /* scroll-lock removed — feedback is now inline, no overlay needed */
+}
+
+.article-page #downvote-feedback {
+  position: static;
+  width: 100%;
+  max-height: none;
+  overflow-y: visible;
+  transform: none;
+  z-index: auto;
+  background: #f8f8f8;
+  border: 1px solid #CFCCC5;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.article-page #downvote-feedback.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.article-page #downvote-feedback.is-hiding {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ----------------------------------------------------------
    4. Article body typography
 ---------------------------------------------------------- */
 .article-content {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   line-height: 1.75;
   color: #3d3d3d;
 }
@@ -19508,7 +19681,7 @@ button.hc-page-btn {
 
 .article-content h2 { font-size: 1.25rem; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.4rem; }
 .article-content h3 { font-size: 1.0625rem; }
-.article-content h4 { font-size: 0.9375rem; }
+.article-content h4 { font-size: 0.875rem; }
 
 .article-content p {
   margin: 0 0 1rem;
@@ -19537,7 +19710,12 @@ button.hc-page-btn {
 
 .article-content a {
   color: #d2051e;
+  font-size: 0.875rem;
   text-decoration: none;
+}
+
+.article-content a span {
+  font-size: 0.875rem;
 }
 
 .article-content a:hover {
