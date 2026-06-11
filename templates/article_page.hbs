@@ -632,6 +632,7 @@
   var articleId = feedbackBox.getAttribute('data-article-id') || '';
   var articleTitle = feedbackBox.getAttribute('data-article-title') || 'Article';
   var downvoteFeedbackStorageKey = 'zd_downvote_feedback_submitted';
+  var feedbackTicketTags = ['article_feedback', 'downvote_feedback', 'knowledge_center'];
 
   function getDownvoteFeedbackSubmitted() {
     try {
@@ -745,6 +746,7 @@
     var payload = {
       request: {
         subject: 'Article downvote feedback: ' + articleTitle,
+        tags: feedbackTicketTags,
         comment: {
           body: 'Article ID: ' + articleId + '\nArticle URL: ' + window.location.href + '\n\nFeedback:\n' + feedbackText
         }
