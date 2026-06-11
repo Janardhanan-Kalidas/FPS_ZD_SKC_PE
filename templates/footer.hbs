@@ -1041,6 +1041,53 @@
   <% } %>
 </script>
 
+{{! Section page sidebar - Active category sections }}
+<script type="text/template" id="tmpl-active-category-sections">
+  <% 
+    var activeCategory = categories.find(function(cat) { return cat.isActive; });
+    if (activeCategory && activeCategory.sections && activeCategory.sections.length) { 
+  %>
+    <div class="border-top border-bottom lg:border-transparent my-5 lg:bg-gray-200 lg:px-5 lg:py-4 lg:my-6">
+      <h3 class="my-4">
+        <a class="sidebar-heading-link" href="<%= activeCategory.html_url %>">
+          <%= activeCategory.name %>
+        </a>
+      </h3>
+      <ul class="list-none">
+        <% activeCategory.sections.forEach(function(section) { %>
+          <li>
+            <a class="block py-1 sidebar-section-link<% if (section.isActive) { %> is-active font-semibold<% } %>" href="<%= section.html_url %>">
+              <%= section.name %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+</script>
+
+{{! Section page sidebar - Subsections (legacy) }}
+<script type="text/template" id="tmpl-section-page-sidebar">
+  <% if (section && section.sections && section.sections.length) { %>
+    <div class="border-top border-bottom lg:border-transparent my-5 lg:bg-gray-200 lg:px-5 lg:py-4 lg:my-6">
+      <h3 class="my-4">
+        <a class="sidebar-heading-link" href="<%= section.html_url %>">
+          <%= section.name %>
+        </a>
+      </h3>
+      <ul class="list-none">
+        <% section.sections.forEach(function(subsection) { %>
+          <li>
+            <a class="block py-1 sidebar-section-link" href="<%= subsection.html_url %>">
+              <%= subsection.name %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+</script>
+
 
 {{! ------- Jana Footer Image Sytle ---------}}        
 <style>

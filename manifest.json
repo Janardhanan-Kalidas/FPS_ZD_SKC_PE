@@ -1703,7 +1703,7 @@
           "type": "list",
           "description": "article_list_columns_description",
           "label": "article_list_columns_label",
-          "value": "3",
+          "value": "2",
           "options": [
             {
               "label": "1",
@@ -2227,11 +2227,15 @@
           "type": "list",
           "description": "section_sidebar_description",
           "label": "section_sidebar_label",
-          "value": "category-list",
+          "value": "active-category-sections",
           "options": [
             {
               "label": "None",
               "value": "none"
+            },
+            {
+              "label": "Active category sections",
+              "value": "active-category-sections"
             },
             {
               "label": "Article list",
@@ -2389,11 +2393,11 @@
           "value": false
         },
         {
-          "identifier": "share_title",
-          "type": "text",
-          "description": "share_title_description",
-          "label": "share_title_label",
-          "value": ""
+          "identifier": "enable_downvote_feedback_modal",
+          "type": "checkbox",
+          "description": "enable_downvote_feedback_modal_description",
+          "label": "enable_downvote_feedback_modal_label",
+          "value": true
         },
         {
           "identifier": "show_recently_viewed_articles",
