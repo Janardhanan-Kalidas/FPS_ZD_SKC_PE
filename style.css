@@ -17786,13 +17786,13 @@ header.d-flex h1 {
   background: rgba(215, 206, 189, 0.6);
 }
 .hilti-lang-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   flex: 0 0 auto;
 }
 .hilti-lang-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: inherit;
@@ -18146,8 +18146,12 @@ header.d-flex h1 {
 .category-page .section-grid > .col-12 {
   padding-bottom: 0 !important;
   border-bottom: none !important;
-  margin-bottom: 2.5rem !important;
+  margin-bottom: 1.5rem !important;
   padding-top: 0 !important;
+}
+
+.category-page .section-grid > .col-12:has(> p > a) {
+  margin-bottom: 1rem !important;
 }
 
 .category-page .section-grid > .col-12:last-child {
@@ -18162,8 +18166,8 @@ header.d-flex h1 {
   font-weight: 700;
   color: #d2051e;
   margin: 0 !important;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
   border-top: none !important;
   border-bottom: none !important;
 }
@@ -18182,8 +18186,8 @@ header.d-flex h1 {
    6. Article list rows — tighter padding, clear dividers
 ---------------------------------------------------------- */
 .category-page #page-container ul.list-unstyled li > div {
-  padding-top: 0.6rem !important;
-  padding-bottom: 0.6rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
 }
 
 /* Keep bottom border on the last article in each section */
@@ -18217,6 +18221,8 @@ header.d-flex h1 {
   color: #D2051E !important;
   text-decoration: none;
   font-weight: 400;
+  display: inline-block;
+  margin-top: 0.15rem;
 }
 
 .category-page #page-container .section-grid p > a:hover {
@@ -18238,7 +18244,7 @@ header.d-flex h1 {
 /* Sidebar card wrapper — strip Zendesk's my-6 margin and py-4 padding so
    CATEGORIES heading aligns flush with the category page title */
 .category-page [data-element="navigation"] > div {
-  background-color: #f7f6f3 !important;
+  background-color: #ffff !important;
   border: 1px solid #e8e8e8;
   border-radius: 2px;
   margin: 0 !important;
@@ -18247,9 +18253,9 @@ header.d-flex h1 {
 
 /* "Categories" heading inside sidebar */
 .category-page [data-element="navigation"] h3 {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.06em;
   color: #524f53 !important;
   margin: 0 0 0.625rem !important;
@@ -18262,7 +18268,7 @@ header.d-flex h1 {
 .category-page [data-element="navigation"] ul li a {
   padding: 5px 6px !important;
   font-size: 0.8125rem !important;
-  border-radius: 2px;
+  border-radius: 0px;
   color: #524f53 !important;
   transition: background 0.15s, color 0.15s;
 }
@@ -18402,17 +18408,32 @@ header.d-flex h1 {
   text-decoration: underline;
 }
 
+.section-page .section-article-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+}
+
+.section-page .section-article-column {
+  margin: 0;
+  padding-left: 0;
+}
+
+.section-page .section-article-column > li {
+  width: 100%;
+}
+
 /* 6. Sidebar — same width and card style as category page */
 .section-page #page-container > .row > aside {
-  flex: 0 0 220px !important;
-  max-width: 220px !important;
-  min-width: 180px;
+  flex: 0 0 240px !important;
+  max-width: 240px !important;
+  min-width: 200px;
   padding: 0 !important;
   align-self: flex-start;
 }
 
 .section-page [data-element="navigation"] > div {
-  background-color: #f7f6f3 !important;
+  background-color: #ffff !important;
   border: 1px solid #e8e8e8;
   border-radius: 2px;
   margin: 0 !important;
@@ -18420,12 +18441,15 @@ header.d-flex h1 {
 }
 
 .section-page [data-element="navigation"] h3 {
-  font-size: 0.75rem;
+  font-size: 0.875rem !important;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: #524f53 !important;
-  margin: 0 0 0.625rem !important;
+  margin: 0 0 0.75rem !important;
   padding-top: 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #d8d5cf;
@@ -18434,6 +18458,9 @@ header.d-flex h1 {
 .section-page [data-element="navigation"] ul li a {
   padding: 5px 6px !important;
   font-size: 0.8125rem !important;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
   border-radius: 2px;
   color: #524f53 !important;
   transition: background 0.15s, color 0.15s;
@@ -18452,12 +18479,37 @@ header.d-flex h1 {
   text-decoration: none !important;
 }
 
+.section-page [data-element="navigation"] .sidebar-heading-link {
+  color: #524f53 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.section-page [data-element="navigation"] .sidebar-section-link {
+  color: #524f53 !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.section-page [data-element="navigation"] .sidebar-section-link.is-active {
+  background-color: #e7e5e2 !important;
+  color: #d2051e !important;
+  font-weight: 600 !important;
+}
+
 /* 7. Mobile: stack layout */
 @media (max-width: 768px) {
   .section-page #page-container > .row {
     flex-direction: column !important;
     gap: 1.5rem;
     padding-top: 1rem;
+  }
+
+  .section-page .section-article-columns {
+    grid-template-columns: 1fr;
+    column-gap: 0;
   }
 
   .section-page #page-container > .row > aside {
