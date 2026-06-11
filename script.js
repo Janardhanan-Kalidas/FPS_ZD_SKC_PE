@@ -1188,6 +1188,69 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /* ============================================================
+   BROWSER LANGUAGE AUTO-DETECTION
+   - Runs once on first visit
+   - Maps browser language to available locales
+   - Respects manual country selection from localStorage
+   ============================================================ */
+;(function () {
+  'use strict';
+
+  function onReady(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn, { once: true });
+    } else {
+      fn();
+    }
+  }
+
+  onReady(function () {
+    var BROWSER_LANG_APPLIED_KEY = 'hilti.browser.lang.applied';
+    var COUNTRY_PREF_KEY = 'hilti.country.selection';
+
+    // Skip if already applied or user has made manual selection
+    var alreadyApplied = localStorage.getItem(BROWSER_LANG_APPLIED_KEY);
+    var manualCountry = localStorage.getItem(COUNTRY_PREF_KEY);
+
+    if (alreadyApplied || manualCountry) {
+      return;
+    }
+
+    // Get current locale from URL
+    var currentLocale = ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
+
+    // Browser language detection: map to available locales
+    var browserLangs = navigator.languages || [navigator.language];
+    var targetLocale = 'en-us'; // default
+
+    // Check if browser language is English variant
+    for (var i = 0; i < browserLangs.length; i++) {
+      var lang = (browserLangs[i] || '').toLowerCase();
+      var langPrefix = lang.split('-')[0];
+
+      // For now, all English variants map to en-us
+      // Future: could use en-gb for UK/AU/NZ browser languages
+      if (langPrefix === 'en') {
+        targetLocale = 'en-us';
+        break;
+      }
+    }
+
+    // Mark that we've applied browser language detection
+    localStorage.setItem(BROWSER_LANG_APPLIED_KEY, 'true');
+
+    // Only redirect if target differs from current
+    if (targetLocale !== currentLocale) {
+      var newUrl = window.location.href.replace(
+        /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
+        '$1' + targetLocale
+      );
+      window.location.href = newUrl;
+    }
+  });
+})();
+
+/* ============================================================
    HILTI LANGUAGE SWITCHER MODAL
    - Opens on globe icon click in header
    - Closes on X, overlay click, or ESC
@@ -1205,13 +1268,69 @@ document.addEventListener('DOMContentLoaded', function () {
     var trigger = document.getElementById('hiltiLangTrigger');
     var overlay = document.getElementById('hiltiLangOverlay');
     var closeBtn = document.getElementById('hiltiLangClose');
+    var cancelBtn = document.getElementById('hiltiLangCancel');
+    var saveBtn = document.getElementById('hiltiLangSave');
+    var countrySelect = document.getElementById('hiltiCountrySelect');
+    var languageSelect = document.getElementById('hiltiLanguageSelect');
+    var langLabel = trigger ? trigger.querySelector('.hilti-lang-label') : null;
 
     if (!trigger || !overlay) return;
 
-    // Set header label to region keyword based on current locale URL
-    var langLabel = trigger.querySelector('.hilti-lang-label');
-    if (langLabel) {
-      langLabel.textContent = /\/hc\/en-gb(?:\/|$)/i.test(window.location.pathname) ? 'EU' : 'ACI';
+    var COUNTRY_LANGUAGE_MAP = {
+      us: {
+        country: 'United States',
+        languages: [{ label: 'English (United States)', locale: 'en-us' }]
+      },
+      in: {
+        country: 'India',
+        languages: [{ label: 'English (United Kingdom)', locale: 'en-gb' }]
+      }
+    };
+    /*
+     * HOW TO EXTEND THIS MAP
+     * ----------------------
+     * Each key is a short country code (lowercase). The value object needs:
+     *   country   – Display name shown in the Country dropdown.
+     *   languages – Array of one or more language objects. Each has:
+     *               label  – Display name shown in the Language dropdown.
+     *               locale – Zendesk locale code used in the /hc/{locale}/ URL.
+     *
+     * ADDING A NEW COUNTRY (single language):
+     *   de: {
+     *     country: 'Germany',
+     *     languages: [{ label: 'Deutsch', locale: 'de' }]
+     *   },
+     *
+     * ADDING A COUNTRY WITH MULTIPLE LANGUAGES:
+     *   ch: {
+     *     country: 'Switzerland',
+     *     languages: [
+     *       { label: 'Deutsch (Schweiz)',   locale: 'de' },
+     *       { label: 'Français (Suisse)',   locale: 'fr' },
+     *       { label: 'Italiano (Svizzera)', locale: 'it' }
+     *     ]
+     *   },
+     *
+     * When a country has more than one language the Language dropdown will
+     * show all options and the user must choose one before Save is enabled.
+     * When only one language exists it is auto-selected immediately.
+     *
+     * Locale codes must match an active locale in your Zendesk Help Center.
+     * Check Guide Admin → Language Settings for the full list of enabled locales.
+     */
+    var STORAGE_KEY = 'hilti.country.selection';
+
+    function getCurrentLocale() {
+      return ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
+    }
+
+    function updateHeaderLocaleLabel(locale) {
+      if (!langLabel) return;
+      var code = (locale || getCurrentLocale()).toLowerCase();
+      var parts = code.split('-');
+      langLabel.textContent = parts[1]
+        ? parts[0].toUpperCase() + '-' + parts[1].toUpperCase()
+        : parts[0].toUpperCase();
     }
 
     // Build the redirect URL for a given locale code
@@ -1236,32 +1355,104 @@ document.addEventListener('DOMContentLoaded', function () {
       document.head.appendChild(link);
     }
 
-    // Prefetch both locales as soon as the user hovers the globe button
+    function setSaveState() {
+      if (!saveBtn || !countrySelect || !languageSelect) return;
+      saveBtn.disabled = !(countrySelect.value && languageSelect.value);
+    }
+
+    function clearSelect(selectEl, placeholder) {
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      var base = document.createElement('option');
+      base.value = '';
+      base.textContent = placeholder;
+      selectEl.appendChild(base);
+    }
+
+    function populateCountries() {
+      if (!countrySelect) return;
+      clearSelect(countrySelect, 'Select Country');
+      Object.keys(COUNTRY_LANGUAGE_MAP).forEach(function (code) {
+        var option = document.createElement('option');
+        option.value = code;
+        option.textContent = COUNTRY_LANGUAGE_MAP[code].country;
+        countrySelect.appendChild(option);
+      });
+    }
+
+    function populateLanguages(countryCode) {
+      if (!languageSelect) return;
+      clearSelect(languageSelect, 'Select Language');
+
+      var countryEntry = COUNTRY_LANGUAGE_MAP[countryCode];
+      if (!countryEntry || !countryEntry.languages || !countryEntry.languages.length) {
+        languageSelect.disabled = true;
+        setSaveState();
+        return;
+      }
+
+      countryEntry.languages.forEach(function (lang) {
+        var option = document.createElement('option');
+        option.value = lang.locale;
+        option.textContent = lang.label;
+        languageSelect.appendChild(option);
+      });
+
+      languageSelect.disabled = false;
+
+      if (countryEntry.languages.length === 1) {
+        languageSelect.value = countryEntry.languages[0].locale;
+      }
+
+      setSaveState();
+    }
+
+    function resolveCountryFromLocale(locale) {
+      var normalized = (locale || '').toLowerCase();
+      var match = Object.keys(COUNTRY_LANGUAGE_MAP).find(function (countryCode) {
+        return COUNTRY_LANGUAGE_MAP[countryCode].languages.some(function (lang) {
+          return lang.locale === normalized;
+        });
+      });
+      return match || 'us';
+    }
+
+    // Prefetch configured locales as soon as the user hovers the trigger
     trigger.addEventListener('mouseenter', function () {
-      prefetchLocale('en-us');
-      prefetchLocale('en-gb');
+      Object.keys(COUNTRY_LANGUAGE_MAP).forEach(function (countryCode) {
+        COUNTRY_LANGUAGE_MAP[countryCode].languages.forEach(function (lang) {
+          prefetchLocale(lang.locale);
+        });
+      });
     }, { once: true });
 
     function openModal() {
-      // Prefetch all available locale options when the modal opens (backup)
-      overlay.querySelectorAll('[data-locale]').forEach(function (el) {
-        prefetchLocale(el.getAttribute('data-locale'));
+      Object.keys(COUNTRY_LANGUAGE_MAP).forEach(function (countryCode) {
+        COUNTRY_LANGUAGE_MAP[countryCode].languages.forEach(function (lang) {
+          prefetchLocale(lang.locale);
+        });
       });
 
       overlay.classList.add('is-open');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
 
-      // Mark the currently active keyword
-      var currentLocale = ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
-      overlay.querySelectorAll('.hilti-region-toggle[data-locale]').forEach(function (a) {
-        a.classList.toggle('is-active', a.getAttribute('data-locale') === currentLocale);
-      });
+      if (countrySelect && languageSelect) {
+        populateCountries();
+        var currentLocale = getCurrentLocale();
+        var savedCountry = localStorage.getItem(STORAGE_KEY);
+        var initialCountry = COUNTRY_LANGUAGE_MAP[savedCountry] ? savedCountry : resolveCountryFromLocale(currentLocale);
 
-      // Focus the active keyword, or the first one
-      var focusTarget = overlay.querySelector('.hilti-region-toggle.is-active') ||
-                        overlay.querySelector('.hilti-region-toggle');
-      if (focusTarget) focusTarget.focus();
+        countrySelect.value = initialCountry;
+        populateLanguages(initialCountry);
+
+        if (languageSelect.querySelector('option[value="' + currentLocale + '"]')) {
+          languageSelect.value = currentLocale;
+        }
+
+        setSaveState();
+        countrySelect.focus();
+      }
     }
 
     function closeModal() {
@@ -1280,6 +1471,46 @@ document.addEventListener('DOMContentLoaded', function () {
       closeBtn.addEventListener('click', closeModal);
     }
 
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', closeModal);
+    }
+
+    if (countrySelect) {
+      countrySelect.addEventListener('change', function () {
+        var selectedCountry = countrySelect.value;
+        if (selectedCountry) {
+          localStorage.setItem(STORAGE_KEY, selectedCountry);
+        }
+        populateLanguages(selectedCountry);
+      });
+    }
+
+    if (languageSelect) {
+      languageSelect.addEventListener('change', setSaveState);
+    }
+
+    function redirectToLocale(locale) {
+      closeModal();
+
+      var bar = document.createElement('div');
+      bar.className = 'hilti-page-loading-bar';
+      document.body.appendChild(bar);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { bar.classList.add('is-animating'); });
+      });
+
+      updateHeaderLocaleLabel(locale);
+      window.location.href = buildLocaleUrl(locale);
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        if (!countrySelect || !languageSelect) return;
+        if (!countrySelect.value || !languageSelect.value) return;
+        redirectToLocale(languageSelect.value);
+      });
+    }
+
     // Close on backdrop click
     overlay.addEventListener('click', function (e) {
       if (e.target === overlay) closeModal();
@@ -1292,38 +1523,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    // Keyword click → show loading bar + redirect
-    // ─────────────────────────────────────────────────────────────────────
-    // FUTURE: When sub-languages are added under ACI or EU (see header.hbs),
-    // swap each keyword <a data-locale="..."> for a toggle button +
-    // <ul class="hilti-region-suboptions"> with one <a data-locale="...">
-    // per language. This handler already targets any [data-locale] element
-    // — no JS changes needed when adding sub-languages.
-    //
-    // Suggested future locales:
-    //   ACI: 'es-419' (Spanish LatAm), 'pt-br' (Portuguese BR)
-    //   EU : 'de' (German), 'fr' (French), 'es-es' (Spanish ES)
-    // ─────────────────────────────────────────────────────────────────────
-    overlay.addEventListener('click', function (e) {
-      var option = e.target.closest('[data-locale]');
-      if (!option) return;
-      e.preventDefault();
-      var locale = option.getAttribute('data-locale');
-      if (!locale) return;
-
-      // Close modal immediately for instant feedback
-      closeModal();
-
-      // Show a red progress bar at the top of the page for visual feedback
-      var bar = document.createElement('div');
-      bar.className = 'hilti-page-loading-bar';
-      document.body.appendChild(bar);
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () { bar.classList.add('is-animating'); });
-      });
-
-      window.location.href = buildLocaleUrl(locale);
-    });
+    updateHeaderLocaleLabel(getCurrentLocale());
 
     /* ---------------------------------------------------------
        Remove sidebar category limit (show all categories)
