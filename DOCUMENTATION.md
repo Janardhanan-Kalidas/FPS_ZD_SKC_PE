@@ -12,9 +12,7 @@ Welcome! This comprehensive guide contains all documentation for the Zendesk the
 
 ---
 
----
-
-# Development Setup Guide
+## Development Setup Guide
 
 ## Complete Onboarding
 
@@ -38,6 +36,7 @@ Welcome! This guide walks you through **everything you need** to set up your dev
 ### Prerequisites
 
 Before starting, ensure you have:
+
 - ✅ macOS, Linux, or Windows with terminal access
 - ✅ Git installed (`git --version` to verify)
 - ✅ Access to GitLab repository (fork or clone permission)
@@ -48,6 +47,7 @@ Before starting, ensure you have:
 Keep the repository source-only. Do not commit local runtime artifacts.
 
 Local-only files/folders to keep out of git:
+
 - `.env.local`
 - `node_modules/`
 - `.venv/`
@@ -68,6 +68,7 @@ cd FPS_ZD_SKC_PE
 ```
 
 Verify you're in the right folder:
+
 ```bash
 pwd
 # Should output: /Users/[username]/Desktop/FPS_ZD_SKC_PE
@@ -114,10 +115,9 @@ ZCLI is the official tool for previewing and managing Zendesk themes locally.
 npm install -g @zendesk/zcli
 ```
 
-#### Verify installation
+#### Check ZCLI version
 
 ```bash
-zcli --version
 ```
 
 Expected output: `@zendesk/zcli/1.0.0-beta.56` or similar
@@ -133,6 +133,7 @@ zcli login -i
 ```
 
 This will:
+
 1. Open a browser window
 2. Ask you to sign in to your Zendesk account
 3. Authorize the CLI tool
@@ -147,6 +148,7 @@ zcli themes:list
 Expected output: List of available themes (should NOT show an error)
 
 If you see authentication errors, try again:
+
 ```bash
 zcli logout
 zcli login -i
@@ -162,10 +164,9 @@ GitLab Runner executes your CI/CD pipelines locally. This step is optional but r
 brew install gitlab-runner
 ```
 
-#### Verify installation
+#### Check GitLab Runner version
 
 ```bash
-gitlab-runner --version
 ```
 
 #### Register the runner
@@ -182,6 +183,7 @@ gitlab-runner register \
 ```
 
 When prompted:
+
 - **Runner name**: `macOS Zendesk Theme Runner`
 - **Executor**: `shell`
 - **Tags**: `macos, shell, node`
@@ -195,7 +197,8 @@ gitlab-runner run
 ```
 
 You should see output like:
-```
+
+```text
 Listening for connections...
 ```
 
@@ -203,7 +206,7 @@ Listening for connections...
 
 ### Step 6: Understand Project Structure
 
-```
+```text
 FPS_ZD_SKC_PE/
 ├── manifest.json          # Theme configuration & settings
 ├── script.js              # Client-side JavaScript behavior
@@ -229,13 +232,11 @@ FPS_ZD_SKC_PE/
 ├── .vscode/
 │   ├── tasks.json         # VS Code tasks (preview, login, etc.)
 │   └── launch.json        # VS Code Run & Debug configs
-├── DEVELOPMENT_SETUP.md   # Development guide
-├── VERSIONING.md          # Detailed versioning rules
-├── LOCAL_PREVIEW.md       # Preview mode troubleshooting
 └── README.md              # Project overview
 ```
 
 **Key files you'll edit:**
+
 - `script.js` - JavaScript functionality
 - `style.css` - Styling & layouts
 - `templates/*.hbs` - Page templates
@@ -252,6 +253,7 @@ git checkout -b feature/short-description
 ```
 
 Example:
+
 ```bash
 git checkout -b feature/add-dark-mode
 ```
@@ -260,14 +262,14 @@ git checkout -b feature/add-dark-mode
 
 Your commit messages MUST follow this format for automatic versioning to work:
 
-```
+```text
 type(scope): description
 ```
 
 **Allowed types:**
 
 | Type | Version Impact | When to use |
-|------|---|---|
+| --- | --- | --- |
 | `fix:` | PATCH bump | Bug fixes, corrections |
 | `feat:` | MINOR bump | New features, additions |
 | `chore:` | No bump | Docs, config, dependencies |
@@ -308,7 +310,8 @@ git log --oneline -5
 ```
 
 Expected output:
-```
+
+```text
 abc1234 feat: add dark mode toggle
 def5678 fix: correct icon spacing
 ghi9012 fix: resolve breadcrumb styling
@@ -332,12 +335,14 @@ zcli login -i
 
 #### Start preview from VS Code
 
-**Option A: Using VS Code Tasks (Easiest)**
+#### Option A: Using VS Code Tasks (Easiest)
+
 1. Press **⌘Shift+P** (macOS) or **Ctrl+Shift+P** (Linux/Windows)
 2. Type `Tasks: Run Task`
 3. Select `Zendesk: Preview Theme`
 
-**Option B: Using terminal**
+#### Option B: Using terminal
+
 ```bash
 zcli themes:preview
 ```
@@ -345,13 +350,15 @@ zcli themes:preview
 #### Open the preview URL
 
 You'll see output like:
-```
+
+```text
 Uploading theme... Ok
 Ready https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start 🚀
 ```
 
 Click the URL or open in browser:
-```
+
+```text
 https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start
 ```
 
@@ -366,13 +373,14 @@ You'll be taken through Zendesk authentication, then see your live preview.
 #### Stop preview
 
 Press **Ctrl+C** in the terminal, or visit:
-```
+
+```text
 https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/stop
 ```
 
 #### DNS Issues?
 
-If the preview page won't load, see the [Local Theme Preview - Troubleshooting](#troubleshooting-1) section for DNS troubleshooting.
+If the preview page won't load, see the [Local Theme Preview - Troubleshooting](#troubleshooting-preview) section for DNS troubleshooting.
 
 ### Step 9: Version Management
 
@@ -388,11 +396,12 @@ The project uses **Semantic Versioning** with automatic version bumps based on y
 Before merging to main, preview the next version:
 
 ```bash
-npm run version:dry-run
+npm run version:theme:dry
 ```
 
 Example output:
-```
+
+```text
 Current version: 2.2.10
 Commits since tag theme-v2.2.10: 3
   - fix: correct icon reference
@@ -406,7 +415,8 @@ Next version: 2.3.0
 
 Once your PR is merged to `main` branch:
 
-**Option A: Using GitLab CI (Recommended)**
+#### Option A: Using GitLab CI (Recommended)
+
 1. Go to **CI/CD → Pipelines** on main branch
 2. Find the `theme_version_release` job
 3. Click **Run** to trigger the release
@@ -415,7 +425,8 @@ Once your PR is merged to `main` branch:
    - Updates manifest.json
    - Creates git tag (e.g., `theme-v2.3.0`)
 
-**Option B: Using CLI**
+#### Option B: Using CLI
+
 ```bash
 npm run version:release
 ```
@@ -506,17 +517,15 @@ BREAKING CHANGE: Old CSS class names removed
 
 ### Troubleshooting
 
-_See the [Local Theme Preview - Troubleshooting](#troubleshooting-1) section for preview-specific issues._
+_See the [Local Theme Preview - Troubleshooting](#troubleshooting-preview) section for preview-specific issues._
 
 ---
 
----
-
-# Local Theme Preview
+## Local Theme Preview
 
 You can preview this Zendesk theme directly from VS Code by using the installed Zendesk CLI.
 
-## Prerequisites
+## Prerequisites for Local Theme Preview
 
 - `zcli` installed locally
 - Access to the target Zendesk Help Center
@@ -552,13 +561,7 @@ You can also use the Run and Debug sidebar:
 
 The preview command watches the current theme folder and pushes local changes to Zendesk preview mode.
 
-## Helpful tasks
-
-- `Zendesk: Login`
-- `Zendesk: Preview Theme`
-- `Zendesk: List Themes`
-
-## Helpful launch shortcuts
+## Helpful tasks and launch shortcuts
 
 - `Zendesk: Login`
 - `Zendesk: Preview Theme`
@@ -580,7 +583,7 @@ zcli login -i
 zcli themes:preview
 ```
 
-## Troubleshooting {#troubleshooting-1}
+## Troubleshooting {#troubleshooting-preview}
 
 ### Preview page won't load / "Page not found"
 
@@ -599,14 +602,17 @@ zcli themes:preview
    - Try the preview URL again
 
 2. **Flush local DNS cache**:
+
    ```bash
    sudo dscacheutil -flushcache
    ```
 
 3. **Test domain resolution**:
+
    ```bash
    nslookup help.profisengineering.hilti.com
    ```
+
    - If you see `** server can't find help.profisengineering.hilti.com: NXDOMAIN`, your DNS cannot resolve the custom domain
    - Try again after switching DNS providers
 
@@ -616,13 +622,16 @@ zcli themes:preview
    - Contact IT if the domain still doesn't resolve on VPN
 
 5. **Verify primary domain works** (sanity check):
+
    ```bash
    nslookup hiltiprofisengineering.zendesk.com
    ```
+
    - Should return IPs like `216.198.54.11` or `216.198.53.11`
    - If this fails, you have a general connectivity issue
 
 **After you fix DNS**: Restart the preview:
+
 ```bash
 # Kill the current preview (Ctrl+C or run this in another terminal)
 # Then restart
@@ -631,9 +640,7 @@ zcli themes:preview
 
 ---
 
----
-
-# Theme Versioning
+## Theme Versioning
 
 This theme now has a small repo-local semantic versioning script that updates `manifest.json` from git history.
 
@@ -661,13 +668,13 @@ Dry run:
 npm run version:theme:dry
 ```
 
-Auto bump from commit history:
+### Auto bump from commit history
 
 ```bash
 npm run version:theme
 ```
 
-Force a specific bump:
+### Force a specific bump
 
 ```bash
 npm run version:theme -- --release-as patch
@@ -675,7 +682,7 @@ npm run version:theme -- --release-as minor
 npm run version:theme -- --release-as major
 ```
 
-Update the manifest and create a git tag:
+### Update the manifest and create a git tag
 
 ```bash
 npm run version:theme -- --tag
