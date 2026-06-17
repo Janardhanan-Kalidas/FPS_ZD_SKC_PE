@@ -1,5 +1,5 @@
 {{! Page footer }}
-<footer class="footer mt-6{{#is settings.footer_shape 'none'}}{{#is settings.bg_color settings.bg_color_footer}} border-top{{/is}}{{/is}}" id="footer">
+<footer class="footer mt-6{{#is settings.footer_shape 'none'}}{{#is '#fff' settings.bg_color_footer}} border-top{{/is}}{{/is}}" id="footer">
 	
   
     {{! SVG dividers }}
@@ -41,7 +41,7 @@
         {{~#if settings.twitter_link}}
           <a class="nav-link" href="{{settings.twitter_link}}" target="_blank">
             <svg class="svg-icon fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M14.095479,10.316482L22.286354,1h-1.940718l-7.115352,8.087682L7.551414,1H1l8.589488,12.231093L1,23h1.940717  l7.509372-8.542861L16.448587,23H23L14.095479,10.316482z M11.436522,13.338465l-0.871624-1.218704l-6.924311-9.68815h2.981339  l5.58978,7.82155l0.867949,1.218704l7.26506,10.166271h-2.981339L11.436522,13.338465z""")/>>
+              <path d="M14.095479,10.316482L22.286354,1h-1.940718l-7.115352,8.087682L7.551414,1H1l8.589488,12.231093L1,23h1.940717l7.509372-8.542861L16.448587,23H23L14.095479,10.316482z M11.436522,13.338465l-0.871624-1.218704l-6.924311-9.68815h2.981339l5.58978,7.82155l0.867949,1.218704l7.26506,10.166271h-2.981339L11.436522,13.338465z"></path>
             </svg>
           </a>
         {{/if~}}
@@ -77,21 +77,7 @@
         </a>
       {{/if~}}
 
-      {{~#if alternative_locales}}
-        <div class="language-selector-wrap" x-data="Widgets.dropdown" @click.away="close">
-          <button class="nav-link not-a-button" aria-haspopup="true" :aria-expanded="isExpanded" x-ref="toggle">
-            {{current_locale.name}}
-            <svg class="svg-icon" viewBox="0 0 12 12" :class="{ 'rotate-180': isExpanded }"><use xlink:href="#icon-chevron-down" /></svg>
-          </button>
-          <div class="z-dropdown absolute bg-white border shadow-md" x-ref="menu" x-cloak x-show="isExpanded">
-            <div class="py-2 font-size-sm text-left">
-              {{#each alternative_locales}}
-                <a class="dropdown-item" href="{{url}}" dir="{{direction}}" rel="nofollow">{{name}}</a>
-              {{/each}}
-            </div>
-          </div>
-        </div>
-      {{/if~}}
+      {{! Language selector moved to header — see header.hbs }}
     </div>
 
   </div>
@@ -225,7 +211,7 @@
         if (numberColumns >= 4) classNames += ' xl:col-3';
         return classNames;
       } %>
-      <div class="container text-{{settings.custom_block_alignment}} py-{{#is settings.bg_color settings.bg_color_custom_blocks}}2{{else}}4{{/is}}{{#isnt settings.content_block_style 'none'}}{{#is settings.bg_color_custom_blocks settings.bg_color_content_blocks}} -mb-4{{/is}}{{/isnt}}">
+      <div class="container text-{{settings.custom_block_alignment}} py-{{#is '#fff' settings.bg_color_custom_blocks}}2{{else}}4{{/is}}{{#isnt settings.content_block_style 'none'}}{{#is settings.bg_color_custom_blocks settings.bg_color_content_blocks}} -mb-4{{/is}}{{/isnt}}">
         <% if (heading) { %>
           <h2 class="inline-flex align-items-baseline my-4" x-data="{ src: Theme.assets['custom-blocks-heading'] }">
             <template x-if="src">
@@ -277,7 +263,7 @@
         if (numberColumns >= 4) classNames += ' xl:col-3';
         return classNames;
       } %>
-      <div class="container text-{{settings.content_block_alignment}} py-{{#is settings.bg_color settings.bg_color_content_blocks}}2{{else}}4{{/is}}">
+      <div class="container text-{{settings.content_block_alignment}} py-{{#is '#fff' settings.bg_color_content_blocks}}2{{else}}4{{/is}}">
         <% if (heading) { %>
           <h2 class="inline-flex align-items-baseline my-4" x-data="{ src: Theme.assets['content-blocks-heading'] }">
             <template x-if="src">
@@ -290,7 +276,10 @@
           <% (categories.length > 1 ? categories : sections).forEach(function(block, index) { %>
             <li class="mb-5 <%= getColumnClasses(numberColumns) %>">
               <div class="card p-6 h-full bg-white transition-fast <% if (['white', 'gray-100', 'gray-200'].indexOf(color) !== -1) { %>hover:border-primary<% } else { %>hover:border-<%= color %><% } %>">
-                <% if (imageHeight) { %>
+                <% var _categoryIcon = (typeof Theme !== 'undefined' && Theme.assets) ? Theme.assets['category-' + block.id] : null; %>
+                <% if (_categoryIcon) { %>
+                  <img class="mb-4<% if (alignment === 'left') { %> align-self-start<% } %>" src="<%= _categoryIcon %>" alt="" style="height: <%= imageHeight || '48px' %>; width: auto;" />
+                <% } else if (imageHeight && images.length) { %>
                   <img class="mb-4<% if (alignment === 'left') { %> align-self-start<% } %>" src="<%= images.length > index ? images[index] : images[images.length - 1] %>" alt="" style="height: <%= imageHeight %>; width: auto;" />
                 <% } %>
                 <h2 class="h3 m-0">
@@ -430,7 +419,7 @@
 {{~#isnt settings.cta_location 'none'}}
   {{~#is settings.cta_style 'banner'}}
     <script type="text/template" id="tmpl-call-to-action">
-      <div class="cta relative mt-6 -mb-6{{#is settings.bg_color settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')">
+      <div class="cta relative mt-6 -mb-6{{#is '#fff' settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')">
         <div class="container relative z-10 py-6">
           <div class="max-w-lg mx-auto text-center">
             {{#if settings.cta_element_heading}}
@@ -451,17 +440,19 @@
                 {{/if}}
               </p>
             {{/if}}
-            <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}">
-              {{#if settings.cta_element_link_text}}
-                {{#if settings.use_translations}}
-                  {{dc 'submit_a_request'}}
+            {{#unless settings.show_submit_a_request_link}}
+              <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+                {{#if settings.cta_element_link_text}}
+                  {{#if settings.use_translations}}
+                    {{dc 'submit_a_request'}}
+                  {{else}}
+                    {{settings.cta_element_link_text}}
+                  {{/if}}
                 {{else}}
-                  {{settings.cta_element_link_text}}
+                  {{t 'submit_a_request'}}
                 {{/if}}
-              {{else}}
-                {{t 'submit_a_request'}}
-              {{/if}}
-            </a>
+              </a>
+            {{/unless}}
           </div>
         </div>
         <div class="absolute-top left-0 z-0 w-full h-full cta"></div>
@@ -471,7 +462,7 @@
   {{~#is settings.cta_style 'boxed'}}
     <script type="text/template" id="tmpl-call-to-action">
       <div class="container">
-        <div class="card cta overflow-hidden my-6{{#isnt settings.bg_color settings.bg_color_cta}} border-0{{/isnt}}">
+        <div class="card cta overflow-hidden my-6{{#isnt '#fff' settings.bg_color_cta}} border-0{{/isnt}}">
           <div class="p-6">
             {{#if settings.cta_element_heading}}
               <h3 class="h2 md:font-size-xl">
@@ -491,17 +482,19 @@
                 {{/if}}
               </p>
             {{/if}}
-            <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}">
-              {{#if settings.cta_element_link_text}}
-                {{#if settings.use_translations}}
-                  {{dc settings.cta_element_link_text}}
+            {{#unless settings.show_submit_a_request_link}}
+              <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+                {{#if settings.cta_element_link_text}}
+                  {{#if settings.use_translations}}
+                    {{dc settings.cta_element_link_text}}
+                  {{else}}
+                    {{settings.cta_element_link_text}}
+                  {{/if}}
                 {{else}}
-                  {{settings.cta_element_link_text}}
+                  {{t 'submit_a_request'}}
                 {{/if}}
-              {{else}}
-                {{t 'submit_a_request'}}
-              {{/if}}
-            </a>
+              </a>
+            {{/unless}}
           </div>
         </div>
       </div>
@@ -510,7 +503,7 @@
   {{~#is settings.cta_style 'boxed-image'}}
     <script type="text/template" id="tmpl-call-to-action">
       <div class="container">
-        <div class="card cta overflow-hidden my-6{{#isnt settings.bg_color settings.bg_color_cta}} border-0{{/isnt}}">
+        <div class="card cta overflow-hidden my-6{{#isnt '#fff' settings.bg_color_cta}} border-0{{/isnt}}">
           <div class="row">
             <div class="p-9 sm:col-6 relative bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')"></div>
             <div class="p-6 sm:col-6 sm:px-6 sm:py-8">
@@ -532,17 +525,19 @@
                   {{/if}}
                 </p>
               {{/if}}
-              <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}">
-                {{#if settings.cta_element_link_text}}
-                  {{#if settings.use_translations}}
-                    {{dc settings.cta_element_link_text}}
+              {{#unless settings.show_submit_a_request_link}}
+                <a class="button button-primary button-lg my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+                  {{#if settings.cta_element_link_text}}
+                    {{#if settings.use_translations}}
+                      {{dc settings.cta_element_link_text}}
+                    {{else}}
+                      {{settings.cta_element_link_text}}
+                    {{/if}}
                   {{else}}
-                    {{settings.cta_element_link_text}}
+                    {{t 'submit_a_request'}}
                   {{/if}}
-                {{else}}
-                  {{t 'submit_a_request'}}
-                {{/if}}
-              </a>
+                </a>
+              {{/unless}}
             </div>
           </div>
         </div>
@@ -570,17 +565,19 @@
             {{/if}}
           </p>
         {{/if}}
-        <a class="button button-primary my-4" href="{{page_path 'new_request'}}">
-          {{#if settings.cta_element_link_text}}
-            {{#if settings.use_translations}}
-              {{dc settings.cta_element_link_text}}
+        {{#unless settings.show_submit_a_request_link}}
+          <a class="button button-primary my-4" href="{{page_path 'new_request'}}" data-requires-auth>
+            {{#if settings.cta_element_link_text}}
+              {{#if settings.use_translations}}
+                {{dc settings.cta_element_link_text}}
+              {{else}}
+                {{settings.cta_element_link_text}}
+              {{/if}}
             {{else}}
-              {{settings.cta_element_link_text}}
+              {{t 'submit_a_request'}}
             {{/if}}
-          {{else}}
-            {{t 'submit_a_request'}}
-          {{/if}}
-        </a>
+          </a>
+        {{/unless}}
       </div>
     </script>
   {{/is~}}
@@ -833,6 +830,12 @@
     alignment: "{{settings.custom_block_alignment}}",
     color: "{{settings.color_custom_blocks}}"
   };
+
+  Theme.customBlocks.blocks.forEach(function(block) {
+    if (block.html_url === '/hc/en-us/requests/new' && Theme.routes && Theme.routes.newRequest) {
+      block.html_url = Theme.routes.newRequest;
+    }
+  });
   {{/isnt~}}
 
   {{! Contact block data }}
@@ -1046,11 +1049,58 @@
   <% } %>
 </script>
 
+{{! Section page sidebar - Active category sections }}
+<script type="text/template" id="tmpl-active-category-sections">
+  <% 
+    var activeCategory = categories.find(function(cat) { return cat.isActive; });
+    if (activeCategory && activeCategory.sections && activeCategory.sections.length) { 
+  %>
+    <div class="border-top border-bottom lg:border-transparent my-5 lg:bg-gray-200 lg:px-5 lg:py-4 lg:my-6">
+      <h3 class="my-4">
+        <a class="sidebar-heading-link" href="<%= activeCategory.html_url %>">
+          <%= activeCategory.name %>
+        </a>
+      </h3>
+      <ul class="list-none">
+        <% activeCategory.sections.forEach(function(section) { %>
+          <li>
+            <a class="block py-1 sidebar-section-link<% if (section.isActive) { %> is-active font-semibold<% } %>" href="<%= section.html_url %>">
+              <%= section.name %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+</script>
+
+{{! Section page sidebar - Subsections (legacy) }}
+<script type="text/template" id="tmpl-section-page-sidebar">
+  <% if (section && section.sections && section.sections.length) { %>
+    <div class="border-top border-bottom lg:border-transparent my-5 lg:bg-gray-200 lg:px-5 lg:py-4 lg:my-6">
+      <h3 class="my-4">
+        <a class="sidebar-heading-link" href="<%= section.html_url %>">
+          <%= section.name %>
+        </a>
+      </h3>
+      <ul class="list-none">
+        <% section.sections.forEach(function(subsection) { %>
+          <li>
+            <a class="block py-1 sidebar-section-link" href="<%= subsection.html_url %>">
+              <%= subsection.name %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+</script>
+
 
 {{! ------- Jana Footer Image Sytle ---------}}        
 <style>
   .footer {
-    background-image: url("{{asset 'Footer-bg.jpg'}}");
+    background-image: url("{{asset 'Footer_bg.jpg'}}");
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;

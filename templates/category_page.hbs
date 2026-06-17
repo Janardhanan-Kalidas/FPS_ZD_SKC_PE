@@ -83,15 +83,6 @@
                       <li>
                         <div class="relative media align-items-baseline py-3 border-bottom">
 
-                          {{! Bordered icon style }}
-                          {{#is ../../settings.article_list_style '3-bordered'}}
-                            <div class="flex" x-data="{ src: Theme.assets['article'] }">
-                              <template x-if="src">
-                                <img class="svg-icon mr-3" src="{{asset 'placeholder.png'}}" aria-hidden="true" :src="src" />
-                              </template>
-                            </div>
-                          {{/is}}
-
                           <div class="media-body">
 
                             <a class="link-stretched" href="{{url}}">{{title}}</a>
@@ -162,7 +153,7 @@
     </div>
 
     {{! Sidebar }}
-    <aside class="relative md:col-4 {{! Width of the Sidebar}}
+    <aside class="relative md:col-3 {{! Width of the Sidebar}}
       {{#is settings.category_sidebar 'none'}}
         {{#isnt settings.cta_style 'sidebar'}}
           {{#isnt settings.cta_style 'all'}}hidden{{/isnt}}
@@ -171,7 +162,7 @@
       
       {{! Sidebar navigation }}
       {{#isnt settings.category_sidebar 'none'}}
-        <div data-element="navigation" data-template="{{#is settings.category_sidebar 'custom'}}sidebar-navigation{{else}}{{settings.category_sidebar}}{{/is}}">
+        <div data-element="navigation" data-template="{{settings.category_sidebar}}">
         </div>
       {{/isnt}}
 

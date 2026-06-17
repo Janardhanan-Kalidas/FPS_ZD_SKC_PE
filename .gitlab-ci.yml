@@ -1,0 +1,202 @@
+# Author: Kalidas, Janardhanan
+# Date: 2026-06-04
+
+# Prevent duplicate pipelines: when a branch has an open MR,
+# only run the MR pipeline (not a separate push pipeline).
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - release
+  - backup
+  - deploy
+  - post_deploy_validate
+
+variables:
+  GIT_DEPTH: "0"
+  ZCLI_VERSION: "1.0.0-beta.56"
+  DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
+  ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
+  EXTERNAL_VALIDATION_PROJECT: "bu-f-ps/sw-support-group/skc_pe_deployment_validation"
+  EXTERNAL_VALIDATION_BRANCH: "Main"
+
+default:
+  tags:
+    - shell
+    - macos
+  before_script:
+    - node --version
+    - npm --version
+    - |
+      if [[ -f package-lock.json ]]; then
+        npm ci
+      else
+        npm install
+      fi
+    - |
+      INSTALLED_ZCLI="$(npx zcli --version 2>/dev/null || true)"
+      if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
+        npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
+      fi
+      npx zcli --version
+
+# ── Release ─────────────────────────────────────────────────────────────────
+# Manual job — bumps manifest.json version. Trigger from the GitLab UI.
+theme_version_release:
+  stage: release
+  script:
+    - npm run version:theme
+    - echo "Version bumped. Commit and push manifest.json manually or extend this job with a deploy token."
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+# ── Backup ──────────────────────────────────────────────────────────────────
+# Manual job — create a Zendesk theme backup before production deploy.
+# This is required to keep rollback available for every deployment.
+theme_backup_production:
+  stage: backup
+  script:
+    - npm run backup:theme
+  artifacts:
+    name: "theme-backup-${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_ID}"
+    when: always
+    expire_in: 14 days
+    paths:
+      - backups/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+
+# ── Deploy ───────────────────────────────────────────────────────────────────
+# Manual job — imports the theme into Zendesk via zcli.
+# Required CI/CD variables (Settings -> CI/CD -> Variables):
+#   ZD_SUBDOMAIN  — e.g. hilti
+#   ZD_EMAIL      — Zendesk admin email
+#   ZD_API_TOKEN  — Zendesk API token
+theme_deploy:
+  stage: deploy
+  needs:
+    - theme_backup_production
+  resource_group: production
+  script:
+    - |
+      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+      for name in "${required[@]}"; do
+        if [[ -z "${!name:-}" ]]; then
+          echo "Deploy blocked: missing required variable '$name'"
+          exit 1
+        fi
+      done
+      if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
+        echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
+        exit 1
+      fi
+    - npm run deploy:theme
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+# Manual rollback job — re-imports a backup ZIP artifact to production.
+# Requires ROLLBACK_CONFIRM=ROLLBACK_TO_PROD by default.
+theme_rollback_production:
+  stage: deploy
+  needs:
+    - theme_backup_production
+  resource_group: production
+  script:
+    - |
+      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+      for name in "${required[@]}"; do
+        if [[ -z "${!name:-}" ]]; then
+          echo "Rollback blocked: missing required variable '$name'"
+          exit 1
+        fi
+      done
+      if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
+        echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
+        exit 1
+      fi
+    - npm run rollback:theme
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
+# ── External Validation Triggers ─────────────────────────────────────────────
+# Production deploy and rollback are hard-gated by downstream validation.
+theme_validate_after_deploy:
+  stage: post_deploy_validate
+  needs:
+    - theme_deploy
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_ENVIRONMENT: "production"
+    VALIDATION_GATE_MODE: "hard"
+    TEST_BASE_URL: "$ZD_PROD_BASE_URL"
+    TARGET_NAME: "production"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  allow_failure: false
+
+theme_validate_after_rollback:
+  stage: post_deploy_validate
+  needs:
+    - theme_rollback_production
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    VALIDATION_SOURCE: "theme_rollback"
+    VALIDATION_ENVIRONMENT: "production"
+    VALIDATION_GATE_MODE: "hard"
+    TEST_BASE_URL: "$ZD_PROD_BASE_URL"
+    TARGET_NAME: "production"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  allow_failure: false
+
+# Manual post-release validation trigger for on-demand UI/backend validation
+# outside of deployment jobs.
+theme_validate_post_release:
+  stage: post_deploy_validate
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    VALIDATION_SOURCE: "post_release_manual"
+    VALIDATION_ENVIRONMENT: "production"
+    VALIDATION_GATE_MODE: "hard"
+    TEST_BASE_URL: "$ZD_PROD_BASE_URL"
+    TARGET_NAME: "post-release"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false

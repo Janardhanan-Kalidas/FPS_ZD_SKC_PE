@@ -28,9 +28,39 @@
   </div>
 </div>
 <div class="container" id="page-container">
-  <div class="row row-lg">
+  <div class="article-3col-layout">
 
-    <article class="col" itemscope itemtype="http://schema.org/Article">
+    {{! ======================================================= }}
+    {{! LEFT SIDEBAR — Articles in this section                 }}
+    {{! ======================================================= }}
+    <aside class="article-left-sidebar" aria-label="Articles in this section">
+      {{#isnt settings.article_sidebar 'none'}}
+        {{#is settings.article_sidebar 'articles-in-section'}}
+          <div class="article-sidebar-card">
+            <h3 class="article-sidebar-heading">{{t 'articles_in_section'}}</h3>
+            <ul class="article-sidebar-list">
+              {{#each section.articles}}
+                <li>
+                  <a class="article-sidebar-link{{#is id ../article.id}} is-active{{/is}}" href="{{url}}">
+                    {{title}}
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+            <p class="article-sidebar-more">
+              <a href="{{section.url}}">Show all articles</a>
+            </p>
+          </div>
+        {{else}}
+          <div data-element="navigation" data-template="{{settings.article_sidebar}}"></div>
+        {{/is}}
+      {{/isnt}}
+    </aside>
+
+    {{! ======================================================= }}
+    {{! CENTER — Article content                               }}
+    {{! ======================================================= }}
+    <article class="article-main-content" itemscope itemtype="http://schema.org/Article">
 
       {{! Article header }}
       <div class="article-title py-4">
@@ -45,76 +75,102 @@
           {{/if}}
         </h1>
 
-        {{! Article metadata }}
-        <div class="flex{{#is settings.article_metadata 'none'}}{{#unless settings.show_follow_article}} hidden{{/unless}}{{/is}}">
-          <div class="media">
-            {{#is settings.article_metadata 'author'}}
-              <div class="avatar">
-                {{#if article.author.agent}}
-                  <svg class="svg-icon absolute bottom-0 right-0 text-primary bg-white border border-white circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
-                    <use xlink:href="#icon-agent" />
-                  </svg>
-                {{/if}}
-                <img class="avatar-img w-7 h-7" alt="{{article.author.name}}" src="{{article.author.avatar_url}}">
-              </div>
-            {{/is}}
-            {{#isnt settings.article_metadata 'none'}}
-              <div class="media-body font-size-md align-self-center{{#is settings.article_metadata 'date-end'}}{{#unless comments}} hidden{{/unless}}{{/is}}">
-                {{#is settings.article_metadata 'author'}}
-                  {{#link 'user_profile' class="link-implied" id=article.author.id}}
-                    {{article.author.name}}
-                  {{/link}}
-                  {{#each article.author.badges}}
-                    {{#is category_slug "titles"}}
-                      <span class="badge bg-primary text-primary-inverse py-1 pr-2 mx-2" title="{{description}}" aria-label="{{name}}">
-                        {{#if icon_url}}
-                          <img src="{{icon_url}}" alt="{{description}}" />
-                        {{/if}}
-                        {{name}}
-                      </span>
-                    {{/is}}
-                  {{/each}}
-                  {{#each article.author.badges}}
-                    {{#is category_slug "achievements"}}
-                      {{#if icon_url}}
-                        <img width="22" height="22" src="{{icon_url}}" alt="{{name}}" title="{{name}} | {{description}}" aria-label="{{name}}" />
-                      {{/if}}
-                    {{/is}}
-                  {{/each}}
-                {{/is}}
-                <ul class="list-divider">
-                  {{#isnt settings.article_metadata 'date-end'}}
-                    <li class="text-gray-600">
-                      {{#is article.created_at article.edited_at}}
-                        {{date article.created_at timeago=true}}
-                      {{else}}
-                        {{t 'updated'}}
-                        {{date article.edited_at timeago=true}}
-                      {{/is}}
-                    </li>
-                  {{/isnt}}
-                  {{#if settings.show_article_comments}}
-                    {{#if comments}}
-                      <li class="text-gray-600">
-                        <a href="#comments" title="{{t 'go_to_comments'}}">
-                          {{t 'comments_count' count=article.comment_count}}
-                        </a>
-                      </li>
-                    {{/if}}
-                  {{~/if}}
-                </ul>
-              </div>
-            {{/isnt}}
+        {{! Row 1: Author | Date | Follow }}
+        <div class="article-meta-row">
+          {{#is settings.article_metadata 'author'}}
+            <span class="article-meta-author">
+              {{article.author.name}}
+            </span>
+            <span class="article-meta-sep">|</span>
+          {{/is}}
+          {{#isnt settings.article_metadata 'none'}}
+            <span class="article-meta-date" data-created-at="{{article.created_at}}">
+              {{date article.created_at}}
+            </span>
+          {{/isnt}}
+          {{#if settings.show_follow_article}}
+            <span class="article-meta-follow">
+              {{subscribe}}
+            </span>
+          {{/if}}
+        </div>
 
-            {{! Subscribe link }}
-            {{#if settings.show_follow_article}}
-              <div class="subscribe-article">
-                {{subscribe}}
-              </div>
-            {{/if}}
+        {{! Row 2: Content tags }}
+        {{#if (compare article.content_tags.length ">" 0)}}
+          <ul class="article-tags-custom">
+            {{#each article.content_tags}}
+              <li>
+                {{#link "search_result" content_tag_id=id class="article-tag-link"}}
+                  {{name}}
+                {{/link}}
+              </li>
+            {{/each}}
+          </ul>
+        {{/if}}
 
+        {{! Row 3: Views | Likes | Share }}
+        <div class="article-actions-row">
+          {{! Views — populated via API }}
+          <span class="article-action-item article-action-views" title="Article views">
+            <img src="{{asset 'views.svg'}}" width="16" height="16" alt="" aria-hidden="true">
+            <span class="article-action-count" id="article-view-count" data-article-id="{{article.id}}">0</span>
+          </span>
+          {{! Likes }}
+          <span class="article-action-item article-action-likes" title="Helpful votes">
+            <img src="{{asset 'thumb_up.svg'}}" width="16" height="16" alt="" aria-hidden="true">
+            <span class="article-action-count">{{article.vote_sum}}</span>
+          </span>
+          {{! Share — right-aligned }}
+          <button class="article-action-share" type="button" id="article-share-trigger" title="Share" aria-label="Open share options" aria-haspopup="dialog" aria-expanded="false" aria-controls="article-share-modal">
+            <img src="{{asset 'share.svg'}}" width="16" height="16" alt="" aria-hidden="true">
+            <span>Share</span>
+          </button>
+        </div>
+
+        <div id="article-share-modal" class="article-share-modal" role="dialog" aria-modal="true" aria-labelledby="article-share-title" aria-hidden="true">
+          <div class="article-share-modal__backdrop" data-share-close></div>
+          <div class="article-share-modal__panel" role="document">
+            <div class="article-share-modal__header">
+              <h2 id="article-share-title" class="article-share-modal__title">Share</h2>
+              <button type="button" class="article-share-modal__close" aria-label="Close share dialog" data-share-close>
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="article-share-modal__body">
+              <a class="article-share-option" data-share-channel="facebook" target="_blank" rel="noopener noreferrer">
+                <svg class="article-share-option__icon" viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="M6 0a6 6 0 01.813 11.945V7.63h1.552l.244-1.585H6.812v-.867c0-.658.214-1.242.827-1.242h.985V2.55c-.173-.024-.538-.075-1.23-.075-1.444 0-2.29.767-2.29 2.513v1.055H3.618v1.585h1.484v4.304A6.001 6.001 0 016 0z"></path>
+                </svg>
+                <span>Facebook</span>
+              </a>
+              <a class="article-share-option" data-share-channel="linkedin" target="_blank" rel="noopener noreferrer">
+                <svg class="article-share-option__icon" viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="M10.8 0A1.2 1.2 0 0112 1.2v9.6a1.2 1.2 0 01-1.2 1.2H1.2A1.2 1.2 0 010 10.8V1.2A1.2 1.2 0 011.2 0h9.6zM8.09 4.356a1.87 1.87 0 00-1.598.792l-.085.133h-.024v-.783H4.676v5.727h1.778V7.392c0-.747.142-1.47 1.068-1.47.913 0 .925.854.925 1.518v2.785h1.778V7.084l-.005-.325c-.05-1.38-.456-2.403-2.13-2.403zm-4.531.142h-1.78v5.727h1.78V4.498zm-.89-2.846a1.032 1.032 0 100 2.064 1.032 1.032 0 000-2.064z"></path>
+                </svg>
+                <span>LinkedIn</span>
+              </a>
+              <a class="article-share-option" data-share-channel="twitter" target="_blank" rel="noopener noreferrer">
+                <svg class="article-share-option__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M14.095479 10.316482L22.286354 1h-1.940718l-7.115352 8.087682L7.551414 1H1l8.589488 12.231093L1 23h1.940717l7.509372-8.542861L16.448587 23H23L14.095479 10.316482zM11.436522 13.338465l-.871624-1.218704-6.924311-9.68815h2.981339l5.58978 7.82155.867949 1.218704 7.26506 10.166271h-2.981339l-5.926673-8.299271z"></path>
+                </svg>
+                <span>Twitter</span>
+              </a>
+              <a class="article-share-option" data-share-channel="xing" target="_blank" rel="noopener noreferrer">
+                <span class="article-share-option__icon article-share-option__icon--text" aria-hidden="true">X</span>
+                <span>XING</span>
+              </a>
+              <a class="article-share-option" data-share-channel="email">
+                <span class="article-share-option__icon article-share-option__icon--text" aria-hidden="true">@</span>
+                <span>Email</span>
+              </a>
+              <button type="button" class="article-share-option article-share-option--copy" id="article-share-copy-link">
+                <img src="{{asset 'share.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
+                <span>Copy Link</span>
+              </button>
+            </div>
           </div>
         </div>
+        <span id="share-toast" class="article-share-toast">Link copied!</span>
 
       </div>
 
@@ -137,24 +193,6 @@
 
         {{! Article content }}
         {{article.body}}
-
-        {{!-- CUSTOM CONTENT TAG UI (SAFE)   --}}
-        {{!-- Matches your design exactly     --}}
-        {{!-- =============================== --}}
-
-        {{#if (compare article.content_tags.length ">" 0)}}
-        <ul class="list-divider font-size-md article-tags-custom">
-          {{#each article.content_tags}}
-            <li>
-              <a class="article-tag-link"
-                 title="Search results"
-                 href="/hc/en-us/search?content_tags={{id}}&utf8=✓">
-                {{name}}
-              </a>
-            </li>
-          {{/each}}
-        </ul>
-      {{/if}}
 
         {{! Attachments }}
         {{#if attachments}}
@@ -184,25 +222,7 @@
 
       </section>
 
-      {{! Article sharing }}
-      {{#if settings.show_article_sharing}}
-        {{#if settings.share_title}}
-          <div class="flex mt-6">
-            <span class="h5 my-0 mr-4">
-              {{#if settings.use_translations}}
-                {{dc settings.share_title}}
-              {{else}}
-                {{settings.share_title}}
-              {{/if}}
-            </span>{{share}}
-          </div>
-        {{else}}
-          <div class="mt-6">
-            {{share}}
-          </div>
-        {{/if}}
-      {{/if}}
-
+      {{! Article sharing — moved to article header row 3, kept here as fallback for themes without show_article_sharing }}
       {{! Article navigation }}
       {{~#isnt settings.article_navigation_style 'none'}}
         <div
@@ -232,35 +252,43 @@
       {{!-- Vote helper label (we hide via CSS later) --}}
       {{vote 'label' class='block text-gray-600 font-size-sm mb-4'}}
 
-      <p class="my-5">
-        {{../request_callout}}
-      </p>
+      {{#if ../settings.enable_downvote_feedback_modal}}
+        {{#unless ../settings.hide_article_downvote_cta}}
+          <!-- Downvote feedback (inline, shown below Yes/No buttons) -->
+          <div id="downvote-feedback" class="hidden mt-4" aria-hidden="true" data-article-id="{{id}}" data-article-title="{{title}}">
+            <textarea
+              id="downvote-text"
+              class="w-full border p-3 rounded-none"
+              rows="4"
+              placeholder="Sorry this wasn’t helpful. Please tell us what we can improve."></textarea>
 
-      <!-- Custom downvote feedback modal (initially hidden) -->
-      <div id="downvote-feedback" class="hidden mt-4" aria-hidden="true">
-        <textarea
-          id="downvote-text"
-          class="w-full border p-3 rounded-none"
-          rows="4"
-          placeholder="Sorry this wasn’t helpful. Please tell us what we can improve."></textarea>
+            <div class="mt-3">
+              <button id="submit-downvote-feedback" class="button button-primary">Submit Feedback</button>
+              <button id="cancel-downvote-feedback" class="button button-outline-primary ml-2">Cancel</button>
+            </div>
+            <p id="downvote-success" class="text-green-600 mt-3 hidden">
+              Thank you! Your feedback has been submitted.
+            </p>
+            <p id="downvote-error" class="text-red-600 mt-3 hidden" role="alert">
+              Sorry, we couldn't submit your feedback. Please try again later.
+            </p>
+          </div>
+        {{/unless}}
+      {{/if}}
 
-        <div class="mt-3">
-          <button id="submit-downvote-feedback" class="button button-primary">Submit Feedback</button>
-          <button id="cancel-downvote-feedback" class="button button-outline-primary ml-2">Cancel</button>
-        </div>
-
-        <p id="downvote-success" class="text-green-600 mt-3 hidden">
-          Thank you! Your feedback has been submitted.
+      {{! Article submit request callout inside voting block }}
+      {{#if ../settings.show_article_submit_cta}}
+        <p id="article-submit-request-callout" class="mt-4 mb-0">
+          <span>Have more questions? </span>
+          <a href="{{page_path 'new_request'}}" class="article-submit-request-link" data-requires-auth>
+            {{t 'submit_a_request'}}
+          </a>
         </p>
-        <p id="downvote-error" class="text-red-600 mt-3 hidden" role="alert">
-          Sorry, we couldn't submit your feedback. Please try again later.
-        </p>
-      </div>
+      {{/if}}
     </div>
   {{/with}}
 {{/if}}
       {{!-- end of article voting --}}
-      
 
       {{! Recent and related articles }}
       <footer class="row my-6{{#unless settings.show_recently_viewed_articles}}{{#unless settings.show_related_articles}} hidden{{/unless}}{{/unless}}">
@@ -431,94 +459,31 @@
 
     </article>
 
-   {{! Left-hand sidebar }}
-    {{~#is settings.table_of_contents_style 'sidebar-left'}}
-      <aside class="relative flex-first hidden lg:flex lg:col lg:max-w-12">
+    </article>
 
-        {{! Table of Contents }}
+    {{! ======================================================= }}
+    {{! RIGHT SIDEBAR — Table of Contents                      }}
+    {{! ======================================================= }}
+    <aside class="article-right-sidebar" aria-label="On this page">
+      <div class="article-toc-card" id="article-toc-wrapper">
+        <h3 class="article-toc-heading">{{t 'on_this_page'}}</h3>
         <div
-          class="table-of-contents sticky top-0"
+          class="article-toc-nav"
           data-element="table-of-contents"
           data-template="sidebar-table-of-contents"
-          data-selector=".content h2">
+          data-selector=".article-content h2, .article-content h3"
+          data-spy="scroll"
+          data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}160px{{/if}}">
         </div>
-      </aside>
-    {{/is}}
-
-   {{! Right-hand sidebar }}
-<aside class="md:col-4" x-data="{ tableOfContents: false }">
-  <div
-    :class="{ 'sticky top-0': tableOfContents }"
-    @table-of-contents:render.camel="
-      tableOfContents = $event.target.children.length > 0
-    "
-  >
-
-    {{! ========================= }}
-    {{! Table of Contents (TOC) }}
-    {{! ========================= }}
-    <div
-      class="table-of-contents block mb-6"
-      data-element="table-of-contents"
-      data-template="sidebar-table-of-contents"
-      data-selector=".article-content h2, .article-content h3"
-      data-spy="scroll"
-      data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}20px{{/if}}">
-    </div>
-
-    {{! ================================= }}
-    {{! Articles in this section sidebar }}
-    {{! ================================= }}
-    {{#isnt settings.article_sidebar 'none'}}
-      {{#is settings.article_sidebar 'articles-in-section'}}
-        <div class="bg-gray-200 py-4 px-5 my-6">
-          <h3 class="my-4">
-            {{t 'articles_in_section'}}
-          </h3>
-
-          <ul>
-            {{#each section.articles}}
-              <li>
-                <a
-                  class="block py-1{{#is id ../article.id}} is-active font-bold{{/is}}"
-                  href="{{url}}">
-                  {{title}}
-                </a>
-              </li>
-            {{/each}}
-          </ul>
-
-          {{#if section.more_articles}}
-            <p class="mt-3">
-              <a href="{{section.url}}">
-                {{t 'show_all_articles' count=section.article_count}}
-              </a>
-            </p>
-          {{/if}}
-        </div>
-      {{else}}
-        <div
-          data-element="navigation"
-          data-template="{{#is settings.article_sidebar 'custom'}}sidebar-navigation{{else}}{{settings.article_sidebar}}{{/is}}">
-        </div>
-      {{/is}}
-    {{/isnt}}
-
-  </div>
-</aside>
-
-        {{! Call-to-action }}
-        {{~#is settings.cta_style 'sidebar'}}
-          {{~#isnt settings.cta_location 'home'}}
-            <div
-              data-element="template"
-              data-template="call-to-action">
-            </div>
-          {{/isnt~}}
-        {{/is~}}
-
       </div>
     </aside>
+
+    {{! Call-to-action }}
+    {{~#is settings.cta_style 'sidebar'}}
+      {{~#isnt settings.cta_location 'home'}}
+        <div data-element="template" data-template="call-to-action"></div>
+      {{/isnt~}}
+    {{/is~}}
 
   </div>
 </div>
@@ -537,6 +502,291 @@
 {{/isnt~}}
 
 <script type="text/javascript">document.documentElement.classList.add('article-page', 'article-' + {{article.id}})</script>
+<script>
+(function() {
+  var el = document.getElementById('article-view-count');
+  if (!el) return;
+  var id = el.getAttribute('data-article-id');
+  if (!id) return;
+  fetch('/api/v2/help_center/articles/' + id + '.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.article && typeof d.article.view_count !== 'undefined') { el.textContent = d.article.view_count; } })
+    .catch(function(){ el.textContent = '0'; });
+})();
+</script>
+<script>
+(function() {
+  var dateEls = document.querySelectorAll('.article-meta-date[data-created-at]');
+  if (!dateEls.length) return;
+
+  function getOrdinalSuffix(day) {
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  }
+
+  dateEls.forEach(function(dateEl) {
+    var raw = dateEl.getAttribute('data-created-at');
+    if (!raw) return;
+
+    var dt = new Date(raw);
+    if (isNaN(dt.getTime())) return;
+
+    var day = dt.getDate();
+    var dayWithSuffix = day + getOrdinalSuffix(day);
+    var month = dt.toLocaleString('en-US', { month: 'long' });
+    var year = dt.getFullYear();
+
+    dateEl.textContent = dayWithSuffix + ' ' + month + ' ' + year;
+  });
+})();
+</script>
+<script>
+(function() {
+  var trigger = document.getElementById('article-share-trigger');
+  var modal = document.getElementById('article-share-modal');
+  var copyBtn = document.getElementById('article-share-copy-link');
+  var toast = document.getElementById('share-toast');
+  if (!trigger || !modal) return;
+
+  var currentUrl = window.location.href;
+  var encodedUrl = encodeURIComponent(currentUrl);
+  var shareLinks = {
+    facebook: 'https://facebook.com/sharer.php?u=' + encodedUrl,
+    linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodedUrl,
+    twitter: 'https://x.com/intent/tweet?url=' + encodedUrl,
+    xing: 'https://www.xing.com/spi/shares/new?url=' + encodedUrl,
+    email: 'mailto:?subject=' + encodeURIComponent('Please Review This Information') + '&body=' + encodeURIComponent('I found this on Engineering Centre and think it could be beneficial for you, ' + currentUrl)
+  };
+
+  modal.querySelectorAll('[data-share-channel]').forEach(function(link) {
+    var channel = link.getAttribute('data-share-channel');
+    if (!shareLinks[channel]) return;
+    link.setAttribute('href', shareLinks[channel]);
+    if (channel === 'email') {
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+    }
+  });
+
+  function openModal() {
+    modal.setAttribute('aria-hidden', 'false');
+    trigger.setAttribute('aria-expanded', 'true');
+    document.documentElement.classList.add('article-share-open');
+    var firstAction = modal.querySelector('.article-share-option');
+    if (firstAction) firstAction.focus();
+  }
+
+  function closeModal() {
+    modal.setAttribute('aria-hidden', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('article-share-open');
+    trigger.focus();
+  }
+
+  trigger.addEventListener('click', openModal);
+
+  modal.querySelectorAll('[data-share-close]').forEach(function(closeEl) {
+    closeEl.addEventListener('click', closeModal);
+  });
+
+  modal.querySelectorAll('.article-share-option[data-share-channel]').forEach(function(link) {
+    link.addEventListener('click', function() {
+      setTimeout(closeModal, 50);
+    });
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
+      closeModal();
+    }
+  });
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function() {
+      navigator.clipboard.writeText(currentUrl).then(function() {
+        if (!toast) return;
+        toast.classList.add('show');
+        setTimeout(function() { toast.classList.remove('show'); }, 2000);
+        closeModal();
+      });
+    });
+  }
+})();
+</script>
+<script>
+(function() {
+  var votingRoot = document.getElementById('article-voting');
+  var feedbackBox = document.getElementById('downvote-feedback');
+  var textarea = document.getElementById('downvote-text');
+  var submitBtn = document.getElementById('submit-downvote-feedback');
+  var cancelBtn = document.getElementById('cancel-downvote-feedback');
+  var successEl = document.getElementById('downvote-success');
+  var errorEl = document.getElementById('downvote-error');
+
+  if (!votingRoot || !feedbackBox || !textarea || !submitBtn || !cancelBtn) return;
+
+  var voteButtons = votingRoot.querySelectorAll('.button-group .button');
+  if (!voteButtons || voteButtons.length < 2) return;
+
+  var upvoteBtn = voteButtons[0];
+  var downvoteBtn = voteButtons[1];
+  var articleId = feedbackBox.getAttribute('data-article-id') || '';
+  var articleTitle = feedbackBox.getAttribute('data-article-title') || 'Article';
+  var downvoteFeedbackStorageKey = 'zd_downvote_feedback_submitted';
+  var feedbackTicketTags = ['article_feedback', 'downvote_feedback', 'knowledge_center'];
+
+  function getDownvoteFeedbackSubmitted() {
+    try {
+      return window.localStorage.getItem(downvoteFeedbackStorageKey) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setDownvoteFeedbackSubmitted() {
+    try {
+      window.localStorage.setItem(downvoteFeedbackStorageKey, '1');
+    } catch (e) {
+      // Ignore storage failures and continue normal UX.
+    }
+  }
+
+  function setVoteButtonLabels() {
+    upvoteBtn.textContent = 'Yes, thanks';
+    upvoteBtn.setAttribute('aria-label', 'Yes, thanks');
+    downvoteBtn.textContent = 'Not really';
+    downvoteBtn.setAttribute('aria-label', 'Not really');
+  }
+
+  function hideNotice(el) {
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('is-visible', 'is-hiding');
+  }
+
+  function showNotice(el) {
+    if (!el) return;
+    el.classList.remove('hidden', 'is-hiding');
+    requestAnimationFrame(function() {
+      el.classList.add('is-visible');
+    });
+  }
+
+  function openFeedback() {
+    hideNotice(successEl);
+    hideNotice(errorEl);
+    feedbackBox.classList.remove('hidden', 'is-hiding');
+    feedbackBox.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(function() {
+      feedbackBox.classList.add('is-visible');
+      textarea.focus();
+    });
+  }
+
+  function closeFeedback() {
+    feedbackBox.classList.remove('is-visible');
+    feedbackBox.classList.add('is-hiding');
+    feedbackBox.setAttribute('aria-hidden', 'true');
+    setTimeout(function() {
+      feedbackBox.classList.add('hidden');
+      feedbackBox.classList.remove('is-hiding');
+      textarea.value = '';
+      hideNotice(successEl);
+      hideNotice(errorEl);
+    }, 200);
+  }
+
+  setVoteButtonLabels();
+
+  downvoteBtn.addEventListener('click', function() {
+    var wasActive = downvoteBtn.classList.contains('is-active');
+    window.setTimeout(function() {
+      if (!wasActive) {
+        if (getDownvoteFeedbackSubmitted()) {
+          closeFeedback();
+          return;
+        }
+        // Was not active and feedback not yet submitted -> show feedback
+        openFeedback();
+      } else {
+        // Was already active -> user is unvoting -> close feedback
+        closeFeedback();
+      }
+    }, 80);
+  });
+
+  upvoteBtn.addEventListener('click', closeFeedback);
+  cancelBtn.addEventListener('click', closeFeedback);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && feedbackBox.getAttribute('aria-hidden') === 'false') {
+      closeFeedback();
+    }
+  });
+
+  document.addEventListener('mousedown', function(e) {
+    if (feedbackBox.getAttribute('aria-hidden') !== 'false') return;
+    if (!feedbackBox.contains(e.target)) {
+      closeFeedback();
+    }
+  });
+
+  submitBtn.addEventListener('click', function() {
+    var feedbackText = (textarea.value || '').trim();
+    hideNotice(successEl);
+    hideNotice(errorEl);
+
+    if (feedbackText.length < 3) {
+      showNotice(errorEl);
+      errorEl.textContent = 'Please enter at least 3 characters before submitting.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+
+    var payload = {
+      request: {
+        subject: 'Article downvote feedback: ' + articleTitle,
+        tags: feedbackTicketTags,
+        comment: {
+          body: 'Article ID: ' + articleId + '\nArticle URL: ' + window.location.href + '\n\nFeedback:\n' + feedbackText
+        }
+      }
+    };
+
+    fetch('/api/v2/requests.json', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(function(response) {
+        if (!response.ok) throw new Error('Request failed');
+        return response.json();
+      })
+      .then(function() {
+        setDownvoteFeedbackSubmitted();
+        showNotice(successEl);
+        textarea.value = '';
+        setTimeout(closeFeedback, 1600);
+      })
+      .catch(function() {
+        errorEl.textContent = "Sorry, we couldn't submit your feedback. Please try again later.";
+        showNotice(errorEl);
+      })
+      .finally(function() {
+        submitBtn.disabled = false;
+      });
+  });
+})();
+</script>
 
 {{!---------------
    Micro-templates
@@ -661,7 +911,7 @@
           <% if (allItems.length > 1) { %>
             <div class="sticky top-0{{#unless settings.sticky_header}} pt-4 -mt-4{{/unless}}"{{#if settings.sticky_header}} style="padding-top: {{settings.header_height}}; margin-top: -{{settings.header_height}}; "{{/if}}
               data-spy="scroll"
-              data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}20px{{/if}}">
+              data-offset="{{#if settings.sticky_header}}{{settings.header_height}}{{else}}160px{{/if}}">
               <div class="bg-gray-200 py-4 px-5 my-6" x-data="{ active: null }" @scrollspy:active="active = $event.target">
                 <h3 class="my-4">
                   {{#if settings.use_translations}}

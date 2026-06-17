@@ -1,0 +1,86 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Zendesk: Login",
+      "type": "shell",
+      "command": "zcli",
+      "args": [
+        "login",
+        "-i"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Preview Theme",
+      "type": "shell",
+      "command": "zcli",
+      "args": [
+        "themes:preview"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: List Themes",
+      "type": "shell",
+      "command": "zcli",
+      "args": [
+        "themes:list"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Deploy Any Branch (Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/deploy-any-branch-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Deploy Current Branch (Non-Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/deploy-current-branch-noninteractive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
