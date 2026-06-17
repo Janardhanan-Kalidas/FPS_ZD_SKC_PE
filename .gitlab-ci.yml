@@ -1,8 +1,6 @@
 # Author: Kalidas, Janardhanan
-# Date: 2026-06-04
+# Updated: 2026-06-17
 
-# Prevent duplicate pipelines: when a branch has an open MR,
-# only run the MR pipeline (not a separate push pipeline).
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -14,6 +12,7 @@ workflow:
 stages:
   - release
   - backup
+  - pre_deploy_validate
   - deploy
   - post_deploy_validate
 
@@ -24,6 +23,9 @@ variables:
   ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
   EXTERNAL_VALIDATION_PROJECT: "bu-f-ps/sw-support-group/skc_pe_deployment_validation"
   EXTERNAL_VALIDATION_BRANCH: "Main"
+  VALIDATION_DEPLOYMENT_TYPE_MAIN: "main_production"
+  VALIDATION_DEPLOYMENT_TYPE_BRANCH: "branch_update"
+  VALIDATION_DEPLOYMENT_TIMESTAMP: "$CI_PIPELINE_CREATED_AT"
 
 default:
   tags:
@@ -45,8 +47,6 @@ default:
       fi
       npx zcli --version
 
-# ── Release ─────────────────────────────────────────────────────────────────
-# Manual job — bumps manifest.json version. Trigger from the GitLab UI.
 theme_version_release:
   stage: release
   script:
@@ -57,9 +57,6 @@ theme_version_release:
       when: manual
   allow_failure: false
 
-# ── Backup ──────────────────────────────────────────────────────────────────
-# Manual job — create a Zendesk theme backup before production deploy.
-# This is required to keep rollback available for every deployment.
 theme_backup_production:
   stage: backup
   script:
@@ -75,17 +72,60 @@ theme_backup_production:
       when: manual
   allow_failure: false
 
-
-# ── Deploy ───────────────────────────────────────────────────────────────────
-# Manual job — imports the theme into Zendesk via zcli.
-# Required CI/CD variables (Settings -> CI/CD -> Variables):
-#   ZD_SUBDOMAIN  — e.g. hilti
-#   ZD_EMAIL      — Zendesk admin email
-#   ZD_API_TOKEN  — Zendesk API token
-theme_deploy:
-  stage: deploy
+theme_validate_before_deploy_main:
+  stage: pre_deploy_validate
   needs:
     - theme_backup_production
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    VALIDATION_PHASE: "pre_deploy"
+    VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_DEPLOYMENT_TYPE: "$VALIDATION_DEPLOYMENT_TYPE_MAIN"
+    VALIDATION_ENVIRONMENT: "production"
+    VALIDATION_GATE_MODE: "hard"
+    TEST_BASE_URL: "$ZD_PROD_BASE_URL"
+    TARGET_NAME: "production"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
+  allow_failure: false
+
+theme_validate_before_deploy_branch:
+  stage: pre_deploy_validate
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    VALIDATION_PHASE: "pre_deploy"
+    VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_DEPLOYMENT_TYPE: "$VALIDATION_DEPLOYMENT_TYPE_BRANCH"
+    VALIDATION_ENVIRONMENT: "preview"
+    VALIDATION_GATE_MODE: "soft"
+    TEST_BASE_URL: "$ZD_PREVIEW_BASE_URL"
+    TARGET_NAME: "preview"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
+  rules:
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: on_success
+  allow_failure: false
+
+theme_deploy_production:
+  stage: deploy
+  needs:
+    - theme_validate_before_deploy_main
   resource_group: production
   script:
     - |
@@ -106,8 +146,29 @@ theme_deploy:
       when: manual
   allow_failure: false
 
-# Manual rollback job — re-imports a backup ZIP artifact to production.
-# Requires ROLLBACK_CONFIRM=ROLLBACK_TO_PROD by default.
+theme_deploy_branch:
+  stage: deploy
+  needs:
+    - theme_validate_before_deploy_branch
+  script:
+    - |
+      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+      for name in "${required[@]}"; do
+        if [[ -z "${!name:-}" ]]; then
+          echo "Branch deploy blocked: missing required variable '$name'"
+          exit 1
+        fi
+      done
+      if [[ "${DEPLOY_CONFIRM_BRANCH:-}" != "DEPLOY_TO_BRANCH" ]]; then
+        echo "Branch deploy blocked: set DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH"
+        exit 1
+      fi
+    - npm run deploy:theme
+  rules:
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+
 theme_rollback_production:
   stage: deploy
   needs:
@@ -132,12 +193,10 @@ theme_rollback_production:
       when: manual
   allow_failure: false
 
-# ── External Validation Triggers ─────────────────────────────────────────────
-# Production deploy and rollback are hard-gated by downstream validation.
-theme_validate_after_deploy:
+theme_validate_after_deploy_main:
   stage: post_deploy_validate
   needs:
-    - theme_deploy
+    - theme_deploy_production
   trigger:
     project: $EXTERNAL_VALIDATION_PROJECT
     branch: $EXTERNAL_VALIDATION_BRANCH
@@ -145,15 +204,43 @@ theme_validate_after_deploy:
     forward:
       pipeline_variables: true
   variables:
+    VALIDATION_PHASE: "post_deploy"
     VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_DEPLOYMENT_TYPE: "$VALIDATION_DEPLOYMENT_TYPE_MAIN"
     VALIDATION_ENVIRONMENT: "production"
     VALIDATION_GATE_MODE: "hard"
     TEST_BASE_URL: "$ZD_PROD_BASE_URL"
     TARGET_NAME: "production"
     VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
     VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  allow_failure: false
+
+theme_validate_after_deploy_branch:
+  stage: post_deploy_validate
+  needs:
+    - theme_deploy_branch
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    VALIDATION_PHASE: "post_deploy"
+    VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_DEPLOYMENT_TYPE: "$VALIDATION_DEPLOYMENT_TYPE_BRANCH"
+    VALIDATION_ENVIRONMENT: "preview"
+    VALIDATION_GATE_MODE: "soft"
+    TEST_BASE_URL: "$ZD_PREVIEW_BASE_URL"
+    TARGET_NAME: "preview"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
+  rules:
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
   allow_failure: false
 
 theme_validate_after_rollback:
@@ -167,13 +254,16 @@ theme_validate_after_rollback:
     forward:
       pipeline_variables: true
   variables:
+    VALIDATION_PHASE: "post_deploy"
     VALIDATION_SOURCE: "theme_rollback"
+    VALIDATION_DEPLOYMENT_TYPE: "main_production"
     VALIDATION_ENVIRONMENT: "production"
     VALIDATION_GATE_MODE: "hard"
     TEST_BASE_URL: "$ZD_PROD_BASE_URL"
     TARGET_NAME: "production"
     VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
     VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   allow_failure: false

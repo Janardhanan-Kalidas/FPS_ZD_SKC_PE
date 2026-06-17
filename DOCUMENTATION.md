@@ -15,20 +15,26 @@ Welcome! This comprehensive guide contains all documentation for the Zendesk the
 
 ## External Validation Workflow
 
-Theme validation is now owned by the external repository:
+Theme validation and Confluence publishing are owned by the external repository:
 
 - `https://git.hilti.com/bu-f-ps/sw-support-group/skc_pe_deployment_validation`
 
+This theme repository does not publish to Confluence directly. It only triggers validation phases.
+
 ### How validation is triggered
 
-- CI deployments in this repository trigger the external validation pipeline after deploy and rollback.
-- Local deployment scripts in this repository also trigger the external validation pipeline.
-- Manual post-release validation is started directly in the external validation repository by running a pipeline and playing `theme_validate_post_release`.
+- CI branch and production deployments trigger `pre_deploy` validation before deployment execution.
+- If pre-deploy validation passes, deployment runs.
+- After successful deployment, CI triggers `post_deploy` full validation.
+- Local deployment scripts also trigger validation in two phases:
+  - `pre_deploy` before deploy
+  - `post_deploy` after deploy
+- Browser-by-browser execution for post-deploy full functional testing is orchestrated in the validation repository (Chrome first, then Edge).
 
 ### Gate behavior
 
-- Production deployments use hard-gate behavior (validation trigger failures stop deployment completion).
-- Preview/non-production deployments use soft-gate behavior (trigger failures are reported but do not block completion).
+- Main/production deployments use hard-gate behavior for pre and post validation.
+- Branch/preview deployments can use soft-gate behavior for validation triggers.
 
 ### Required trigger variables for local deployments
 

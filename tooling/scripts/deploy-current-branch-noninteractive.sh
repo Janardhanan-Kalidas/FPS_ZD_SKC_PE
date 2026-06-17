@@ -263,6 +263,8 @@ trigger_external_validation_pipeline() {
   local validation_environment="$2"
   local validation_source="$3"
   local gate_mode="$4"
+  local validation_phase="$5"
+  local deployment_type="$6"
 
   if [[ "${ENABLE_EXTERNAL_VALIDATION_TRIGGER:-true}" != "true" ]]; then
     echo "External validation trigger disabled by ENABLE_EXTERNAL_VALIDATION_TRIGGER."
@@ -301,8 +303,11 @@ trigger_external_validation_pipeline() {
     --form "variables[VALIDATION_ENVIRONMENT]=${validation_environment}" \
     --form "variables[VALIDATION_SOURCE]=${validation_source}" \
     --form "variables[VALIDATION_GATE_MODE]=${gate_mode}" \
+    --form "variables[VALIDATION_PHASE]=${validation_phase}" \
+    --form "variables[VALIDATION_DEPLOYMENT_TYPE]=${deployment_type}" \
     --form "variables[VALIDATION_REF_NAME]=${current_branch}" \
-    --form "variables[VALIDATION_COMMIT_SHA]=$(git rev-parse HEAD)")"
+    --form "variables[VALIDATION_COMMIT_SHA]=$(git rev-parse HEAD)" \
+    --form "variables[DEPLOYMENT_TIMESTAMP]=$(date -u +%Y-%m-%dT%H:%M:%SZ)")"
   local curl_exit=$?
   set -e
 
@@ -571,6 +576,55 @@ fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 fi
 
+validation_environment="preview"
+validation_source="local_deploy"
+validation_gate_mode="soft"
+validation_deployment_type="branch_update"
+if [[ "$deploy_mode" == "1" ]]; then
+  validation_deployment_type="branch_new"
+fi
+if [[ "$set_theme_live_choice" == "yes" ]]; then
+  validation_environment="production"
+  validation_source="local_deploy_live"
+  validation_gate_mode="hard"
+  validation_deployment_type="main_production"
+fi
+
+echo
+echo "Triggering pre-deployment validation pipeline..."
+test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-}"
+if [[ -z "$test_base_url" ]]; then
+  if [[ "$set_theme_live_choice" == "yes" ]]; then
+    test_base_url="${ZD_PROD_BASE_URL:-${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-}}}"
+  else
+    test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}}"
+  fi
+fi
+
+if [[ -z "$test_base_url" ]]; then
+  zcli_subdomain="$(get_active_zcli_subdomain)"
+  if [[ -n "$zcli_subdomain" ]]; then
+    manifest_locale="$(get_manifest_default_locale)"
+    test_base_url="https://${zcli_subdomain}.zendesk.com/hc/${manifest_locale}"
+  fi
+fi
+
+if [[ -z "$test_base_url" ]]; then
+  echo "Unable to auto-resolve deployment URL for external validation trigger."
+  echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
+  if [[ "$validation_gate_mode" == "hard" ]]; then
+    echo "Hard gate active for production deployment, exiting."
+    exit 1
+  fi
+  echo "Soft gate mode for non-production deployment, continuing without pre-deploy trigger."
+else
+  echo "Auto-selected validation base URL: ${test_base_url}"
+  if ! trigger_external_validation_pipeline "$test_base_url" "$validation_environment" "$validation_source" "$validation_gate_mode" "pre_deploy" "$validation_deployment_type"; then
+    echo "Deployment blocked because pre-deployment validation trigger failed in hard-gate mode."
+    exit 1
+  fi
+fi
+
 if [[ "$deploy_mode" == "1" ]]; then
   echo "Importing as a new Zendesk theme..."
   zcli themes:import . --brandId="$selected_brand_id"
@@ -595,47 +649,16 @@ if [[ "$set_theme_live_choice" == "yes" ]]; then
 fi
 
 echo
-echo "Triggering external validation pipeline..."
-
-test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-}"
-if [[ -z "$test_base_url" ]]; then
-  if [[ "$set_theme_live_choice" == "yes" ]]; then
-    test_base_url="${ZD_PROD_BASE_URL:-${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-}}}"
-  else
-    test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}}"
-  fi
-fi
+echo "Triggering post-deployment validation pipeline..."
 
 if [[ -z "$test_base_url" ]]; then
-  zcli_subdomain="$(get_active_zcli_subdomain)"
-  if [[ -n "$zcli_subdomain" ]]; then
-    manifest_locale="$(get_manifest_default_locale)"
-    test_base_url="https://${zcli_subdomain}.zendesk.com/hc/${manifest_locale}"
-  fi
-fi
-
-if [[ -z "$test_base_url" ]]; then
-  echo "Unable to auto-resolve deployment URL for external validation trigger."
-  echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
-  if [[ "$set_theme_live_choice" == "yes" ]]; then
-    echo "Hard gate active for production deployment, exiting."
+  echo "Unable to auto-resolve deployment URL for external post-deploy validation trigger."
+  if [[ "$validation_gate_mode" == "hard" ]]; then
     exit 1
   fi
-  echo "Soft gate mode for non-production deployment, continuing without trigger."
 else
-  echo "Auto-selected validation base URL: ${test_base_url}"
-
-  validation_environment="preview"
-  validation_source="local_deploy"
-  validation_gate_mode="soft"
-  if [[ "$set_theme_live_choice" == "yes" ]]; then
-    validation_environment="production"
-    validation_source="local_deploy_live"
-    validation_gate_mode="hard"
-  fi
-
-  if ! trigger_external_validation_pipeline "$test_base_url" "$validation_environment" "$validation_source" "$validation_gate_mode"; then
-    echo "Deployment completed, but external validation trigger failed in hard-gate mode."
+  if ! trigger_external_validation_pipeline "$test_base_url" "$validation_environment" "$validation_source" "$validation_gate_mode" "post_deploy" "$validation_deployment_type"; then
+    echo "Deployment completed, but post-deployment validation trigger failed in hard-gate mode."
     exit 1
   fi
 fi
