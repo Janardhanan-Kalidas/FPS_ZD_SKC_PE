@@ -8,17 +8,8 @@
     "version:theme:patch": "node tooling/scripts/version-theme.mjs --release-as patch",
     "version:theme:minor": "node tooling/scripts/version-theme.mjs --release-as minor",
     "version:theme:major": "node tooling/scripts/version-theme.mjs --release-as major",
-    "validate:theme": "bash tooling/scripts/validate-theme.sh",
-    "test:deployment": "node tooling/scripts/run-deployment-tests.mjs",
-    "test:functional:playwright": "node tooling/scripts/run-playwright-functional-tests.mjs",
-    "test:performance": "node tooling/scripts/run-performance-tests.mjs",
-    "test:quality:gate": "node tooling/scripts/run-quality-gate.mjs",
-    "report:confluence": "node tooling/scripts/publish-confluence-report.mjs",
     "backup:theme": "bash tooling/scripts/backup-zendesk-theme.sh",
     "deploy:theme": "bash tooling/scripts/deploy-zendesk-theme.sh",
     "rollback:theme": "bash tooling/scripts/rollback-zendesk-theme.sh"
-  },
-  "devDependencies": {
-    "playwright": "^1.54.0"
   }
 }

@@ -258,38 +258,85 @@ get_manifest_default_locale() {
   node -e "const fs=require('fs');try{const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.default_locale||'en-us'));}catch{process.stdout.write('en-us');}"
 }
 
-resolve_confluence_email() {
-  if [[ -n "${ATLASSIAN_USER_EMAIL:-}" ]]; then
-    printf '%s' "${ATLASSIAN_USER_EMAIL}"
+trigger_external_validation_pipeline() {
+  local base_url="$1"
+  local validation_environment="$2"
+  local validation_source="$3"
+  local gate_mode="$4"
+
+  if [[ "${ENABLE_EXTERNAL_VALIDATION_TRIGGER:-true}" != "true" ]]; then
+    echo "External validation trigger disabled by ENABLE_EXTERNAL_VALIDATION_TRIGGER."
     return 0
   fi
 
-  local git_email=""
-  git_email="$(git config --get user.email 2>/dev/null || true)"
-  if [[ -n "$git_email" ]]; then
-    printf '%s' "$git_email"
+  local gitlab_api_url="${VALIDATION_GITLAB_API_URL:-https://git.hilti.com/api/v4}"
+  local validation_project_path="${VALIDATION_PROJECT_PATH:-bu-f-ps/sw-support-group/skc_pe_deployment_validation}"
+  local validation_ref="${VALIDATION_REF:-main}"
+  local trigger_token="${VALIDATION_TRIGGER_TOKEN:-}"
+
+  if [[ -z "$trigger_token" ]]; then
+    echo "Skipping external validation trigger: VALIDATION_TRIGGER_TOKEN is not set."
+    if [[ "$gate_mode" == "hard" ]]; then
+      echo "Hard gate active, cannot continue without external validation trigger token."
+      return 1
+    fi
     return 0
   fi
 
-  printf '%s' ""
+  local encoded_project_path
+  encoded_project_path="$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$validation_project_path")"
+  local trigger_url="${gitlab_api_url}/projects/${encoded_project_path}/trigger/pipeline"
+
+  local response_file
+  response_file="$(mktemp)"
+
+  local http_code
+  set +e
+  http_code="$(curl -sS -o "$response_file" -w "%{http_code}" \
+    -X POST "$trigger_url" \
+    --form "token=${trigger_token}" \
+    --form "ref=${validation_ref}" \
+    --form "variables[TEST_BASE_URL]=${base_url}" \
+    --form "variables[TARGET_NAME]=${validation_environment}" \
+    --form "variables[VALIDATION_ENVIRONMENT]=${validation_environment}" \
+    --form "variables[VALIDATION_SOURCE]=${validation_source}" \
+    --form "variables[VALIDATION_GATE_MODE]=${gate_mode}" \
+    --form "variables[VALIDATION_REF_NAME]=${current_branch}" \
+    --form "variables[VALIDATION_COMMIT_SHA]=$(git rev-parse HEAD)")"
+  local curl_exit=$?
+  set -e
+
+  local pipeline_web_url=""
+  pipeline_web_url="$(node - "$response_file" <<'NODE'
+const fs = require('fs');
+const path = process.argv[2];
+try {
+  const payload = JSON.parse(fs.readFileSync(path, 'utf8'));
+  if (payload && payload.web_url) process.stdout.write(String(payload.web_url));
+} catch {
+  // Ignore parse errors.
 }
+NODE
+)"
 
-resolve_confluence_api_token() {
-  if [[ -n "${ATLASSIAN_API_TOKEN:-}" ]]; then
-    printf '%s' "${ATLASSIAN_API_TOKEN}"
+  if [[ $curl_exit -ne 0 || "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
+    echo "External validation trigger failed (HTTP ${http_code})."
+    echo "Response:"
+    cat "$response_file"
+    rm -f "$response_file"
+    if [[ "$gate_mode" == "hard" ]]; then
+      return 1
+    fi
     return 0
   fi
 
-  if ! command -v security >/dev/null 2>&1; then
-    printf '%s' ""
-    return 0
+  rm -f "$response_file"
+  echo "External validation pipeline triggered successfully."
+  if [[ -n "$pipeline_web_url" ]]; then
+    echo "Validation pipeline URL: ${pipeline_web_url}"
   fi
 
-  local service_name="${ATLASSIAN_KEYCHAIN_SERVICE_NAME:-atlassian_api_token_hilti}"
-  local account_name="${ATLASSIAN_KEYCHAIN_ACCOUNT_NAME:-${USER}}"
-  local token=""
-  token="$(security find-generic-password -s "$service_name" -a "$account_name" -w 2>/dev/null || true)"
-  printf '%s' "$token"
+  return 0
 }
 
 current_branch="$(git branch --show-current)"
@@ -548,27 +595,11 @@ if [[ "$set_theme_live_choice" == "yes" ]]; then
 fi
 
 echo
-echo "Running automated post-deployment tests..."
-test_profile="manual-on-demand"
-if [[ "$set_theme_live_choice" == "yes" ]]; then
-  test_profile="production"
-fi
-
-playwright_visible_choice="${ZD_PLAYWRIGHT_VISIBLE:-}"
-if [[ -z "$playwright_visible_choice" ]]; then
-  playwright_visible_choice="$(pick_yes_no "Open visible browser for Playwright tests? (y/n)" "n")"
-fi
-
-playwright_headless="true"
-if [[ "$playwright_visible_choice" == "yes" ]]; then
-  playwright_headless="false"
-fi
-
-echo "Playwright browser mode: $([[ "$playwright_headless" == "false" ]] && echo "visible" || echo "headless")"
+echo "Triggering external validation pipeline..."
 
 test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-}"
 if [[ -z "$test_base_url" ]]; then
-  if [[ "$test_profile" == "production" ]]; then
+  if [[ "$set_theme_live_choice" == "yes" ]]; then
     test_base_url="${ZD_PROD_BASE_URL:-${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-}}}"
   else
     test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}}"
@@ -584,134 +615,29 @@ if [[ -z "$test_base_url" ]]; then
 fi
 
 if [[ -z "$test_base_url" ]]; then
-  echo "Unable to auto-resolve test base URL."
+  echo "Unable to auto-resolve deployment URL for external validation trigger."
   echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
-  echo "or run 'zcli login -i' so the active subdomain can be auto-detected."
-  exit 1
-fi
-
-echo "Auto-selected test base URL: ${test_base_url}"
-
-safe_target_name="$(echo "$current_branch" | tr '/ ' '--' | tr -cd '[:alnum:]_-')"
-run_id="manual-post-deploy-$(date -u +%Y%m%d%H%M%S)"
-report_dir="tooling/reports/${run_id}"
-mkdir -p "$report_dir"
-
-deployment_report="${report_dir}/${safe_target_name}-deployment.json"
-functional_report="${report_dir}/${safe_target_name}-functional-playwright.json"
-performance_report="${report_dir}/${safe_target_name}-performance.json"
-
-set +e
-node tooling/scripts/run-deployment-tests.mjs \
-  --target-name "$safe_target_name" \
-  --base-url "$test_base_url" \
-  --output "$deployment_report"
-deployment_exit=$?
-
-PLAYWRIGHT_HEADLESS="$playwright_headless" node tooling/scripts/run-playwright-functional-tests.mjs \
-  --target-name "$safe_target_name" \
-  --profile "$test_profile" \
-  --base-url "$test_base_url" \
-  --output "$functional_report"
-functional_exit=$?
-
-PLAYWRIGHT_HEADLESS="$playwright_headless" node tooling/scripts/run-performance-tests.mjs \
-  --target-name "$safe_target_name" \
-  --base-url "$test_base_url" \
-  --output "$performance_report"
-performance_exit=$?
-set -e
-
-echo "Post-deployment reports:"
-echo "- ${deployment_report}"
-echo "- ${functional_report}"
-echo "- ${performance_report}"
-
-tests_failed="false"
-if [[ $deployment_exit -ne 0 || $functional_exit -ne 0 || $performance_exit -ne 0 ]]; then
-  tests_failed="true"
-  echo "Post-deployment tests failed."
-else
-  echo "Post-deployment tests passed."
-fi
-
-publish_confluence_choice="$(pick_yes_no "Publish Confluence result pages now? (y/n)" "n")"
-if [[ "$publish_confluence_choice" == "yes" ]]; then
-  quality_report="${report_dir}/${safe_target_name}-quality-gate.json"
-  confluence_result="${report_dir}/${safe_target_name}-confluence-result.json"
-
-  QUALITY_REPORT_PATH="$quality_report" \
-  TARGET_NAME="$safe_target_name" \
-  BASE_URL="$test_base_url" \
-  CURRENT_BRANCH="$current_branch" \
-  node --input-type=commonjs <<'NODE'
-const fs = require('fs');
-const path = require('path');
-
-const reportPath = process.env.QUALITY_REPORT_PATH;
-const targetName = process.env.TARGET_NAME;
-const baseUrl = process.env.BASE_URL;
-const branch = process.env.CURRENT_BRANCH;
-
-const reportDir = path.dirname(reportPath);
-const deployment = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-deployment.json`), 'utf8'));
-const functional = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-functional-playwright.json`), 'utf8'));
-const performance = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-performance.json`), 'utf8'));
-
-const failed =
-  (deployment?.summary?.failed || 0) > 0 ||
-  (functional?.summary?.failed || 0) > 0 ||
-  (performance?.summary?.failed || 0) > 0;
-
-const payload = {
-  generatedAt: new Date().toISOString(),
-  environmentName: 'manual-post-deploy',
-  targetName,
-  baseUrl,
-  branch,
-  commit: 'local',
-  pipelineUrl: '',
-  failed,
-  quality: {
-    deployment,
-    functional,
-    performance,
-  },
-};
-
-fs.writeFileSync(reportPath, `${JSON.stringify(payload, null, 2)}\n`);
-NODE
-
-  confluence_base_url="${ATLASSIAN_BASE_URL:-https://hilti.atlassian.net}"
-  confluence_space_key="${CONFLUENCE_SPACE_KEY:-BFS}"
-  confluence_parent_page_id="${CONFLUENCE_PARENT_PAGE_ID:-2900984544}"
-
-  resolved_atlassian_email="$(resolve_confluence_email)"
-  resolved_atlassian_token="$(resolve_confluence_api_token)"
-
-  if [[ -z "$resolved_atlassian_email" || -z "$resolved_atlassian_token" ]]; then
-    echo "Skipping Confluence publish: missing Atlassian credentials."
-    echo "Checked: ATLASSIAN_USER_EMAIL, git user.email, ATLASSIAN_API_TOKEN, macOS Keychain."
-    echo "Tip: save token in Keychain with: security add-generic-password -s atlassian_api_token_hilti -a ${USER} -w"
-  else
-    echo "Publishing Confluence functional/performance pages..."
-    ATLASSIAN_BASE_URL="$confluence_base_url" \
-    ATLASSIAN_USER_EMAIL="$resolved_atlassian_email" \
-    ATLASSIAN_API_TOKEN="$resolved_atlassian_token" \
-    CONFLUENCE_SPACE_KEY="$confluence_space_key" \
-    CONFLUENCE_PARENT_PAGE_ID="$confluence_parent_page_id" \
-    REQUIRE_CONFLUENCE_REPORT="false" \
-    node tooling/scripts/publish-confluence-report.mjs \
-      --report-file "$quality_report" \
-      --output "$confluence_result"
-
-    echo "Confluence publish result: ${confluence_result}"
+  if [[ "$set_theme_live_choice" == "yes" ]]; then
+    echo "Hard gate active for production deployment, exiting."
+    exit 1
   fi
-fi
+  echo "Soft gate mode for non-production deployment, continuing without trigger."
+else
+  echo "Auto-selected validation base URL: ${test_base_url}"
 
-if [[ "$tests_failed" == "true" ]]; then
-  echo "Deployment completed, but post-deployment tests failed."
-  exit 1
+  validation_environment="preview"
+  validation_source="local_deploy"
+  validation_gate_mode="soft"
+  if [[ "$set_theme_live_choice" == "yes" ]]; then
+    validation_environment="production"
+    validation_source="local_deploy_live"
+    validation_gate_mode="hard"
+  fi
+
+  if ! trigger_external_validation_pipeline "$test_base_url" "$validation_environment" "$validation_source" "$validation_gate_mode"; then
+    echo "Deployment completed, but external validation trigger failed in hard-gate mode."
+    exit 1
+  fi
 fi
 
 echo "Deployment finished for branch '${current_branch}'."

@@ -9,8 +9,33 @@ Welcome! This comprehensive guide contains all documentation for the Zendesk the
 1. [Development Setup Guide](#development-setup-guide)
 2. [Local Theme Preview](#local-theme-preview)
 3. [Theme Versioning](#theme-versioning)
+4. [External Validation Workflow](#external-validation-workflow)
 
 ---
+
+## External Validation Workflow
+
+Theme validation is now owned by the external repository:
+
+- `https://git.hilti.com/bu-f-ps/sw-support-group/skc_pe_deployment_validation`
+
+### How validation is triggered
+
+- CI deployments in this repository trigger the external validation pipeline after deploy and rollback.
+- Local deployment scripts in this repository also trigger the external validation pipeline.
+
+### Gate behavior
+
+- Production deployments use hard-gate behavior (validation trigger failures stop deployment completion).
+- Preview/non-production deployments use soft-gate behavior (trigger failures are reported but do not block completion).
+
+### Required trigger variables for local deployments
+
+- `VALIDATION_TRIGGER_TOKEN` (GitLab pipeline trigger token from validation project)
+- Optional overrides:
+   - `VALIDATION_PROJECT_PATH` (default: `bu-f-ps/sw-support-group/skc_pe_deployment_validation`)
+   - `VALIDATION_REF` (default: `main`)
+   - `VALIDATION_GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
 
 ## Development Setup Guide
 
