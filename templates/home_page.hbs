@@ -68,7 +68,7 @@
         <use xlink:href="#icon-search" />
       </svg>
     </div>
-<!--
+
     {{! Popular keywords - Jana Enabled}}
     {{~#isnt settings.popular_keywords_style 'none'}}
       {{~#if settings.popular_keywords}}
@@ -83,7 +83,7 @@
         </div>
       {{/if~}}
     {{/isnt~}}
--->
+
   </div>
 
   {{! SVG dividers for the hero bg & Category container}}
@@ -458,7 +458,7 @@
       Theme.contentBlocks.categories.push({
         id: {{id}},
         name: {{json_stringify name}},
-       <!-- {{~#if description}}description: {{json_stringify description}},{{/if~}} --> {{! Commented out category descriptions as they are not currently used in the default templates and can be lengthy, but can be re-enabled if needed}}
+        {{~#if description}}description: {{json_stringify description}},{{/if~}}
         html_url: {{json_stringify url}}
       });
         {{~#each sections~}}

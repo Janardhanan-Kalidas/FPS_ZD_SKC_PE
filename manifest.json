@@ -1,10 +1,582 @@
 {
-  "name": "Hilti [SKC] - PE Theme 2026",
+  "name": "Hilti [SKC] - PE Main Production Theme Apr 2026",
   "author": "Zenplates",
-  "version": "0.13.10",
+  "version": "2.2.9",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
+    {
+      "label": "colors_group_label",
+      "variables": [
+        {
+          "identifier": "color_primary",
+          "type": "color",
+          "description": "color_primary_description",
+          "label": "color_primary_label",
+          "value": "rgba(210, 5, 30, 1)"
+        },
+        {
+          "identifier": "color_primary_inverse",
+          "type": "color",
+          "description": "color_primary_inverse_description",
+          "label": "color_primary_inverse_label",
+          "value": "#fff"
+        },
+        {
+          "identifier": "color_secondary",
+          "type": "color",
+          "description": "color_secondary_description",
+          "label": "color_secondary_label",
+          "value": "rgba(210, 5, 30, 1)"
+        },
+        {
+          "identifier": "color_secondary_inverse",
+          "type": "color",
+          "description": "color_secondary_inverse_description",
+          "label": "color_secondary_inverse_label",
+          "value": "rgba(151, 149, 152, 1)"
+        },
+        {
+          "identifier": "color_tertiary",
+          "type": "color",
+          "description": "color_tertiary_description",
+          "label": "color_tertiary_label",
+          "value": "rgba(171, 1, 21, 1)"
+        },
+        {
+          "identifier": "color_tertiary_inverse",
+          "type": "color",
+          "description": "color_tertiary_inverse_description",
+          "label": "color_tertiary_inverse_label",
+          "value": "rgba(186, 185, 186, 1)"
+        },
+        {
+          "identifier": "color_heading",
+          "type": "color",
+          "description": "heading_color_description",
+          "label": "heading_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "color_text",
+          "type": "color",
+          "description": "text_color_description",
+          "label": "text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "color_link",
+          "type": "color",
+          "description": "link_color_description",
+          "label": "link_color_label",
+          "value": "rgba(210, 5, 30, 1)"
+        },
+        {
+          "identifier": "color_outline",
+          "type": "color",
+          "description": "outline_color_description",
+          "label": "outline_color_label",
+          "value": "rgba(221, 220, 221, 1)"
+        },
+        {
+          "identifier": "color_border",
+          "type": "color",
+          "description": "color_border_description",
+          "label": "color_border_label",
+          "value": "rgba(221, 220, 221, 1)"
+        },
+        {
+          "identifier": "color_gray_100",
+          "type": "color",
+          "description": "color_gray_100_description",
+          "label": "color_gray_100_label",
+          "value": "rgba(248, 248, 247, 1)"
+        },
+        {
+          "identifier": "color_gray_200",
+          "type": "color",
+          "description": "color_gray_200_description",
+          "label": "color_gray_200_label",
+          "value": "rgba(239, 235, 229, 1)"
+        },
+        {
+          "identifier": "color_gray_600",
+          "type": "color",
+          "description": "color_gray_600_description",
+          "label": "color_gray_600_label",
+          "value": "rgba(186, 185, 186, 1)"
+        },
+        {
+          "identifier": "bg_color",
+          "type": "color",
+          "description": "background_color_description",
+          "label": "background_color_label",
+          "value": "#fff"
+        }
+      ]
+    },
+    {
+      "label": "fonts_group_label",
+      "variables": [
+        {
+          "identifier": "heading_font",
+          "type": "list",
+          "description": "heading_font_description",
+          "label": "heading_font_label",
+          "value": "'Hilti Small Bold', sans-serif",
+          "options": [
+            {
+              "label": "Hilti Small Roman",
+              "value": "'Hilti Small Roman', sans-serif"
+            },
+            {
+              "label": "Hilti Small Bold",
+              "value": "'Hilti Small Bold', sans-serif"
+            },
+            {
+              "label": "Hilti Small Extended",
+              "value": "'Hilti Small Extended', sans-serif"
+            },
+            {
+              "label": "Hilti Small Heavy Extended",
+              "value": "'Hilti Small Heavy Extended', sans-serif"
+            },
+            {
+              "label": "Arimo (Google)",
+              "value": "'Arimo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Bitter (Google)",
+              "value": "'Bitter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Catamaran (Google)",
+              "value": "'Catamaran', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Crimson Text (Google)",
+              "value": "'Crimson Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "DM Sans (Google)",
+              "value": "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "EB Garamond (Google)",
+              "value": "'EB Garamond', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Faustina (Google)",
+              "value": "'Faustina', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Fira Sans (Google)",
+              "value": "'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Inter (Google)",
+              "value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Jost (Google)",
+              "value": "'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Lato (Google)",
+              "value": "'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Libre Franklin (Google)",
+              "value": "'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Lora (Google)",
+              "value": "'Lora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Manrope (Google)",
+              "value": "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Merriweather (Google)",
+              "value": "'Merriweather', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Montserrat (Google)",
+              "value": "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Mukta (Google)",
+              "value": "'Mukta', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Mulish (Google)",
+              "value": "'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Nunito Sans (Google)",
+              "value": "'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Noto Sans Display (Google)",
+              "value": "'Noto Sans Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Noto Serif (Google)",
+              "value": "'Noto Serif', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Oswald (Google)",
+              "value": "'Oswald', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Roboto (Google)",
+              "value": "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Rubik (Google)",
+              "value": "'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Open Sans (Google)",
+              "value": "'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Poppins (Google)",
+              "value": "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Prata (Google)",
+              "value": "'Prata', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "PT Sans (Google)",
+              "value": "'PT Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "PT Serif (Google)",
+              "value": "'PT Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Public Sans (Google)",
+              "value": "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Raleway (Google)",
+              "value": "'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Signika (Google)",
+              "value": "'Signika', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Source Sans Pro (Google)",
+              "value": "'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Ubuntu (Google)",
+              "value": "'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Work Sans (Google)",
+              "value": "'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "System",
+              "value": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Arial",
+              "value": "Arial, 'Helvetica Neue', Helvetica, sans-serif"
+            },
+            {
+              "label": "Arial Black",
+              "value": "'Arial Black', Arial, 'Helvetica Neue', Helvetica, sans-serif"
+            },
+            {
+              "label": "Baskerville",
+              "value": "Baskerville, 'Times New Roman', Times, serif"
+            },
+            {
+              "label": "Century Gothic",
+              "value": "'Century Gothic', AppleGothic, sans-serif"
+            },
+            {
+              "label": "Copperplate Light",
+              "value": "'Copperplate Light', 'Copperplate Gothic Light', serif"
+            },
+            {
+              "label": "Courier New",
+              "value": "'Courier New', Courier, monospace"
+            },
+            {
+              "label": "Futura",
+              "value": "Futura, 'Century Gothic', AppleGothic, sans-serif"
+            },
+            {
+              "label": "Garamond",
+              "value": "Garamond, 'Hoefler Text', 'Times New Roman', Times, serif"
+            },
+            {
+              "label": "Geneva",
+              "value": "Geneva, 'Lucida Sans', 'Lucida Grande', 'Lucida Sans Unicode', Verdana, sans-serif"
+            },
+            {
+              "label": "Georgia",
+              "value": "Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif"
+            },
+            {
+              "label": "Helvetica",
+              "value": "Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Helvetica Neue",
+              "value": "'Helvetica Neue', Arial, Helvetica, sans-serif"
+            },
+            {
+              "label": "Impact",
+              "value": "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
+            },
+            {
+              "label": "Lucida Grande",
+              "value": "'Lucida Grande', 'Lucida Sans', 'Lucida Sans Unicode', sans-serif"
+            },
+            {
+              "label": "Trebuchet MS",
+              "value": "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif"
+            }
+          ]
+        },
+        {
+          "identifier": "text_font",
+          "type": "list",
+          "description": "text_font_description",
+          "label": "text_font_label",
+          "value": "'Hilti Small Roman', sans-serif",
+          "options": [
+            {
+              "label": "Hilti Small Roman",
+              "value": "'Hilti Small Roman', sans-serif"
+            },
+            {
+              "label": "Hilti Small Bold",
+              "value": "'Hilti Small Bold', sans-serif"
+            },
+            {
+              "label": "Hilti Small Extended",
+              "value": "'Hilti Small Extended', sans-serif"
+            },
+            {
+              "label": "Hilti Small Heavy Extended",
+              "value": "'Hilti Small Heavy Extended', sans-serif"
+            },
+            {
+              "label": "Arimo (Google)",
+              "value": "'Arimo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Bitter (Google)",
+              "value": "'Bitter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Catamaran (Google)",
+              "value": "'Catamaran', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Crimson Text (Google)",
+              "value": "'Crimson Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "DM Sans (Google)",
+              "value": "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "EB Garamond (Google)",
+              "value": "'EB Garamond', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Fira Sans (Google)",
+              "value": "'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Inter (Google)",
+              "value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Jost (Google)",
+              "value": "'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Lato (Google)",
+              "value": "'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Libre Franklin (Google)",
+              "value": "'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Lora (Google)",
+              "value": "'Lora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Merriweather (Google)",
+              "value": "'Merriweather', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Montserrat (Google)",
+              "value": "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Mukta (Google)",
+              "value": "'Mukta', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Mulish (Google)",
+              "value": "'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Nunito Sans (Google)",
+              "value": "'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Noto Sans (Google)",
+              "value": "'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Noto Serif (Google)",
+              "value": "'Noto Serif', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Roboto (Google)",
+              "value": "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Rubik (Google)",
+              "value": "'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Open Sans (Google)",
+              "value": "'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Poppins (Google)",
+              "value": "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Prata (Google)",
+              "value": "'Prata', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "PT Sans (Google)",
+              "value": "'PT Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "PT Serif (Google)",
+              "value": "'PT Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Public Sans (Google)",
+              "value": "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Raleway (Google)",
+              "value": "'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Slabo 27px (Google)",
+              "value": "'Slabo 27px', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, serif"
+            },
+            {
+              "label": "Signika (Google)",
+              "value": "'Signika', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Source Sans Pro (Google)",
+              "value": "'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Ubuntu (Google)",
+              "value": "'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Work Sans (Google)",
+              "value": "'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "System",
+              "value": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Arial",
+              "value": "Arial, 'Helvetica Neue', Helvetica, sans-serif"
+            },
+            {
+              "label": "Arial Black",
+              "value": "'Arial Black', Arial, 'Helvetica Neue', Helvetica, sans-serif"
+            },
+            {
+              "label": "Baskerville",
+              "value": "Baskerville, 'Times New Roman', Times, serif"
+            },
+            {
+              "label": "Century Gothic",
+              "value": "'Century Gothic', AppleGothic, sans-serif"
+            },
+            {
+              "label": "Copperplate Light",
+              "value": "'Copperplate Light', 'Copperplate Gothic Light', serif"
+            },
+            {
+              "label": "Courier New",
+              "value": "'Courier New', Courier, monospace"
+            },
+            {
+              "label": "Futura",
+              "value": "Futura, 'Century Gothic', AppleGothic, sans-serif"
+            },
+            {
+              "label": "Garamond",
+              "value": "Garamond, 'Hoefler Text', 'Times New Roman', Times, serif"
+            },
+            {
+              "label": "Geneva",
+              "value": "Geneva, 'Lucida Sans', 'Lucida Grande', 'Lucida Sans Unicode', Verdana, sans-serif"
+            },
+            {
+              "label": "Georgia",
+              "value": "Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif"
+            },
+            {
+              "label": "Helvetica",
+              "value": "Helvetica, Arial, sans-serif"
+            },
+            {
+              "label": "Helvetica Neue",
+              "value": "'Helvetica Neue', Arial, Helvetica, sans-serif"
+            },
+            {
+              "label": "Impact",
+              "value": "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
+            },
+            {
+              "label": "Lucida Grande",
+              "value": "'Lucida Grande', 'Lucida Sans', 'Lucida Sans Unicode', sans-serif"
+            },
+            {
+              "label": "Trebuchet MS",
+              "value": "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif"
+            }
+          ]
+        },
+        {
+          "identifier": "base_font_size",
+          "type": "text",
+          "description": "base_font_size_description",
+          "label": "base_font_size_label",
+          "value": "16px"
+        }
+      ]
+    },
     {
       "label": "brand_group_label",
       "variables": [
@@ -393,6 +965,13 @@
           "value": ""
         },
         {
+          "identifier": "show_submit_a_request_link",
+          "type": "checkbox",
+          "description": "show_submit_a_request_link_description",
+          "label": "show_submit_a_request_link_label",
+          "value": true
+        },
+        {
           "identifier": "category_dropdown_style",
           "type": "list",
           "description": "category_dropdown_style_description",
@@ -408,39 +987,6 @@
               "value": "dropdown"
             }
           ]
-        }
-      ]
-    },
-    {
-      "label": "support_visibility_group_label",
-      "variables": [
-        {
-          "identifier": "show_submit_a_request_link",
-          "type": "checkbox",
-          "description": "show_submit_a_request_link_description",
-          "label": "show_submit_a_request_link_label",
-          "value": true
-        },
-        {
-          "identifier": "hide_sign_in_link",
-          "type": "checkbox",
-          "description": "hide_sign_in_link_description",
-          "label": "hide_sign_in_link_label",
-          "value": true
-        },
-        {
-          "identifier": "hide_article_downvote_cta",
-          "type": "checkbox",
-          "description": "hide_article_downvote_cta_description",
-          "label": "hide_article_downvote_cta_label",
-          "value": true
-        },
-        {
-          "identifier": "show_article_submit_cta",
-          "type": "checkbox",
-          "description": "show_article_submit_request_cta_description",
-          "label": "show_article_submit_request_cta_label",
-          "value": false
         }
       ]
     },
@@ -1157,7 +1703,7 @@
           "type": "list",
           "description": "article_list_columns_description",
           "label": "article_list_columns_label",
-          "value": "2",
+          "value": "3",
           "options": [
             {
               "label": "1",
@@ -1681,15 +2227,11 @@
           "type": "list",
           "description": "section_sidebar_description",
           "label": "section_sidebar_label",
-          "value": "active-category-sections",
+          "value": "category-list",
           "options": [
             {
               "label": "None",
               "value": "none"
-            },
-            {
-              "label": "Active category sections",
-              "value": "active-category-sections"
             },
             {
               "label": "Article list",
@@ -1847,11 +2389,11 @@
           "value": false
         },
         {
-          "identifier": "enable_downvote_feedback_modal",
-          "type": "checkbox",
-          "description": "enable_downvote_feedback_modal_description",
-          "label": "enable_downvote_feedback_modal_label",
-          "value": true
+          "identifier": "share_title",
+          "type": "text",
+          "description": "share_title_description",
+          "label": "share_title_label",
+          "value": ""
         },
         {
           "identifier": "show_recently_viewed_articles",
@@ -2149,6 +2691,34 @@
           "type": "text",
           "description": "footer_link_1_url_description",
           "label": "footer_link_1_url_label",
+          "value": ""
+        },
+        {
+          "identifier": "footer_link_2_text",
+          "type": "text",
+          "description": "footer_link_2_text_description",
+          "label": "footer_link_2_text_label",
+          "value": ""
+        },
+        {
+          "identifier": "footer_link_2_url",
+          "type": "text",
+          "description": "footer_link_2_url_description",
+          "label": "footer_link_2_url_label",
+          "value": ""
+        },
+        {
+          "identifier": "footer_link_3_text",
+          "type": "text",
+          "description": "footer_link_3_text_description",
+          "label": "footer_link_3_text_label",
+          "value": ""
+        },
+        {
+          "identifier": "footer_link_3_url",
+          "type": "text",
+          "description": "footer_link_3_url_description",
+          "label": "footer_link_3_url_label",
           "value": ""
         },
         {

@@ -1,235 +1,325 @@
 {{!--
-  ============================================================================
-  REDESIGNED SEARCH RESULTS PAGE
-  ============================================================================
   Updated by: Kalidas, Janardhanan
-  Updated on: 19 May 2026
-  Purpose: Modern UX redesign with simplified filtering and improved layout
-  
-  Changes:
-  - Removed Applications filter completely
-  - Show only Categories in sidebar filter
-  - Clean card/list layout for results
-  - Highlight search keywords
-  - Show result count and metadata
-  - Empty state message
-  - Responsive design with hover effects
-  ============================================================================
+  Updated on: 26 Mar 2026, 17:01 IST
+  Purpose: Add ".bc-home" element required for universal breadcrumb CSS.
 --}}
 
-{{! Breadcrumbs }}
-<div class="bg-gray-100 pt-3 pb-2">
+<div class="bg-gray-100 pt-5 pb-1">
   <div class="container">
-    <div class="row">
+
+    <div class="row align-items-center">
+
       <div class="col font-size-md">
+
         <div class="breadcrumbs-wrapper">
+
+          {{!-- REQUIRED for universal breadcrumb CSS --}}
           <a href="{{help_center.url}}" class="bc-home">Home</a>
+
           <div class="bc-native">
             {{breadcrumbs}}
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-{{! Search Bar }}
-<div class="search-results-search-bar">
-  <div class="container">
-    <div class="search-bar-wrapper">
-      <div class="search search-lg">
-        {{search class='form-field mb-0' instant=true submit=false placeholder='Search articles...'}}
-        <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
-          <use xlink:href="#icon-search" />
-        </svg>
-      </div>
-    </div>
-  </div>
-</div>
-
-{{! Main Content Container }}
-<div class="hc-search-container" id="page-container" data-search-query="{{query}}" data-help-center-url="{{help_center.url}}">
-  <div class="hc-search-layout">
-
-    {{! ===== LEFT SIDEBAR - FILTERS ===== }}
-    <aside class="hc-search-sidebar">
-      <div class="hc-sidebar-wrapper">
-
-        {{! Sidebar header: "Filter by" + Reset link }}
-        <div class="hc-sidebar-header">
-          <span class="hc-sidebar-title">Filter by</span>
-          <a href="{{help_center.url}}search?utf8=✓&query={{query}}" class="hc-sidebar-reset">Reset</a>
-        </div>
-
-        {{! Types - from Zendesk type_filters }}
-        {{#if type_filters}}
-          <div class="hc-filter-section">
-            <h3 class="hc-filter-title">Types</h3>
-            <ul class="hc-filter-list">
-              {{#each type_filters}}
-                <li class="hc-filter-item">
-                  <a class="hc-filter-link{{#if selected}} hc-filter-active{{/if}}" href="{{url}}">
-                    <span class="hc-filter-checkbox" aria-hidden="true"></span>
-                    <span class="hc-filter-name">{{name}}</span>
-                    {{#if count}}<span class="hc-filter-count">({{count}})</span>{{/if}}
-                  </a>
-                </li>
-              {{/each}}
-            </ul>
-          </div>
-        {{/if}}
-
-        {{! Categories - built by JavaScript from rendered result breadcrumbs }}
-        <div class="hc-filter-section" id="hc-category-filter">
-          <h3 class="hc-filter-title">Categories</h3>
-          <ul class="hc-filter-list" id="hc-category-list">
-            {{! Populated by JavaScript from rendered results }}
-          </ul>
-        </div>
-
-        {{! Sections - built by JavaScript from rendered result breadcrumbs }}
-        <div class="hc-filter-section" id="hc-section-filter">
-          <h3 class="hc-filter-title">Sections</h3>
-          <ul class="hc-filter-list" id="hc-section-list">
-            {{! Populated by JavaScript from rendered results }}
-          </ul>
         </div>
 
       </div>
-    </aside>
 
-    {{! ===== MAIN CONTENT - RESULTS ===== }}
-    <section class="hc-search-main">
-      
-      {{! Results Header with Count }}
-      <div class="hc-results-header">
-        <h1 class="hc-results-title" data-display-query="{{query}}">
-          {{#if query}}
-            {{#if results}}
-              Showing <strong>{{results_count}}</strong> results for "<span class="hc-clean-query"></span>"
-              {{#is current_filter.identifier 'unified'}}
-                in all categories
+      {{!-- Search bar stays unchanged --}}
+      {{#is settings.header_search_style 'none'}}
+        <div class="md:col-4">
+          <div class="search mb-4">
+            <h2 class="sr-only">{{t 'search'}}</h2>
+
+            {{#if settings.search_placeholder}}
+              {{#if settings.use_translations}}
+                {{search class='form-field mb-0'
+                    instant=settings.instant_search
+                    scoped=settings.scoped_kb_search
+                    submit=false
+                    placeholder=(dc settings.search_placeholder)}}
               {{else}}
-                in {{current_filter.name}}
-              {{/is}}
+                {{search class='form-field mb-0'
+                    instant=settings.instant_search
+                    scoped=settings.scoped_kb_search
+                    submit=false
+                    placeholder=settings.search_placeholder}}
+              {{/if}}
             {{else}}
-              No results for "<strong><span class="hc-clean-query"></span></strong>"
+              {{search class='form-field mb-0'
+                  instant=settings.instant_search
+                  scoped=settings.scoped_kb_search
+                  submit=false}}
             {{/if}}
-          {{else}}
-            Search Results
-          {{/if}}
-        </h1>
-        
-        {{! Sort dropdown }}
-        {{#if results}}
-          <div class="hc-sort-dropdown">
-            <label for="sortSelect" class="sr-only">Sort by</label>
-            <select id="sortSelect" class="hc-sort-select">
-              <option value="relevance">Most Relevant</option>
-              <option value="recent">Most Recent</option>
-            </select>
+
+            <svg class="search-icon fill-current transition"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 12 12"
+                aria-hidden="true">
+              <use xlink:href="#icon-search" />
+            </svg>
+
           </div>
+        </div>
+      {{/is}}
+
+    </div>
+  </div>
+</div>
+
+<div class="container" id="page-container">
+  
+   {{! Hero element search bar }}
+    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4{{#is settings.hero_content_alignment 'center'}} mx-auto{{/is}}">
+      <h2 class="sr-only">{{ t 'search' }}</h2>
+      {{~#if settings.search_placeholder}}
+        {{#if settings.use_translations}}
+          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=(dc 'search')}}
+        {{else}}
+          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=settings.search_placeholder}}
         {{/if}}
-      </div>
+      {{else}}
+        {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button}}
+      {{/if~}}
+      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+        <use xlink:href="#icon-search" />
+      </svg>
+    </div>
+  
+  
+  <div class="row row-lg">
+<section class="col">
 
-      {{! Generative Answers - Disabled per user request }}
-      {{!-- {{generative_answers}} --}}
+  {{! Page header }}
+  <div class="search-results-wrapper">
+    <header class="d-flex justify-content-between align-items-center">
 
-      {{! Results List }}
+      <h1 class="h3 mb-0">
+        {{#is current_filter.identifier 'unified'}}
+          {{#if content_tag_filters }}
+            {{#each (filter content_tag_filters on="selected" equals=true)}}
+              {{t 'results_content_tag' content_tag=name count=../results_count}}
+            {{/each}}
+          {{else}}
+            {{t 'results' query=query count=results_count}}
+          {{/if}}
+        {{else}}
+          {{#if content_tag_filters }}
+            {{#each (filter content_tag_filters on="selected" equals=true)}}
+              {{t 'results_content_tag' content_tag=name count=../results_count}}
+            {{/each}}
+          {{else}}
+            {{#unless current_subfilter.identifier}}
+              {{t 'results' query=query count=results_count}}
+            {{else}}
+              {{t 'results_with_scope' query=query count=results_count scope_name=current_subfilter.name}}
+            {{/unless}}
+          {{/if}}
+        {{/is}}
+      </h1>
+
       {{#if results}}
-        <div class="hc-results-list">
-          {{#each results}}
-            <article class="hc-result-card">
-              
-              {{! Article Title }}
-              <h2 class="hc-result-title">
-                <a href="{{url}}" class="hc-result-link"{{#if is_external}} target="_blank" rel="noopener"{{/if}}>
+        <div class="sorting-dropdown">
+          <select id="sortSelect" class="sort-select-custom">
+            <option value="relevance">Most Relevant</option>
+            <option value="recent">Most Recent</option>
+          </select>
+        </div>
+      {{/if}}
+
+    </header>
+  </div>
+
+  {{! Generative Answers }}
+  {{generative_answers}}
+
+  {{! Search results list }}
+  {{#if results}}
+    <ul class="list-unstyled list-bordered">
+      {{#each results}}
+        <li class="list-item">
+          <article>
+            <header>
+              <h3 class="h4 mb-3">
+                <a href="{{url}}"{{#if is_external}} target="_blank"{{/if}}>
                   {{title}}
                   {{#if is_external}}
-                    <svg class="hc-external-icon" viewBox="0 0 12 12" width="14" height="14" aria-label="External link">
+                    <svg viewBox="0 0 12 12" height="12">
                       <path fill="none" stroke="currentColor" stroke-linecap="round" d="M10.5 8.5V10c0 .28-.22.5-.5.5H2c-.28 0-.5-.22-.5-.5V2c0-.28.22-.5.5-.5h1.5M6 6l4-4"></path>
                       <path fill="currentColor" d="M10.5 6.5a.47.47 0 0 1-.35-.15l-4.5-4.5a.474.474 0 0 1-.11-.54C5.62 1.12 5.8 1 6 1h4c.55 0 1 .45 1 1v4c0 .2-.12.38-.31.46-.06.03-.13.04-.19.04z"></path>
                     </svg>
                   {{/if}}
                 </a>
-              </h2>
 
-              {{! Category breadcrumb }}
-              {{#if path_steps}}
-                <div class="hc-result-category">
-                  {{#each path_steps}}
-                    {{#unless @first}}
-                      <span class="hc-category-separator">›</span>
-                    {{/unless}}
-                    <a href="{{url}}" class="hc-category-link">{{name}}</a>
-                  {{/each}}
-                </div>
-              {{/if}}
-
-              {{! Article Snippet/Description }}
-              {{#if text}}
-                <p class="hc-result-snippet">{{text}}</p>
-              {{/if}}
-
-              {{! Metadata Footer }}
-              <div class="hc-result-meta">
-                {{! Last Updated Date }}
-                <span class="hc-meta-item">
-                  <svg class="hc-meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true">
-                    <circle cx="6" cy="6" r="5.5" fill="none" stroke="currentColor"/>
-                    <path stroke="currentColor" stroke-linecap="round" d="M6 3v3.5L8 8"/>
-                  </svg>
-                  Updated {{date created_at}}
-                </span>
-
-                {{! Vote Count }}
                 {{#if vote_sum}}
-                  <span class="hc-meta-item">
-                    <svg class="hc-meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+                  <span class="badge ml-2">
+                    <svg class="svg-icon mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
                       <g fill="none" stroke="currentColor">
                         <path stroke-linejoin="round" d="M10.77 4.5a.73.73 0 01.73.73C11.43 7 11.21 11.5 10 11.5H5a.5.5 0 01-.5-.5V4.5s1-.5 1-3a1 1 0 012 0v3z"/>
                         <rect width="2" height="7" x=".5" y="4.5" rx=".5" ry=".5"/>
                       </g>
                     </svg>
-                    {{vote_sum}} helpful
+                    {{vote_sum}}
                   </span>
                 {{/if}}
 
-                {{! Comment Count }}
                 {{#if comment_count}}
-                  <span class="hc-meta-item">
-                    <svg class="hc-meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+                  <span class="badge ml-2">
+                    <svg class="svg-icon mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
                       <path fill="none" stroke="currentColor" d="M1 .5h10c.3 0 .5.2.5.5v7c0 .3-.2.5-.5.5H6l-2.6 2.6c-.3.3-.9.1-.9-.4V8.5H1C.7 8.5.5 8.3.5 8V1C.5.7.7.5 1 .5z"/>
                     </svg>
-                    {{comment_count}} comments
+                    {{t 'comments_count' count=comment_count}}
                   </span>
                 {{/if}}
-              </div>
+              </h3>
 
-            </article>
-          {{/each}}
-        </div>
+              <nav>
+                <ol class="breadcrumbs font-size-md">
+                  {{#each path_steps}}
+                    <li title="{{name}}">
+                      <a class="text-inherit" target="{{target}}" href="{{url}}">
+                        {{name}}
+                      </a>
+                    </li>
+                  {{/each}}
+                </ol>
+              </nav>
+            </header>
 
-        {{! Pagination }}
-        <div class="hc-pagination-wrapper">
-          {{pagination}}
-        </div>
+            <p>{{text}}</p>
 
-      {{else}}
-        {{! Empty State }}
-        <div class="hc-empty-state">
-          <img src="{{asset 'Magnifier.svg'}}" class="hc-empty-icon" alt="No results" width="80" height="80" />
-          <h2 class="hc-empty-title">No results found</h2>
-          <p class="hc-empty-text">
-            Try different keywords or browse our
-            {{#link 'help_center'}}
-              Software Knowledge Center
-            {{/link}}
-          </p>
+            <ul class="list-divider mb-5">
+              {{#unless is_external}}
+                {{#is ../settings.article_metadata 'author'}}
+                  <li class="text-gray-600">
+                    {{#link 'user_profile' id=author.id}}
+                      {{author.name}}
+                    {{/link}}
+                  </li>
+                {{/is}}
+              {{/unless}}
+              <li class="text-gray-600">
+                {{date created_at}}
+              </li>
+            </ul>
+          </article>
+        </li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <p class="text-gray-600">
+      {{t 'no_results_unified'}}
+      {{#link 'help_center'}}
+        {{t 'go_to_help_center'}}
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" focusable="false" aria-hidden="true">
+          <path fill="none" stroke="currentColor" stroke-linecap="round" d="M10.5 8.5V10c0 .3-.2.5-.5.5H2c-.3 0-.5-.2-.5-.5V2c0-.3.2-.5.5-.5h1.5M6 6l4-4m-3.5-.5H10c.3 0 .5.2.5.5v3.5"></path>
+        </svg>
+      {{/link}}
+    </p>
+  {{/if}}
+
+  {{pagination}}
+
+</section>
+
+    <aside class="md:col-3 flex-first">
+
+      {{! Source filters }}
+      {{#if source_filters}}
+        <div class="border-top border-bottom my-4 md:m-0 md:border-0">
+          <h3 class="collapse-title" data-toggle="collapse" data-target="#source-filters" aria-controls="source-filters" aria-expanded="false">
+            {{t 'filter_source'}}
+          </h3>
+          <div class="collapse md:flex md:flex-column md:h-full" id="source-filters">
+            <ul class="nav nav-pills flex-column py-3 md:pt-0">
+              {{#each source_filters}}
+                <li class="nav-item">
+                  <a class="nav-link border-radius{{#if selected}} is-active{{/if}}"{{#if selected}} aria-current="page"{{/if}} href="{{url}}">
+                    {{name}}
+                    <span>({{count}})</span>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
         </div>
       {{/if}}
 
-    </section>
+      {{! Type filters }}
+      {{#if type_filters}}
+        <div class="border-top border-bottom my-4 md:m-0 md:border-0">
+          <h3 class="collapse-title" data-toggle="collapse" data-target="#type-filters" aria-controls="type-filters" aria-expanded="false">
+            {{t 'filter_type'}}
+          </h3>
+          <div class="collapse md:flex md:flex-column md:h-full" id="type-filters">
+            <ul class="nav nav-pills flex-column py-3 md:pt-0">
+              {{#each type_filters}}
+                <li class="nav-item">
+                  <a class="nav-link border-radius{{#if selected}} is-active{{/if}}"{{#if selected}} aria-current="page"{{/if}} href="{{url}}">
+                    {{name}}
+                    <span>({{count}})</span>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      {{/if}}
 
+      {{! Subfilters }}
+      {{#if subfilters}}
+        <div class="border-top border-bottom my-4 md:m-0 md:border-0">
+          <h3 class="collapse-title" data-toggle="collapse" data-target="#subfilters" aria-controls="subfilters" aria-expanded="false">
+            {{#is current_filter.identifier 'knowledge_base'}}
+              {{t 'filter_by_category'}}
+            {{/is}}
+            {{#is current_filter.identifier 'community'}}
+              {{t 'filter_by_topic'}}
+            {{/is}}
+          </h3>
+          <div class="collapse md:flex md:flex-column md:h-full" id="subfilters">
+            <ul class="nav nav-pills flex-column py-3 md:pt-0">
+              {{#each subfilters}}
+                <li class="nav-item">
+                  <a class="nav-link border-radius{{#if selected}} is-active{{/if}}"{{#if selected}} aria-current="page"{{/if}} href="{{url}}">
+                    {{name}}
+                    <span>
+                    ({{count}})
+                  </span>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      {{/if}}
+
+      {{! Content tag filters }}
+      {{#if content_tag_filters}}
+        <div class="border-top border-bottom my-4 md:m-0 md:border-0">
+          <h3 class="collapse-title" data-toggle="collapse" data-target="#content-tags" aria-controls="content-tags" aria-expanded="false">
+            {{t 'filter_content_tag'}}
+          </h3>
+          <div class="collapse md:flex md:flex-column md:h-full" id="content-tags">
+            <ul class="list-unstyled py-3 md:pt-0">
+              {{#each content_tag_filters}}
+                {{#if selected}}
+                  <li class="inline-flex align-items-center py-2 px-3 border border-radius font-size-md">
+                    <span>{{name}}</span>
+                    <a class="ml-2 text-inherit" href="{{url}}">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" focusable="false" aria-hidden="true">
+                        <path stroke="currentColor" stroke-linecap="round" d="M3 9l6-6m0 6L3 3"/>
+                      </svg>
+                    </a>
+                  </li>
+                {{/if}}
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      {{/if}}
+
+    </aside>
   </div>
 </div>
+
+<script type="text/javascript">document.documentElement.classList.add('search-results-page')</script>
