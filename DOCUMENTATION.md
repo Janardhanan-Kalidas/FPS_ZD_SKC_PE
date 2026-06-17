@@ -23,6 +23,7 @@ Theme validation is now owned by the external repository:
 
 - CI deployments in this repository trigger the external validation pipeline after deploy and rollback.
 - Local deployment scripts in this repository also trigger the external validation pipeline.
+- Manual post-release validation is started directly in the external validation repository by running a pipeline and playing `theme_validate_post_release`.
 
 ### Gate behavior
 

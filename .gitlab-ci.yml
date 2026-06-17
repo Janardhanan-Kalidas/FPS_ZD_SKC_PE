@@ -177,26 +177,3 @@ theme_validate_after_rollback:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   allow_failure: false
-
-# Manual post-release validation trigger for on-demand UI/backend validation
-# outside of deployment jobs.
-theme_validate_post_release:
-  stage: post_deploy_validate
-  trigger:
-    project: $EXTERNAL_VALIDATION_PROJECT
-    branch: $EXTERNAL_VALIDATION_BRANCH
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  variables:
-    VALIDATION_SOURCE: "post_release_manual"
-    VALIDATION_ENVIRONMENT: "production"
-    VALIDATION_GATE_MODE: "hard"
-    TEST_BASE_URL: "$ZD_PROD_BASE_URL"
-    TARGET_NAME: "post-release"
-    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
-    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
-  allow_failure: false
