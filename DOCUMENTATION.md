@@ -33,9 +33,9 @@ Theme validation is now owned by the external repository:
 
 - `VALIDATION_TRIGGER_TOKEN` (GitLab pipeline trigger token from validation project)
 - Optional overrides:
-   - `VALIDATION_PROJECT_PATH` (default: `bu-f-ps/sw-support-group/skc_pe_deployment_validation`)
-   - `VALIDATION_REF` (default: `main`)
-   - `VALIDATION_GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
+  - `VALIDATION_PROJECT_PATH` (default: `bu-f-ps/sw-support-group/skc_pe_deployment_validation`)
+  - `VALIDATION_REF` (default: `main`)
+  - `VALIDATION_GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
 
 ## Development Setup Guide
 
