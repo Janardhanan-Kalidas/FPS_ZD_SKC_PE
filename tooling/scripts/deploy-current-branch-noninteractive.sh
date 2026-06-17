@@ -371,6 +371,7 @@ selected_theme_key=""
 selected_theme_name=""
 selected_theme_id=""
 selected_theme_brand_key=""
+resolved_update_theme_name=""
 
 if [[ "$deploy_mode" == "2" ]]; then
   echo
@@ -448,6 +449,12 @@ if [[ "$deploy_mode" == "2" ]]; then
     echo "Theme ID is required for update mode. Deployment cancelled."
     exit 1
   fi
+
+  resolved_update_theme_name="$(get_theme_name_from_list_output "$ZENDESK_THEME_LIST_OUTPUT" "$selected_theme_id" || true)"
+  if [[ -z "$resolved_update_theme_name" && -n "$selected_theme_name" && "$selected_theme_name" != "Manual themeId" ]]; then
+    resolved_update_theme_name="$selected_theme_name"
+  fi
+  resolved_update_theme_name="$(normalize_theme_name "$resolved_update_theme_name")"
 fi
 
 echo
@@ -462,7 +469,11 @@ if [[ "$deploy_mode" == "1" ]]; then
   echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 else
   echo "Deploy mode: Update existing theme"
-  echo "Theme name: unchanged (kept from existing Zendesk theme)"
+  if [[ -n "$resolved_update_theme_name" ]]; then
+    echo "Theme name: preserved from existing Zendesk theme (${resolved_update_theme_name})"
+  else
+    echo "Theme name: unchanged (kept from existing Zendesk theme)"
+  fi
   echo "Theme target: ${selected_theme_name}"
   echo "Theme ID: ${selected_theme_id}"
 fi
@@ -497,6 +508,14 @@ trap restore_manifest EXIT
 
 if [[ "$deploy_mode" == "1" ]]; then
   ZD_DEPLOY_THEME_NAME="$theme_name" node <<'NODE'
+const fs = require('fs');
+const path = 'manifest.json';
+const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
+fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
+NODE
+elif [[ "$deploy_mode" == "2" && -n "$resolved_update_theme_name" ]]; then
+  ZD_DEPLOY_THEME_NAME="$resolved_update_theme_name" node <<'NODE'
 const fs = require('fs');
 const path = 'manifest.json';
 const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
