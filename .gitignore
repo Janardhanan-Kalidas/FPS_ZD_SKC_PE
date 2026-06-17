@@ -1,6 +1,7 @@
 # Local environment
 .env.local
 .env.*.local
+.envrc
 
 # Dependencies
 node_modules/
