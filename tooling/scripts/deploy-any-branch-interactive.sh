@@ -27,90 +27,6 @@ normalize_theme_name() {
   printf '%s' "$name"
 }
 
-trigger_external_validation_pipeline() {
-  local base_url="$1"
-  local validation_environment="$2"
-  local validation_source="$3"
-  local gate_mode="$4"
-  local validation_phase="$5"
-  local deployment_type="$6"
-
-  if [[ "${ENABLE_EXTERNAL_VALIDATION_TRIGGER:-true}" != "true" ]]; then
-    echo "External validation trigger disabled by ENABLE_EXTERNAL_VALIDATION_TRIGGER."
-    return 0
-  fi
-
-  local gitlab_api_url="${VALIDATION_GITLAB_API_URL:-https://git.hilti.com/api/v4}"
-  local validation_project_path="${VALIDATION_PROJECT_PATH:-bu-f-ps/sw-support-group/skc_pe_deployment_validation}"
-  local validation_ref="${VALIDATION_REF:-main}"
-  local trigger_token="${VALIDATION_TRIGGER_TOKEN:-}"
-
-  if [[ -z "$trigger_token" ]]; then
-    echo "Skipping external validation trigger: VALIDATION_TRIGGER_TOKEN is not set."
-    if [[ "$gate_mode" == "hard" ]]; then
-      return 1
-    fi
-    return 0
-  fi
-
-  local encoded_project_path
-  encoded_project_path="$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$validation_project_path")"
-  local trigger_url="${gitlab_api_url}/projects/${encoded_project_path}/trigger/pipeline"
-
-  local response_file
-  response_file="$(mktemp)"
-
-  local http_code
-  set +e
-  http_code="$(curl -sS -o "$response_file" -w "%{http_code}" \
-    -X POST "$trigger_url" \
-    --form "token=${trigger_token}" \
-    --form "ref=${validation_ref}" \
-    --form "variables[TEST_BASE_URL]=${base_url}" \
-    --form "variables[TARGET_NAME]=${validation_environment}" \
-    --form "variables[VALIDATION_ENVIRONMENT]=${validation_environment}" \
-    --form "variables[VALIDATION_SOURCE]=${validation_source}" \
-    --form "variables[VALIDATION_GATE_MODE]=${gate_mode}" \
-    --form "variables[VALIDATION_PHASE]=${validation_phase}" \
-    --form "variables[VALIDATION_DEPLOYMENT_TYPE]=${deployment_type}" \
-    --form "variables[VALIDATION_REF_NAME]=$(git branch --show-current)" \
-    --form "variables[VALIDATION_COMMIT_SHA]=$(git rev-parse HEAD)" \
-    --form "variables[DEPLOYMENT_TIMESTAMP]=$(date -u +%Y-%m-%dT%H:%M:%SZ)")"
-  local curl_exit=$?
-  set -e
-
-  local pipeline_web_url=""
-  pipeline_web_url="$(node - "$response_file" <<'NODE'
-const fs = require('fs');
-const path = process.argv[2];
-try {
-  const payload = JSON.parse(fs.readFileSync(path, 'utf8'));
-  if (payload && payload.web_url) process.stdout.write(String(payload.web_url));
-} catch {
-  // Ignore parse errors.
-}
-NODE
-)"
-
-  if [[ $curl_exit -ne 0 || "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
-    echo "External validation trigger failed (HTTP ${http_code})."
-    cat "$response_file"
-    rm -f "$response_file"
-    if [[ "$gate_mode" == "hard" ]]; then
-      return 1
-    fi
-    return 0
-  fi
-
-  rm -f "$response_file"
-  echo "External validation pipeline triggered successfully."
-  if [[ -n "$pipeline_web_url" ]]; then
-    echo "Validation pipeline URL: ${pipeline_web_url}"
-  fi
-
-  return 0
-}
-
 theme_version="$(node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.version||'unknown'));")"
 
 echo "Step 1/5: Current branch and local status"
@@ -200,41 +116,10 @@ manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
 fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
-test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}}}"
-validation_environment="preview"
-validation_source="local_deploy_new_theme"
-validation_gate_mode="soft"
-validation_deployment_type="branch_new"
-
-echo
-echo "Triggering pre-deployment validation pipeline..."
-if [[ -z "$test_base_url" ]]; then
-  echo "Unable to auto-resolve deployment URL for external validation trigger."
-  echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
-  echo "Soft gate mode for new-theme deployment, continuing without pre-deploy trigger."
-else
-  echo "Auto-selected validation base URL: ${test_base_url}"
-  if ! trigger_external_validation_pipeline "$test_base_url" "$validation_environment" "$validation_source" "$validation_gate_mode" "pre_deploy" "$validation_deployment_type"; then
-    echo "Pre-deployment validation trigger failed in hard-gate mode."
-    exit 1
-  fi
-fi
-
 if [[ -n "$brand_id" ]]; then
   zcli themes:import . --brandId="$brand_id"
 else
   zcli themes:import .
-fi
-
-echo
-echo "Triggering post-deployment validation pipeline..."
-if [[ -z "$test_base_url" ]]; then
-  echo "Post-deploy validation skipped: TEST_BASE_URL could not be resolved."
-else
-  if ! trigger_external_validation_pipeline "$test_base_url" "$validation_environment" "$validation_source" "$validation_gate_mode" "post_deploy" "$validation_deployment_type"; then
-    echo "Post-deployment validation trigger failed in hard-gate mode."
-    exit 1
-  fi
 fi
 
 echo "Deployment finished."
