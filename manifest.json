@@ -1747,6 +1747,13 @@
           ]
         },
         {
+          "identifier": "show_article_author",
+          "type": "checkbox",
+          "description": "show_article_author_description",
+          "label": "show_article_author_label",
+          "value": true
+        },
+        {
           "identifier": "show_follow_article",
           "type": "checkbox",
           "description": "follow_article_description",

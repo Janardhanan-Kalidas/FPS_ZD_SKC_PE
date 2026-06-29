@@ -9,40 +9,214 @@ Welcome! This comprehensive guide contains all documentation for the Zendesk the
 1. [Development Setup Guide](#development-setup-guide)
 2. [Local Theme Preview](#local-theme-preview)
 3. [Theme Versioning](#theme-versioning)
-4. [External Validation Workflow](#external-validation-workflow)
+4. [Deployment Setup and Validation Workflow](#deployment-setup-and-validation-workflow)
 
 ---
 
-## External Validation Workflow
+## Deployment Setup and Validation Workflow
 
-Theme validation and Confluence publishing are owned by the external repository:
+The deployment pipeline is defined in `.gitlab-ci.yml` and uses an external validation project for all validation execution:
 
 - `https://git.hilti.com/bu-f-ps/sw-support-group/skc_pe_deployment_validation`
 
-This theme repository does not publish to Confluence directly. It only triggers validation phases.
+This repository is responsible for deploy orchestration. Validation test execution and reporting are handled by the external validation repository.
 
-### How validation is triggered
+### Pipeline stages
 
-- CI branch and production deployments trigger `pre_deploy` validation before deployment execution.
-- If pre-deploy validation passes, deployment runs.
-- After successful deployment, CI triggers `post_deploy` full validation.
-- Local deployment scripts also trigger validation in two phases:
-  - `pre_deploy` before deploy
-  - `post_deploy` after deploy
-- Browser-by-browser execution for post-deploy full functional testing is orchestrated in the validation repository (Chrome first, then Edge).
+The CI/CD stages run in this order:
 
-### Gate behavior
+1. `release`
+2. `backup`
+3. `pre_deploy_validate`
+4. `deploy`
+5. `post_deploy_validate`
+6. `post_deploy_full_test`
 
-- Main/production deployments use hard-gate behavior for pre and post validation.
-- Branch/preview deployments can use soft-gate behavior for validation triggers.
+### Branch strategy
 
-### Required trigger variables for local deployments
+There are two deployment paths:
 
-- `VALIDATION_TRIGGER_TOKEN` (GitLab pipeline trigger token from validation project)
-- Optional overrides:
-  - `VALIDATION_PROJECT_PATH` (default: `bu-f-ps/sw-support-group/skc_pe_deployment_validation`)
-  - `VALIDATION_REF` (default: `main`)
-  - `VALIDATION_GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
+1. **Main branch path (production)**
+    - Pre-deploy validation (`hard` gate)
+    - Production backup
+    - Manual production deploy (confirmation required)
+    - Post-deploy validation (`hard` gate)
+    - Full post-deploy regression (`hard` gate)
+
+2. **Current/any non-main branch path (preview)**
+    - Pre-deploy validation (`soft` gate)
+    - Manual branch deploy (confirmation required)
+    - Post-deploy validation (`soft` gate)
+    - Full post-deploy regression (`soft` gate, allowed to fail)
+
+### End-to-end workflow
+
+```mermaid
+flowchart TD
+   A[Pipeline Start] --> B{Default branch?}
+
+   B -->|Yes| C[theme_backup_production]
+   C --> D[theme_validate_before_deploy_main\nphase=pre_deploy\ngate=hard]
+   D --> E[theme_deploy_production\nmanual + DEPLOY_CONFIRM]
+   E --> F[theme_validate_after_deploy_main\nphase=post_deploy\ngate=hard]
+   F --> G[theme_full_test_after_deploy_main\nphase=post_deploy_full\ngate=hard]
+
+   B -->|No| H[theme_validate_before_deploy_branch\nphase=pre_deploy\ngate=soft]
+   H --> I[theme_deploy_branch\nmanual + DEPLOY_CONFIRM_BRANCH]
+   I --> J[theme_validate_after_deploy_branch\nphase=post_deploy\ngate=soft]
+   J --> K[theme_full_test_after_deploy_branch\nphase=post_deploy_full\ngate=soft\nallow_failure=true]
+
+   E --> L[Optional: theme_rollback_production\nmanual + ROLLBACK_CONFIRM]
+   L --> M[theme_validate_after_rollback\nphase=post_deploy\nsource=theme_rollback\ngate=hard]
+```
+
+### Validation phases and what they mean
+
+Validation behavior is driven by variables passed to the external validation pipeline:
+
+- `VALIDATION_PHASE=pre_deploy`
+  - Runs before deployment.
+  - Used as an entry gate for deploy jobs.
+- `VALIDATION_PHASE=post_deploy`
+  - Runs immediately after deployment (or rollback).
+  - Validates deployed environment health and readiness.
+- `VALIDATION_PHASE=post_deploy_full`
+  - Runs separate full regression after post-deploy checks.
+  - Intended for broader functional coverage and deeper verification.
+
+### Gate behavior standards
+
+- `VALIDATION_GATE_MODE=hard` blocks progression when validation fails (used for production/main).
+- `VALIDATION_GATE_MODE=soft` allows progression while still reporting failures (used for preview/branch).
+- Branch full regression is configured with `allow_failure: true` to keep feature branch flow unblocked.
+
+### Required deployment variables
+
+Required in CI for deploy and rollback jobs:
+
+- `ZD_SUBDOMAIN`
+- `ZD_EMAIL`
+- `ZD_API_TOKEN`
+
+Production deploy confirmation:
+
+- `DEPLOY_CONFIRM=DEPLOY_TO_PROD`
+
+Branch deploy confirmation:
+
+- `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
+
+Production rollback confirmation:
+
+- `ROLLBACK_CONFIRM=ROLLBACK_TO_PROD`
+
+### External validation contract
+
+The external validation project receives and uses these key variables:
+
+- `VALIDATION_PHASE`
+- `VALIDATION_SOURCE`
+- `VALIDATION_DEPLOYMENT_TYPE`
+- `VALIDATION_ENVIRONMENT`
+- `VALIDATION_GATE_MODE`
+- `TEST_BASE_URL`
+- `TARGET_NAME`
+- `VALIDATION_REF_NAME`
+- `VALIDATION_COMMIT_SHA`
+- `DEPLOYMENT_TIMESTAMP`
+
+Ensure the external validation repository supports these deployment types:
+
+- `main_production`
+- `branch_update`
+- `main_full_regression`
+- `branch_full_regression`
+
+### Quick Runbook
+
+Use this runbook for standard deployment operations in GitLab.
+
+#### 1) Main branch production deployment
+
+Pre-checks:
+
+- Confirm branch is the default branch.
+- Ensure backup job has completed successfully.
+- Ensure pre-deploy validation job passed.
+
+Set CI/CD variables for the manual deploy job:
+
+```text
+ZD_SUBDOMAIN=<your_subdomain>
+ZD_EMAIL=<service_account_email>
+ZD_API_TOKEN=<api_token>
+DEPLOY_CONFIRM=DEPLOY_TO_PROD
+```
+
+Run order:
+
+1. `theme_backup_production`
+2. `theme_validate_before_deploy_main`
+3. `theme_deploy_production` (manual)
+4. `theme_validate_after_deploy_main`
+5. `theme_full_test_after_deploy_main`
+
+Success criteria:
+
+- Deploy job succeeds.
+- Post-deploy validation succeeds.
+- Full post-deploy regression succeeds.
+
+#### 2) Current/any non-main branch deployment (preview)
+
+Pre-checks:
+
+- Confirm branch is not the default branch.
+- Ensure pre-deploy branch validation has completed.
+
+Set CI/CD variables for the manual deploy job:
+
+```text
+ZD_SUBDOMAIN=<your_subdomain>
+ZD_EMAIL=<service_account_email>
+ZD_API_TOKEN=<api_token>
+DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH
+```
+
+Run order:
+
+1. `theme_validate_before_deploy_branch`
+2. `theme_deploy_branch` (manual)
+3. `theme_validate_after_deploy_branch`
+4. `theme_full_test_after_deploy_branch` (non-blocking)
+
+Success criteria:
+
+- Deploy job succeeds.
+- Post-deploy validation result is reviewed.
+- Full regression report is reviewed (does not block branch flow).
+
+#### 3) Production rollback checklist
+
+When to use:
+
+- Main deployment failed or introduced production instability.
+
+Set CI/CD variables for rollback job:
+
+```text
+ZD_SUBDOMAIN=<your_subdomain>
+ZD_EMAIL=<service_account_email>
+ZD_API_TOKEN=<api_token>
+ROLLBACK_CONFIRM=ROLLBACK_TO_PROD
+```
+
+Run order:
+
+1. Verify latest backup artifact exists.
+2. Trigger `theme_rollback_production` (manual).
+3. Verify `theme_validate_after_rollback` passes.
+4. Share rollback outcome and validation evidence in release channel/ticket.
 
 ## Development Setup Guide
 

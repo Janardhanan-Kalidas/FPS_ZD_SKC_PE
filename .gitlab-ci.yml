@@ -1,5 +1,5 @@
 # Author: Kalidas, Janardhanan
-# Updated: 2026-06-17
+# Updated: 2026-06-29
 
 workflow:
   rules:
@@ -15,6 +15,7 @@ stages:
   - pre_deploy_validate
   - deploy
   - post_deploy_validate
+  - post_deploy_full_test
 
 variables:
   GIT_DEPTH: "0"
@@ -25,6 +26,8 @@ variables:
   EXTERNAL_VALIDATION_BRANCH: "Main"
   VALIDATION_DEPLOYMENT_TYPE_MAIN: "main_production"
   VALIDATION_DEPLOYMENT_TYPE_BRANCH: "branch_update"
+  VALIDATION_DEPLOYMENT_TYPE_MAIN_FULL: "main_full_regression"
+  VALIDATION_DEPLOYMENT_TYPE_BRANCH_FULL: "branch_full_regression"
   VALIDATION_DEPLOYMENT_TIMESTAMP: "$CI_PIPELINE_CREATED_AT"
 
 default:
@@ -46,6 +49,42 @@ default:
         npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
       fi
       npx zcli --version
+
+.validate_trigger_template:
+  trigger:
+    project: $EXTERNAL_VALIDATION_PROJECT
+    branch: $EXTERNAL_VALIDATION_BRANCH
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  allow_failure: false
+
+.required_vars_check_cmd: &required_vars_check_cmd |
+  required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+  for name in "${required[@]}"; do
+    if [[ -z "${!name:-}" ]]; then
+      echo "Blocked: missing required variable '$name'"
+      exit 1
+    fi
+  done
+
+.production_deploy_confirm_check_cmd: &production_deploy_confirm_check_cmd |
+  if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
+    echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
+    exit 1
+  fi
+
+.branch_deploy_confirm_check_cmd: &branch_deploy_confirm_check_cmd |
+  if [[ "${DEPLOY_CONFIRM_BRANCH:-}" != "DEPLOY_TO_BRANCH" ]]; then
+    echo "Branch deploy blocked: set DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH"
+    exit 1
+  fi
+
+.rollback_confirm_check_cmd: &rollback_confirm_check_cmd |
+  if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
+    echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
+    exit 1
+  fi
 
 theme_version_release:
   stage: release
@@ -74,14 +113,9 @@ theme_backup_production:
 
 theme_validate_before_deploy_main:
   stage: pre_deploy_validate
+  extends: .validate_trigger_template
   needs:
     - theme_backup_production
-  trigger:
-    project: $EXTERNAL_VALIDATION_PROJECT
-    branch: $EXTERNAL_VALIDATION_BRANCH
-    strategy: depend
-    forward:
-      pipeline_variables: true
   variables:
     VALIDATION_PHASE: "pre_deploy"
     VALIDATION_SOURCE: "theme_deploy"
@@ -96,16 +130,10 @@ theme_validate_before_deploy_main:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
-  allow_failure: false
 
 theme_validate_before_deploy_branch:
   stage: pre_deploy_validate
-  trigger:
-    project: $EXTERNAL_VALIDATION_PROJECT
-    branch: $EXTERNAL_VALIDATION_BRANCH
-    strategy: depend
-    forward:
-      pipeline_variables: true
+  extends: .validate_trigger_template
   variables:
     VALIDATION_PHASE: "pre_deploy"
     VALIDATION_SOURCE: "theme_deploy"
@@ -120,26 +148,18 @@ theme_validate_before_deploy_branch:
   rules:
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: on_success
-  allow_failure: false
 
 theme_deploy_production:
   stage: deploy
+  environment:
+    name: production
   needs:
+    - theme_backup_production
     - theme_validate_before_deploy_main
   resource_group: production
   script:
-    - |
-      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
-      for name in "${required[@]}"; do
-        if [[ -z "${!name:-}" ]]; then
-          echo "Deploy blocked: missing required variable '$name'"
-          exit 1
-        fi
-      done
-      if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
-        echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
-        exit 1
-      fi
+    - *required_vars_check_cmd
+    - *production_deploy_confirm_check_cmd
     - npm run deploy:theme
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -148,21 +168,13 @@ theme_deploy_production:
 
 theme_deploy_branch:
   stage: deploy
+  environment:
+    name: preview/$CI_COMMIT_REF_SLUG
   needs:
     - theme_validate_before_deploy_branch
   script:
-    - |
-      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
-      for name in "${required[@]}"; do
-        if [[ -z "${!name:-}" ]]; then
-          echo "Branch deploy blocked: missing required variable '$name'"
-          exit 1
-        fi
-      done
-      if [[ "${DEPLOY_CONFIRM_BRANCH:-}" != "DEPLOY_TO_BRANCH" ]]; then
-        echo "Branch deploy blocked: set DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH"
-        exit 1
-      fi
+    - *required_vars_check_cmd
+    - *branch_deploy_confirm_check_cmd
     - npm run deploy:theme
   rules:
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
@@ -171,22 +183,14 @@ theme_deploy_branch:
 
 theme_rollback_production:
   stage: deploy
+  environment:
+    name: production
   needs:
     - theme_backup_production
   resource_group: production
   script:
-    - |
-      required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
-      for name in "${required[@]}"; do
-        if [[ -z "${!name:-}" ]]; then
-          echo "Rollback blocked: missing required variable '$name'"
-          exit 1
-        fi
-      done
-      if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
-        echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
-        exit 1
-      fi
+    - *required_vars_check_cmd
+    - *rollback_confirm_check_cmd
     - npm run rollback:theme
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -195,14 +199,9 @@ theme_rollback_production:
 
 theme_validate_after_deploy_main:
   stage: post_deploy_validate
+  extends: .validate_trigger_template
   needs:
     - theme_deploy_production
-  trigger:
-    project: $EXTERNAL_VALIDATION_PROJECT
-    branch: $EXTERNAL_VALIDATION_BRANCH
-    strategy: depend
-    forward:
-      pipeline_variables: true
   variables:
     VALIDATION_PHASE: "post_deploy"
     VALIDATION_SOURCE: "theme_deploy"
@@ -216,18 +215,12 @@ theme_validate_after_deploy_main:
     DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-  allow_failure: false
 
 theme_validate_after_deploy_branch:
   stage: post_deploy_validate
+  extends: .validate_trigger_template
   needs:
     - theme_deploy_branch
-  trigger:
-    project: $EXTERNAL_VALIDATION_PROJECT
-    branch: $EXTERNAL_VALIDATION_BRANCH
-    strategy: depend
-    forward:
-      pipeline_variables: true
   variables:
     VALIDATION_PHASE: "post_deploy"
     VALIDATION_SOURCE: "theme_deploy"
@@ -241,18 +234,51 @@ theme_validate_after_deploy_branch:
     DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
   rules:
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-  allow_failure: false
+
+theme_full_test_after_deploy_main:
+  stage: post_deploy_full_test
+  extends: .validate_trigger_template
+  needs:
+    - theme_validate_after_deploy_main
+  variables:
+    VALIDATION_PHASE: "post_deploy_full"
+    VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_DEPLOYMENT_TYPE: "$VALIDATION_DEPLOYMENT_TYPE_MAIN_FULL"
+    VALIDATION_ENVIRONMENT: "production"
+    VALIDATION_GATE_MODE: "hard"
+    TEST_BASE_URL: "$ZD_PROD_BASE_URL"
+    TARGET_NAME: "production"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+theme_full_test_after_deploy_branch:
+  stage: post_deploy_full_test
+  extends: .validate_trigger_template
+  needs:
+    - theme_validate_after_deploy_branch
+  allow_failure: true
+  variables:
+    VALIDATION_PHASE: "post_deploy_full"
+    VALIDATION_SOURCE: "theme_deploy"
+    VALIDATION_DEPLOYMENT_TYPE: "$VALIDATION_DEPLOYMENT_TYPE_BRANCH_FULL"
+    VALIDATION_ENVIRONMENT: "preview"
+    VALIDATION_GATE_MODE: "soft"
+    TEST_BASE_URL: "$ZD_PREVIEW_BASE_URL"
+    TARGET_NAME: "preview"
+    VALIDATION_REF_NAME: "$CI_COMMIT_REF_NAME"
+    VALIDATION_COMMIT_SHA: "$CI_COMMIT_SHA"
+    DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
+  rules:
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
 
 theme_validate_after_rollback:
   stage: post_deploy_validate
+  extends: .validate_trigger_template
   needs:
     - theme_rollback_production
-  trigger:
-    project: $EXTERNAL_VALIDATION_PROJECT
-    branch: $EXTERNAL_VALIDATION_BRANCH
-    strategy: depend
-    forward:
-      pipeline_variables: true
   variables:
     VALIDATION_PHASE: "post_deploy"
     VALIDATION_SOURCE: "theme_rollback"
@@ -266,4 +292,3 @@ theme_validate_after_rollback:
     DEPLOYMENT_TIMESTAMP: "$VALIDATION_DEPLOYMENT_TIMESTAMP"
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-  allow_failure: false
