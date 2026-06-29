@@ -436,6 +436,7 @@
     for (var i = 0; i < allULs.length; i++) {
       var ul = allULs[i];
       if (ul.closest && ul.closest('header, nav, footer, .breadcrumbs, .pagination')) continue;
+      if (ul.closest && ul.closest('.article-content, [itemprop="articleBody"]')) continue;
       var liCount = 0;
       for (var c = 0; c < ul.children.length; c++) if (ul.children[c].tagName === 'LI') liCount++;
       if (liCount >= (MAX_VISIBLE + 1)) out.push({ ul: ul, liCount: liCount });
