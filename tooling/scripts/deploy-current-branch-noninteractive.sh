@@ -280,6 +280,7 @@ trigger_external_validation_pipeline() {
     echo "Skipping external validation trigger: VALIDATION_TRIGGER_TOKEN is not set."
     if [[ "$gate_mode" == "hard" ]]; then
       echo "Hard gate active, cannot continue without external validation trigger token."
+      echo "Either set VALIDATION_TRIGGER_TOKEN or choose non-live deployment (soft gate)."
       return 1
     fi
     return 0
@@ -588,6 +589,32 @@ if [[ "$set_theme_live_choice" == "yes" ]]; then
   validation_source="local_deploy_live"
   validation_gate_mode="hard"
   validation_deployment_type="main_production"
+fi
+
+if [[ "$validation_gate_mode" == "hard" ]] && [[ "${ENABLE_EXTERNAL_VALIDATION_TRIGGER:-true}" == "true" ]] && [[ -z "${VALIDATION_TRIGGER_TOKEN:-}" ]]; then
+  echo
+  echo "Live deployment requires external validation trigger in hard-gate mode."
+  echo "Missing required variable: VALIDATION_TRIGGER_TOKEN"
+  echo
+  echo "Choose how to continue:"
+  echo "1. Switch to non-live deployment (preview, soft gate)"
+  echo "2. Abort deployment"
+  missing_token_choice="$(pick_menu_index "Select option" "2" "2")"
+
+  if [[ "$missing_token_choice" == "1" ]]; then
+    set_theme_live_choice="no"
+    validation_environment="preview"
+    validation_source="local_deploy"
+    validation_gate_mode="soft"
+    validation_deployment_type="branch_update"
+    if [[ "$deploy_mode" == "1" ]]; then
+      validation_deployment_type="branch_new"
+    fi
+    echo "Switched to non-live deployment mode."
+  else
+    echo "Deployment cancelled. Set VALIDATION_TRIGGER_TOKEN to enable live deployment."
+    exit 1
+  fi
 fi
 
 echo

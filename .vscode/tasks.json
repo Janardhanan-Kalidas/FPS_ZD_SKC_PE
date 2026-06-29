@@ -66,7 +66,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Zendesk: Deploy Current Branch (Non-Interactive)",
+      "label": "Zendesk: Deploy Current Branch (Interactive)",
       "type": "shell",
       "command": "bash",
       "args": [
