@@ -124,9 +124,21 @@
 
   function init() {
     bindInput();
-    // Re-bind after SPA navigation or dynamic DOM changes
-    new MutationObserver(bindInput)
-      .observe(document.documentElement, { childList: true, subtree: true });
+
+    // Only watch for late-rendered search input if it is not present yet.
+    // Avoid a permanent whole-document observer on normal page loads.
+    var input = document.querySelector('input[name="query"], input[type="search"]');
+    if (input) return;
+
+    var searchObserver = new MutationObserver(function () {
+      bindInput();
+      var resolvedInput = document.querySelector('input[name="query"], input[type="search"]');
+      if (resolvedInput && resolvedInput._hkInstantBound) {
+        searchObserver.disconnect();
+      }
+    });
+
+    searchObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === 'loading') {
@@ -618,7 +630,8 @@
         }
       }
     });
-    rootMo.observe(document.body, { childList: true, subtree: true });
+    var observeRoot = document.querySelector('main') || document.body;
+    rootMo.observe(observeRoot, { childList: true, subtree: true });
   });
 })();
 
