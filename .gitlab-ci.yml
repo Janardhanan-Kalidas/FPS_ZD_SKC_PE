@@ -117,6 +117,8 @@ theme_deploy_branch:
     - *branch_deploy_confirm_check_cmd
     - npm run deploy:theme
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: on_success
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       when: manual
   allow_failure: false

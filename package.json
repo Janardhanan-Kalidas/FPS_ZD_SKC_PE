@@ -10,6 +10,7 @@
     "version:theme:major": "node tooling/scripts/version-theme.mjs --release-as major",
     "backup:theme": "bash tooling/scripts/backup-zendesk-theme.sh",
     "deploy:theme": "bash tooling/scripts/deploy-zendesk-theme.sh",
+    "deploy:gitlab:interactive": "bash tooling/scripts/trigger-gitlab-branch-deploy-interactive.sh",
     "rollback:theme": "bash tooling/scripts/rollback-zendesk-theme.sh"
   }
 }

@@ -87,6 +87,34 @@ Production rollback confirmation:
 
 Use this runbook for standard deployment operations in GitLab.
 
+#### VS Code task: interactive branch deployment via GitLab
+
+Use VS Code task `Zendesk: Trigger GitLab Branch Deploy (Interactive)` to launch a GitLab pipeline from your terminal workflow.
+
+Interactive flow:
+
+1. Select branch from remote branch list.
+2. Select deployment type: `new` or `update`.
+3. If `new`, auto-generate theme name (max 50 chars) and allow optional edit.
+4. If `update`, provide existing `themeId`.
+5. Trigger GitLab pipeline with selected inputs.
+
+Required local variable for the trigger task:
+
+- `GITLAB_TRIGGER_TOKEN`
+
+Optional local variables for the trigger task:
+
+- `GITLAB_PROJECT_PATH` (defaults from `origin` remote)
+- `GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
+
+Pipeline variables sent automatically by the task:
+
+- `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
+- `DEPLOY_MODE` (`new` or `update`)
+- `ZD_THEME_NAME` (for `new` mode)
+- `ZD_THEME_ID` (for `update` mode)
+
 #### 1) Main branch production deployment
 
 Pre-checks:
