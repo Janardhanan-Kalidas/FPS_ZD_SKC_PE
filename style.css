@@ -774,10 +774,27 @@ input[type="search"] {
   appearance: none;
 }
 
-input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration {
+/* Keep default search decoration hidden */
+input[type="search"]::-webkit-search-decoration {
   -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
+}
+
+/* Custom clear X icon (shows only when input has value in WebKit/Blink) */
+.search [type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  background: no-repeat center / 14px 14px
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2 2 L10 10 M10 2 L2 10' stroke='%23524f53' stroke-width='1.8' stroke-linecap='round'/></svg>");
+}
+
+/* Hover color: Hilti Red */
+.search [type="search"]::-webkit-search-cancel-button:hover {
+  background: no-repeat center / 14px 14px
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2 2 L10 10 M10 2 L2 10' stroke='%23d2051e' stroke-width='1.8' stroke-linecap='round'/></svg>");
 }
 
 select::-ms-expand, .nesty-input::-ms-expand,
@@ -1443,6 +1460,17 @@ fieldset:disabled a.button {
   border-color: rgba(221, 220, 221, 1);
   border-radius: 4px;
 }
+
+/* Search placeholder text color */
+.search [type="search"]::placeholder {
+  color: #BAB9BA !important;
+  opacity: 1;
+}
+
+/* Optional legacy support */
+.search [type="search"]::-webkit-input-placeholder { color: #BAB9BA !important; }
+.search [type="search"]::-moz-placeholder { color: #BAB9BA !important; opacity: 1; }
+.search [type="search"]:-ms-input-placeholder { color: #BAB9BA !important; }
 
 .search-sm [type="search"] {
   padding: 0.375em 0.675em;
