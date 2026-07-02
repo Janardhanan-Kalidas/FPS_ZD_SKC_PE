@@ -1844,7 +1844,7 @@
           "type": "checkbox",
           "description": "show_article_voting_description",
           "label": "show_article_voting_label",
-          "value": true
+          "value": false
         },
         {
           "identifier": "show_article_sharing",

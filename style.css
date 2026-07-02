@@ -17846,7 +17846,7 @@ header.d-flex h1 {
   transition: background 0.2s;
 }
 .hilti-lang-trigger:hover {
-  background: rgba(215, 206, 189, 0.6);
+  background: #F1F1F1;
 }
 .hilti-lang-icon {
   width: 18px;
@@ -17993,7 +17993,6 @@ header.d-flex h1 {
   color: #524f53;
   font-weight: 600;
   cursor: pointer;
-  border-radius: 3px;
   transition: background 0.2s, border-color 0.2s;
 }
 .hilti-lang-btn:hover {
@@ -18337,14 +18336,14 @@ header.d-flex h1 {
 }
 
 .category-page [data-element="navigation"] ul li a:hover {
-  background-color: #eeebe5 !important;
+  background-color: #F1F1F1 !important;
   color: #d2051e !important;
 }
 
 /* Active / current category in sidebar */
 .category-page [data-element="navigation"] ul li a.underline,
 .category-page [data-element="navigation"] ul li a[aria-current="page"] {
-  background-color: #e7e5e2 !important;
+  background-color: #E7E5E2 !important;
   color: #d2051e !important;
   font-weight: 600 !important;
   text-decoration: none !important;
@@ -18530,13 +18529,13 @@ header.d-flex h1 {
 }
 
 .section-page [data-element="navigation"] ul li a:hover {
-  background-color: #eeebe5 !important;
+  background-color: #F1F1F1 !important;
   color: #d2051e !important;
 }
 
 .section-page [data-element="navigation"] ul li a.underline,
 .section-page [data-element="navigation"] ul li a[aria-current="page"] {
-  background-color: #e7e5e2 !important;
+  background-color: #E7E5E2 !important;
   color: #d2051e !important;
   font-weight: 600 !important;
   text-decoration: none !important;
@@ -18557,7 +18556,7 @@ header.d-flex h1 {
 }
 
 .section-page [data-element="navigation"] .sidebar-section-link.is-active {
-  background-color: #e7e5e2 !important;
+  background-color: #E7E5E2 !important;
   color: #d2051e !important;
   font-weight: 600 !important;
 }
@@ -18715,7 +18714,7 @@ header.d-flex h1 {
 
 .hc-filter-count {
   font-size: 0.8125rem;
-  color: #999;
+  color: #F1F1F1;
   margin-left: 0.25rem;
 }
 
@@ -18724,8 +18723,7 @@ header.d-flex h1 {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  border: 1.5px solid #aaa;
-  border-radius: 3px;
+  border: 1.5px solid #EAEAEA;
   background: #fff;
   display: inline-block;
   transition: border-color 0.2s, background 0.2s;
@@ -19281,13 +19279,13 @@ button.hc-page-btn {
 }
 
 .article-sidebar-link:hover {
-  background-color: #eeebe5;
+  background-color: #F1F1F1 !important;
   color: #d2051e !important;
   text-decoration: none;
 }
 
 .article-sidebar-link.is-active {
-  background-color: #e7e5e2 !important;
+  background-color: #E7E5E2 !important;
   color: #d2051e !important;
   font-weight: 600;
 }
@@ -19324,6 +19322,37 @@ button.hc-page-btn {
    Previous / Next article navigation controls
    Adjust: font-size, color, hover-color
 ---------------------------------------------------------- */
+[data-element="article-navigation"] {
+  border-top: 1px solid #CFCCC5;
+  padding-top: 1rem;
+}
+
+.article-navigation-no-voting-divider {
+  border-bottom: 1px solid #CFCCC5;
+  padding-bottom: 1rem;
+}
+
+[data-element="article-navigation"] .row {
+  margin-left: 0;
+  margin-right: 0;
+  align-items: center;
+  justify-content: space-between;
+}
+
+[data-element="article-navigation"] .row > .sm\:col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  min-height: 4.5rem;
+}
+
+[data-element="article-navigation"] .row > .sm\:col.text-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
 [data-element="article-navigation"] h4 {
   font-size: 1rem;     /* ← "Previous article" / "Next article" label size */
   color: #524F53;           /* ← label color */
@@ -19660,7 +19689,7 @@ button.hc-page-btn {
   font-size: 0.6875rem;
   font-weight: 500;
   color: #524f53 !important;
-  background: #E7E5E2;
+  background: #CFCCC5;
   border-radius: 0;
   text-decoration: none;
   transition: background 0.15s;

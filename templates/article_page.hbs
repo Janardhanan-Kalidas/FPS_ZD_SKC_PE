@@ -226,7 +226,7 @@
       {{! Article navigation }}
       {{~#isnt settings.article_navigation_style 'none'}}
         <div
-          class="my-6"
+          class="my-6{{#unless settings.show_article_voting}} article-navigation-no-voting-divider{{/unless}}"
           data-element="article-navigation"
           data-template="article-navigation"
           data-next-title="{{#if settings.use_translations}}{{dc 'next_article'}}{{else}}{{settings.next_article_title}}{{/if}}"
