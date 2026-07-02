@@ -124,9 +124,21 @@
 
   function init() {
     bindInput();
-    // Re-bind after SPA navigation or dynamic DOM changes
-    new MutationObserver(bindInput)
-      .observe(document.documentElement, { childList: true, subtree: true });
+
+    // Only watch for late-rendered search input if it is not present yet.
+    // Avoid a permanent whole-document observer on normal page loads.
+    var input = document.querySelector('input[name="query"], input[type="search"]');
+    if (input) return;
+
+    var searchObserver = new MutationObserver(function () {
+      bindInput();
+      var resolvedInput = document.querySelector('input[name="query"], input[type="search"]');
+      if (resolvedInput && resolvedInput._hkInstantBound) {
+        searchObserver.disconnect();
+      }
+    });
+
+    searchObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === 'loading') {
@@ -436,6 +448,7 @@
     for (var i = 0; i < allULs.length; i++) {
       var ul = allULs[i];
       if (ul.closest && ul.closest('header, nav, footer, .breadcrumbs, .pagination')) continue;
+      if (ul.closest && ul.closest('.article-content, [itemprop="articleBody"]')) continue;
       var liCount = 0;
       for (var c = 0; c < ul.children.length; c++) if (ul.children[c].tagName === 'LI') liCount++;
       if (liCount >= (MAX_VISIBLE + 1)) out.push({ ul: ul, liCount: liCount });
@@ -617,7 +630,8 @@
         }
       }
     });
-    rootMo.observe(document.body, { childList: true, subtree: true });
+    var observeRoot = document.querySelector('main') || document.body;
+    rootMo.observe(observeRoot, { childList: true, subtree: true });
   });
 })();
 

@@ -254,44 +254,6 @@ NODE
   printf '%s' "$active_subdomain"
 }
 
-get_manifest_default_locale() {
-  node -e "const fs=require('fs');try{const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.default_locale||'en-us'));}catch{process.stdout.write('en-us');}"
-}
-
-resolve_confluence_email() {
-  if [[ -n "${ATLASSIAN_USER_EMAIL:-}" ]]; then
-    printf '%s' "${ATLASSIAN_USER_EMAIL}"
-    return 0
-  fi
-
-  local git_email=""
-  git_email="$(git config --get user.email 2>/dev/null || true)"
-  if [[ -n "$git_email" ]]; then
-    printf '%s' "$git_email"
-    return 0
-  fi
-
-  printf '%s' ""
-}
-
-resolve_confluence_api_token() {
-  if [[ -n "${ATLASSIAN_API_TOKEN:-}" ]]; then
-    printf '%s' "${ATLASSIAN_API_TOKEN}"
-    return 0
-  fi
-
-  if ! command -v security >/dev/null 2>&1; then
-    printf '%s' ""
-    return 0
-  fi
-
-  local service_name="${ATLASSIAN_KEYCHAIN_SERVICE_NAME:-atlassian_api_token_hilti}"
-  local account_name="${ATLASSIAN_KEYCHAIN_ACCOUNT_NAME:-${USER}}"
-  local token=""
-  token="$(security find-generic-password -s "$service_name" -a "$account_name" -w 2>/dev/null || true)"
-  printf '%s' "$token"
-}
-
 current_branch="$(git branch --show-current)"
 if [[ -z "$current_branch" ]]; then
   echo "Unable to detect current git branch."
@@ -371,6 +333,7 @@ selected_theme_key=""
 selected_theme_name=""
 selected_theme_id=""
 selected_theme_brand_key=""
+resolved_update_theme_name=""
 
 if [[ "$deploy_mode" == "2" ]]; then
   echo
@@ -448,6 +411,12 @@ if [[ "$deploy_mode" == "2" ]]; then
     echo "Theme ID is required for update mode. Deployment cancelled."
     exit 1
   fi
+
+  resolved_update_theme_name="$(get_theme_name_from_list_output "$ZENDESK_THEME_LIST_OUTPUT" "$selected_theme_id" || true)"
+  if [[ -z "$resolved_update_theme_name" && -n "$selected_theme_name" && "$selected_theme_name" != "Manual themeId" ]]; then
+    resolved_update_theme_name="$selected_theme_name"
+  fi
+  resolved_update_theme_name="$(normalize_theme_name "$resolved_update_theme_name")"
 fi
 
 echo
@@ -462,7 +431,11 @@ if [[ "$deploy_mode" == "1" ]]; then
   echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
 else
   echo "Deploy mode: Update existing theme"
-  echo "Theme name: unchanged (kept from existing Zendesk theme)"
+  if [[ -n "$resolved_update_theme_name" ]]; then
+    echo "Theme name: preserved from existing Zendesk theme (${resolved_update_theme_name})"
+  else
+    echo "Theme name: unchanged (kept from existing Zendesk theme)"
+  fi
   echo "Theme target: ${selected_theme_name}"
   echo "Theme ID: ${selected_theme_id}"
 fi
@@ -503,6 +476,14 @@ const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
 manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
 fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
+elif [[ "$deploy_mode" == "2" && -n "$resolved_update_theme_name" ]]; then
+  ZD_DEPLOY_THEME_NAME="$resolved_update_theme_name" node <<'NODE'
+const fs = require('fs');
+const path = 'manifest.json';
+const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
+fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
+NODE
 fi
 
 if [[ "$deploy_mode" == "1" ]]; then
@@ -526,173 +507,6 @@ if [[ "$set_theme_live_choice" == "yes" ]]; then
     zcli themes:publish --themeId="$live_theme_id"
     selected_theme_id="$live_theme_id"
   fi
-fi
-
-echo
-echo "Running automated post-deployment tests..."
-test_profile="manual-on-demand"
-if [[ "$set_theme_live_choice" == "yes" ]]; then
-  test_profile="production"
-fi
-
-playwright_visible_choice="${ZD_PLAYWRIGHT_VISIBLE:-}"
-if [[ -z "$playwright_visible_choice" ]]; then
-  playwright_visible_choice="$(pick_yes_no "Open visible browser for Playwright tests? (y/n)" "n")"
-fi
-
-playwright_headless="true"
-if [[ "$playwright_visible_choice" == "yes" ]]; then
-  playwright_headless="false"
-fi
-
-echo "Playwright browser mode: $([[ "$playwright_headless" == "false" ]] && echo "visible" || echo "headless")"
-
-test_base_url="${ZD_POST_DEPLOY_TEST_BASE_URL:-}"
-if [[ -z "$test_base_url" ]]; then
-  if [[ "$test_profile" == "production" ]]; then
-    test_base_url="${ZD_PROD_BASE_URL:-${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-}}}"
-  else
-    test_base_url="${ZD_PREVIEW_BASE_URL:-${ZD_FEATURE_PREVIEW_BASE_URL:-${ZD_PROD_BASE_URL:-}}}"
-  fi
-fi
-
-if [[ -z "$test_base_url" ]]; then
-  zcli_subdomain="$(get_active_zcli_subdomain)"
-  if [[ -n "$zcli_subdomain" ]]; then
-    manifest_locale="$(get_manifest_default_locale)"
-    test_base_url="https://${zcli_subdomain}.zendesk.com/hc/${manifest_locale}"
-  fi
-fi
-
-if [[ -z "$test_base_url" ]]; then
-  echo "Unable to auto-resolve test base URL."
-  echo "Set one of: ZD_POST_DEPLOY_TEST_BASE_URL, ZD_PREVIEW_BASE_URL, ZD_FEATURE_PREVIEW_BASE_URL, ZD_PROD_BASE_URL"
-  echo "or run 'zcli login -i' so the active subdomain can be auto-detected."
-  exit 1
-fi
-
-echo "Auto-selected test base URL: ${test_base_url}"
-
-safe_target_name="$(echo "$current_branch" | tr '/ ' '--' | tr -cd '[:alnum:]_-')"
-run_id="manual-post-deploy-$(date -u +%Y%m%d%H%M%S)"
-report_dir="tooling/reports/${run_id}"
-mkdir -p "$report_dir"
-
-deployment_report="${report_dir}/${safe_target_name}-deployment.json"
-functional_report="${report_dir}/${safe_target_name}-functional-playwright.json"
-performance_report="${report_dir}/${safe_target_name}-performance.json"
-
-set +e
-node tooling/scripts/run-deployment-tests.mjs \
-  --target-name "$safe_target_name" \
-  --base-url "$test_base_url" \
-  --output "$deployment_report"
-deployment_exit=$?
-
-PLAYWRIGHT_HEADLESS="$playwright_headless" node tooling/scripts/run-playwright-functional-tests.mjs \
-  --target-name "$safe_target_name" \
-  --profile "$test_profile" \
-  --base-url "$test_base_url" \
-  --output "$functional_report"
-functional_exit=$?
-
-PLAYWRIGHT_HEADLESS="$playwright_headless" node tooling/scripts/run-performance-tests.mjs \
-  --target-name "$safe_target_name" \
-  --base-url "$test_base_url" \
-  --output "$performance_report"
-performance_exit=$?
-set -e
-
-echo "Post-deployment reports:"
-echo "- ${deployment_report}"
-echo "- ${functional_report}"
-echo "- ${performance_report}"
-
-tests_failed="false"
-if [[ $deployment_exit -ne 0 || $functional_exit -ne 0 || $performance_exit -ne 0 ]]; then
-  tests_failed="true"
-  echo "Post-deployment tests failed."
-else
-  echo "Post-deployment tests passed."
-fi
-
-publish_confluence_choice="$(pick_yes_no "Publish Confluence result pages now? (y/n)" "n")"
-if [[ "$publish_confluence_choice" == "yes" ]]; then
-  quality_report="${report_dir}/${safe_target_name}-quality-gate.json"
-  confluence_result="${report_dir}/${safe_target_name}-confluence-result.json"
-
-  QUALITY_REPORT_PATH="$quality_report" \
-  TARGET_NAME="$safe_target_name" \
-  BASE_URL="$test_base_url" \
-  CURRENT_BRANCH="$current_branch" \
-  node --input-type=commonjs <<'NODE'
-const fs = require('fs');
-const path = require('path');
-
-const reportPath = process.env.QUALITY_REPORT_PATH;
-const targetName = process.env.TARGET_NAME;
-const baseUrl = process.env.BASE_URL;
-const branch = process.env.CURRENT_BRANCH;
-
-const reportDir = path.dirname(reportPath);
-const deployment = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-deployment.json`), 'utf8'));
-const functional = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-functional-playwright.json`), 'utf8'));
-const performance = JSON.parse(fs.readFileSync(path.join(reportDir, `${targetName}-performance.json`), 'utf8'));
-
-const failed =
-  (deployment?.summary?.failed || 0) > 0 ||
-  (functional?.summary?.failed || 0) > 0 ||
-  (performance?.summary?.failed || 0) > 0;
-
-const payload = {
-  generatedAt: new Date().toISOString(),
-  environmentName: 'manual-post-deploy',
-  targetName,
-  baseUrl,
-  branch,
-  commit: 'local',
-  pipelineUrl: '',
-  failed,
-  quality: {
-    deployment,
-    functional,
-    performance,
-  },
-};
-
-fs.writeFileSync(reportPath, `${JSON.stringify(payload, null, 2)}\n`);
-NODE
-
-  confluence_base_url="${ATLASSIAN_BASE_URL:-https://hilti.atlassian.net}"
-  confluence_space_key="${CONFLUENCE_SPACE_KEY:-BFS}"
-  confluence_parent_page_id="${CONFLUENCE_PARENT_PAGE_ID:-2900984544}"
-
-  resolved_atlassian_email="$(resolve_confluence_email)"
-  resolved_atlassian_token="$(resolve_confluence_api_token)"
-
-  if [[ -z "$resolved_atlassian_email" || -z "$resolved_atlassian_token" ]]; then
-    echo "Skipping Confluence publish: missing Atlassian credentials."
-    echo "Checked: ATLASSIAN_USER_EMAIL, git user.email, ATLASSIAN_API_TOKEN, macOS Keychain."
-    echo "Tip: save token in Keychain with: security add-generic-password -s atlassian_api_token_hilti -a ${USER} -w"
-  else
-    echo "Publishing Confluence functional/performance pages..."
-    ATLASSIAN_BASE_URL="$confluence_base_url" \
-    ATLASSIAN_USER_EMAIL="$resolved_atlassian_email" \
-    ATLASSIAN_API_TOKEN="$resolved_atlassian_token" \
-    CONFLUENCE_SPACE_KEY="$confluence_space_key" \
-    CONFLUENCE_PARENT_PAGE_ID="$confluence_parent_page_id" \
-    REQUIRE_CONFLUENCE_REPORT="false" \
-    node tooling/scripts/publish-confluence-report.mjs \
-      --report-file "$quality_report" \
-      --output "$confluence_result"
-
-    echo "Confluence publish result: ${confluence_result}"
-  fi
-fi
-
-if [[ "$tests_failed" == "true" ]]; then
-  echo "Deployment completed, but post-deployment tests failed."
-  exit 1
 fi
 
 echo "Deployment finished for branch '${current_branch}'."

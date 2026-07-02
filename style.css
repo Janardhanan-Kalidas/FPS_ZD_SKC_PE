@@ -15673,6 +15673,14 @@ a:hover .icon-circle {
   font-style: normal;
 }
 
+.article-page .article-content em {
+  padding: 0;
+  background-color: transparent;
+  color: inherit !important;
+  font-weight: inherit;
+  font-style: italic;
+}
+
 .content img,
 .content iframe {
   max-width: 100%;

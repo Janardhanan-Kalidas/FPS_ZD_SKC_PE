@@ -9,8 +9,199 @@ Welcome! This comprehensive guide contains all documentation for the Zendesk the
 1. [Development Setup Guide](#development-setup-guide)
 2. [Local Theme Preview](#local-theme-preview)
 3. [Theme Versioning](#theme-versioning)
+4. [Deployment Setup (Theme Repo Scope)](#deployment-setup-theme-repo-scope)
 
 ---
+
+## Deployment Setup (Theme Repo Scope)
+
+This repository is intentionally scoped to Zendesk theme lifecycle only.
+
+What this repository owns:
+
+- Theme versioning and packaging
+- Theme backup, deploy, and rollback execution
+- Branch and production deployment safeguards
+
+What this repository does not own:
+
+- External automated validation orchestration
+- Jira integration and release ticket updates
+- Confluence publishing and release report generation
+
+### Pipeline stages
+
+The CI/CD stages in this repository run in this order:
+
+1. `release`
+2. `backup`
+3. `deploy`
+
+### Branch strategy
+
+There are two deployment paths:
+
+1. **Main branch path (production)**
+   - Optional version release
+   - Production backup
+   - Manual production deploy (confirmation required)
+   - Manual production rollback (if required)
+
+2. **Current/any non-main branch path (preview)**
+   - Manual branch deploy (confirmation required)
+
+### End-to-end workflow
+
+```mermaid
+flowchart TD
+    A[Pipeline Start] --> B{Default branch?}
+
+    B -->|Yes| C[theme_backup_production]
+    C --> D[theme_deploy_production\nmanual + DEPLOY_CONFIRM]
+    D --> E[Optional: theme_rollback_production\nmanual + ROLLBACK_CONFIRM]
+
+    B -->|No| F[theme_deploy_branch\nmanual + DEPLOY_CONFIRM_BRANCH]
+```
+
+### Required deployment variables
+
+Required in CI for deploy and rollback jobs:
+
+- `ZD_SUBDOMAIN`
+- `ZD_EMAIL`
+- `ZD_API_TOKEN`
+
+Production deploy confirmation:
+
+- `DEPLOY_CONFIRM=DEPLOY_TO_PROD`
+
+Branch deploy confirmation:
+
+- `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
+
+Production rollback confirmation:
+
+- `ROLLBACK_CONFIRM=ROLLBACK_TO_PROD`
+
+### Quick Runbook
+
+Use this runbook for standard deployment operations in GitLab.
+
+#### VS Code task: interactive branch deployment via GitLab
+
+Use VS Code task `Zendesk: Trigger GitLab Branch Deploy (Interactive)` to launch a GitLab pipeline from your terminal workflow.
+
+Interactive flow:
+
+1. Select branch from remote branch list.
+2. Select deployment type: `new` or `update`.
+3. If `new`, auto-generate theme name (max 50 chars) and allow optional edit.
+4. If `update`, provide existing `themeId`.
+5. Trigger GitLab pipeline with selected inputs.
+
+Required local variable for the trigger task:
+
+- `GITLAB_TRIGGER_TOKEN`
+
+Optional local variables for the trigger task:
+
+- `GITLAB_PROJECT_PATH` (defaults from `origin` remote)
+- `GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
+
+Pipeline variables sent automatically by the task:
+
+- `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
+- `DEPLOY_MODE` (`new` or `update`)
+- `ZD_THEME_NAME` (for `new` mode)
+- `ZD_THEME_ID` (for `update` mode)
+
+#### 1) Main branch production deployment
+
+Pre-checks:
+
+- Confirm branch is the default branch.
+- Ensure backup job has completed successfully.
+
+Set CI/CD variables for the manual deploy job:
+
+```text
+ZD_SUBDOMAIN=<your_subdomain>
+ZD_EMAIL=<service_account_email>
+ZD_API_TOKEN=<api_token>
+DEPLOY_CONFIRM=DEPLOY_TO_PROD
+```
+
+Run order:
+
+1. `theme_backup_production`
+2. `theme_deploy_production` (manual)
+
+Success criteria:
+
+- Deploy job succeeds.
+
+#### 2) Current/any non-main branch deployment (preview)
+
+Pre-checks:
+
+- Confirm branch is not the default branch.
+
+Set CI/CD variables for the manual deploy job:
+
+```text
+ZD_SUBDOMAIN=<your_subdomain>
+ZD_EMAIL=<service_account_email>
+ZD_API_TOKEN=<api_token>
+DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH
+```
+
+Run order:
+
+1. `theme_deploy_branch` (manual)
+
+Success criteria:
+
+- Deploy job succeeds.
+
+#### 3) Production rollback checklist
+
+When to use:
+
+- Main deployment failed or introduced production instability.
+
+Set CI/CD variables for rollback job:
+
+```text
+ZD_SUBDOMAIN=<your_subdomain>
+ZD_EMAIL=<service_account_email>
+ZD_API_TOKEN=<api_token>
+ROLLBACK_CONFIRM=ROLLBACK_TO_PROD
+```
+
+Run order:
+
+1. Verify latest backup artifact exists.
+2. Trigger `theme_rollback_production` (manual).
+3. Share rollback outcome in release channel/ticket.
+
+### DevOps Standardization Handover
+
+To keep this repository theme-only and aligned with Hilti governance practices, DevOps should own validation/reporting integration in the external validation repository.
+
+Recommended standardization actions:
+
+1. Keep production approval workflow outside this repo with release and quality approvers.
+2. Keep Jira and Confluence reporting automation in the external validation pipeline only.
+3. Enforce protected production environments and controlled approver groups in GitLab.
+4. Preserve audit evidence in release tooling: commit SHA, approver trail, deployment logs, and rollback evidence.
+5. Maintain environment separation (Dev/QA/Pre-Prod/Prod) and avoid adding test/report orchestration back into this theme repo.
+
+Reference governance pages (Hilti internal):
+
+- BFS Release Management Approval Process
+- BFS Release Approver Management
+- EAS Hilti IT System Operations Standard
+- Digital Onboarding Technical Release Management
 
 ## Development Setup Guide
 

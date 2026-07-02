@@ -355,6 +355,8 @@
   "article_author_description": "Show author image and name",
   "article_metadata_label": "Metadata",
   "article_metadata_description": "The type of article metadata to display",
+  "show_article_author_label": "Show Article Author",
+  "show_article_author_description": "Display the author's name in the article metadata",
   "follow_article_label": "Follow",
   "follow_article_description": "Users can follow a specific article",
   "table_of_contents_style_label": "Table of Contents",

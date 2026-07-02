@@ -77,12 +77,12 @@
 
         {{! Row 1: Author | Date | Follow }}
         <div class="article-meta-row">
-          {{#is settings.article_metadata 'author'}}
+          {{#if settings.show_article_author}}
             <span class="article-meta-author">
               {{article.author.name}}
             </span>
             <span class="article-meta-sep">|</span>
-          {{/is}}
+          {{/if}}
           {{#isnt settings.article_metadata 'none'}}
             <span class="article-meta-date" data-created-at="{{article.created_at}}">
               {{date article.created_at}}

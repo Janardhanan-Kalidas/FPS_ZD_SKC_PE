@@ -66,11 +66,28 @@
       "problemMatcher": []
     },
     {
-      "label": "Zendesk: Deploy Current Branch (Non-Interactive)",
+      "label": "Zendesk: Deploy Current Branch (Interactive)",
       "type": "shell",
       "command": "bash",
       "args": [
         "tooling/scripts/deploy-current-branch-noninteractive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Trigger GitLab Branch Deploy (Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/trigger-gitlab-branch-deploy-interactive.sh"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.13.5",
+  "version": "0.16.3",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -1745,6 +1745,13 @@
               "value": "author"
             }
           ]
+        },
+        {
+          "identifier": "show_article_author",
+          "type": "checkbox",
+          "description": "show_article_author_description",
+          "label": "show_article_author_label",
+          "value": true
         },
         {
           "identifier": "show_follow_article",

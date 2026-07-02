@@ -349,6 +349,8 @@
   "article_author_description": "Autorbild und -name anzeigen",
   "article_metadata_label": "Metadaten",
   "article_metadata_description": "Der Typ der anzuzeigenden Artikelmetadaten",
+  "show_article_author_label": "Artikelautor anzeigen",
+  "show_article_author_description": "Zeigen Sie den Namen des Autors in den Artikelmetadaten an",
   "follow_article_label": "Folgen",
   "follow_article_description": "Benutzer können einem bestimmten Beitrag folgen",
   "table_of_contents_style_label": "Inhaltsverzeichnis",
