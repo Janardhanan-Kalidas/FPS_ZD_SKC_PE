@@ -1721,6 +1721,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function buildFiltersFromCurrentPage() {
       var rows = parseResultsFromDoc(document);
       buildFilters(rows);
+      hydrateTagsFromArticleDetailsForVisibleCards();
     }
 
     // Saved DOM state from immediately before the first filter was applied.
@@ -1748,21 +1749,389 @@ document.addEventListener('DOMContentLoaded', function () {
         try { date = new Date(r.updatedAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); } catch(e){}
       }
       var breadcrumb = '';
+      var homeUrl = helpCenterUrl || '/hc';
       if (r.category && r.section) {
-        breadcrumb = '<div class="hc-result-category"><a class="hc-category-link">' + esc(r.category) + '</a><span class="hc-category-separator">›</span><a class="hc-category-link">' + esc(r.section) + '</a></div>';
+        breadcrumb = '<div class="hc-result-category"><a href="' + esc(homeUrl) + '" class="hc-category-link">Home</a><span class="hc-category-separator">/</span><a class="hc-category-link">' + esc(r.category) + '</a><span class="hc-category-separator">/</span><a class="hc-category-link">' + esc(r.section) + '</a></div>';
       } else if (r.section) {
-        breadcrumb = '<div class="hc-result-category"><a class="hc-category-link">' + esc(r.section) + '</a></div>';
+        breadcrumb = '<div class="hc-result-category"><a href="' + esc(homeUrl) + '" class="hc-category-link">Home</a><span class="hc-category-separator">/</span><a class="hc-category-link">' + esc(r.section) + '</a></div>';
+      }
+      var tags = '';
+      if (r.tags && r.tags.length) {
+        tags = '<ul class="article-tags-custom hc-result-tags">' + r.tags.map(function(tag) {
+          var tagName = typeof tag === 'string' ? tag : (tag && tag.name) || '';
+          if (!tagName) return '';
+          var tagHref = (helpCenterUrl || '/hc') + 'search?query=' + encodeURIComponent(tagName) + '&utf8=%E2%9C%93';
+          return '<li><a class="article-tag-link" title="Search results" href="' + esc(tagHref) + '">' + esc(tagName) + '</a></li>';
+        }).join('') + '</ul>';
       }
       return '<article class="hc-result-card">' +
         '<h2 class="hc-result-title"><a href="' + esc(r.url) + '" class="hc-result-link">' + esc(r.title) + '</a></h2>' +
         breadcrumb +
         (r.snippet ? '<p class="hc-result-snippet">' + esc(r.snippet) + '</p>' : '') +
+        tags +
         '<div class="hc-result-meta">' +
           '<span class="hc-meta-item"><svg class="hc-meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><circle cx="6" cy="6" r="5.5" fill="none" stroke="currentColor"/><path stroke="currentColor" stroke-linecap="round" d="M6 3v3.5L8 8"/></svg>Updated ' + esc(date) + '</span>' +
           (r.voteSum ? '<span class="hc-meta-item">' + r.voteSum + ' helpful</span>' : '') +
           (r.commentCount ? '<span class="hc-meta-item">' + r.commentCount + ' comments</span>' : '') +
         '</div>' +
       '</article>';
+    }
+
+    // Normalize absolute/relative result URLs to a stable key so API data and DOM links match.
+    function toResultUrlKey(url) {
+      if (!url) return '';
+      try {
+        var u = new URL(url, window.location.origin);
+        return u.pathname + (u.search || '');
+      } catch (e) {
+        return String(url);
+      }
+    }
+
+    function normalizeTextKey(text) {
+      return String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    }
+
+    // Extract tag names from multiple possible Zendesk payload shapes.
+    function extractTagNames(obj) {
+      var raw = (obj && (obj.label_names || obj.content_tag_names || obj.tags || obj.content_tags)) || [];
+      if (!Array.isArray(raw)) return [];
+
+      var names = raw.map(function(item) {
+        if (typeof item === 'string') return item;
+        if (item && typeof item === 'object') return item.name || item.title || '';
+        return '';
+      }).filter(Boolean);
+
+      var seen = {};
+      return names.filter(function(name) {
+        if (seen[name]) return false;
+        seen[name] = true;
+        return true;
+      });
+    }
+
+    // Add tags to currently rendered server-side cards using API data keyed by URL.
+    // This keeps template validation strict while still showing labels on initial load.
+    function insertTagsIntoCard(card, tags) {
+      if (!card || !tags || !tags.length || card.querySelector('.hc-result-tags')) return;
+
+      var tagsEl = document.createElement('ul');
+      tagsEl.className = 'article-tags-custom hc-result-tags';
+
+      tags.forEach(function(tag) {
+        var tagName = typeof tag === 'string' ? tag : (tag && tag.name) || '';
+        if (!tagName) return;
+
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.className = 'article-tag-link';
+        a.title = 'Search results';
+        a.href = (helpCenterUrl || '/hc') + 'search?query=' + encodeURIComponent(tagName) + '&utf8=%E2%9C%93';
+        a.textContent = tagName;
+        li.appendChild(a);
+        tagsEl.appendChild(li);
+      });
+
+      var snippet = card.querySelector('.hc-result-snippet');
+      if (snippet && snippet.parentNode) {
+        snippet.insertAdjacentElement('afterend', tagsEl);
+      } else {
+        var meta = card.querySelector('.hc-result-meta');
+        if (meta && meta.parentNode) meta.insertAdjacentElement('beforebegin', tagsEl);
+      }
+    }
+
+    function hydrateVisibleResultTags(rows) {
+      if (!rows || !rows.length) return;
+
+      var byUrl = {};
+      var byId = {};
+      var byTitle = {};
+      rows.forEach(function(r) {
+        if (r.url) byUrl[toResultUrlKey(r.url)] = r;
+        if (r.id != null) byId[String(r.id)] = r;
+        var key = normalizeTextKey(r.title);
+        if (key && !byTitle[key]) byTitle[key] = r;
+      });
+
+      var cards = document.querySelectorAll('.hc-result-card');
+      cards.forEach(function(card, index) {
+        if (card.querySelector('.hc-result-tags')) return;
+
+        var link = card.querySelector('.hc-result-title a');
+        if (!link) return;
+
+        var href = link.getAttribute('href');
+        var articleId = extractArticleIdFromUrl(href);
+        var titleKey = normalizeTextKey(link.textContent);
+
+        var row = null;
+        if (articleId && byId[String(articleId)]) {
+          row = byId[String(articleId)];
+        } else if (byUrl[toResultUrlKey(href)]) {
+          row = byUrl[toResultUrlKey(href)];
+        } else if (titleKey && byTitle[titleKey]) {
+          row = byTitle[titleKey];
+        } else if (rows[index]) {
+          row = rows[index];
+        }
+
+        if (!row || !row.tags || !row.tags.length) return;
+
+        insertTagsIntoCard(card, row.tags);
+      });
+    }
+
+    // Strong fallback: fetch each visible article by ID and read tags from article payload.
+    // This handles tenants where search endpoint omits tag fields entirely.
+    var articleTagCache = {};
+    var articlePageTagCache = {};
+    var contentTagNameCache = {};
+
+    function extractArticleIdFromUrl(url) {
+      if (!url) return null;
+      var m = String(url).match(/\/articles\/(\d+)(?:[-/?#]|$)/);
+      return m ? m[1] : null;
+    }
+
+    function fetchArticleTagsById(articleId) {
+      if (!articleId) return Promise.resolve([]);
+      if (Array.isArray(articleTagCache[articleId])) return Promise.resolve(articleTagCache[articleId]);
+      if (articleTagCache[articleId] && typeof articleTagCache[articleId].then === 'function') return articleTagCache[articleId];
+
+      var localeMatch = window.location.pathname.match(/\/hc\/([^/]+)\//);
+      var locale = localeMatch ? localeMatch[1] : 'en-us';
+      var apiOrigin = window.location.origin;
+      var endpoints = [
+        apiOrigin + '/api/v2/help_center/' + encodeURIComponent(locale) + '/articles/' + articleId + '.json',
+        apiOrigin + '/api/v2/help_center/articles/' + articleId + '.json',
+        apiOrigin + '/api/v2/help_center/' + encodeURIComponent(locale) + '/articles/' + articleId + '/labels.json',
+        apiOrigin + '/api/v2/help_center/articles/' + articleId + '/labels.json'
+      ];
+
+      function dedupeNames(list) {
+        var seen = {};
+        return (list || []).filter(function(name) {
+          if (!name) return false;
+          if (seen[name]) return false;
+          seen[name] = true;
+          return true;
+        });
+      }
+
+      function fetchContentTagNameById(tagId) {
+        if (!tagId) return Promise.resolve('');
+        if (typeof contentTagNameCache[tagId] === 'string') return Promise.resolve(contentTagNameCache[tagId]);
+        if (contentTagNameCache[tagId] && typeof contentTagNameCache[tagId].then === 'function') return contentTagNameCache[tagId];
+
+        var endpoint = apiOrigin + '/api/v2/guide/content_tags/' + encodeURIComponent(tagId);
+        contentTagNameCache[tagId] = fetch(endpoint, {
+          credentials: 'same-origin',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        }).then(function(r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        }).then(function(data) {
+          var ct = data && (data.content_tag || data);
+          var name = (ct && ct.name) ? String(ct.name).trim() : '';
+          contentTagNameCache[tagId] = name;
+          return name;
+        }).catch(function() {
+          contentTagNameCache[tagId] = '';
+          return '';
+        });
+
+        return contentTagNameCache[tagId];
+      }
+
+      function resolveContentTagIdsToNames(ids) {
+        if (!Array.isArray(ids) || !ids.length) return Promise.resolve([]);
+        return Promise.all(ids.map(fetchContentTagNameById)).then(function(names) {
+          return dedupeNames(names.filter(Boolean));
+        });
+      }
+
+      function parseTagResponse(data) {
+        // Article payload shapes
+        var article = data && (data.article || data);
+        var names = extractTagNames(article || {});
+        if (names.length) return Promise.resolve(dedupeNames(names));
+
+        // Some plans return content_tag_ids (IDs) without names; resolve via Content Tags API.
+        if (article && Array.isArray(article.content_tag_ids) && article.content_tag_ids.length) {
+          return resolveContentTagIdsToNames(article.content_tag_ids);
+        }
+
+        // Labels endpoint payload shapes
+        var labels = (data && (data.labels || data.article_labels || data.results)) || null;
+        if (Array.isArray(labels)) {
+          return Promise.resolve(dedupeNames(labels.map(function(item) {
+            if (typeof item === 'string') return item;
+            if (item && typeof item === 'object') return item.name || item.label || item.title || '';
+            return '';
+          }).filter(Boolean)));
+        }
+
+        return Promise.resolve([]);
+      }
+
+      function tryFetch(index) {
+        if (index >= endpoints.length) return Promise.resolve([]);
+
+        return fetch(endpoints[index], {
+          credentials: 'same-origin',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        }).then(function(r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        }).then(function(data) {
+          return parseTagResponse(data);
+        }).catch(function() {
+          return tryFetch(index + 1);
+        });
+      }
+
+      articleTagCache[articleId] = tryFetch(0).then(function(tags) {
+        articleTagCache[articleId] = tags || [];
+        return articleTagCache[articleId];
+      });
+
+      return articleTagCache[articleId];
+    }
+
+    // Final fallback: fetch article HTML and extract rendered tag chips.
+    function fetchArticleTagsFromPage(url) {
+      var key = toResultUrlKey(url);
+      if (!key) return Promise.resolve([]);
+      if (Array.isArray(articlePageTagCache[key])) return Promise.resolve(articlePageTagCache[key]);
+      if (articlePageTagCache[key] && typeof articlePageTagCache[key].then === 'function') return articlePageTagCache[key];
+
+      // Search result links may redirect cross-origin (/search/click?...), which is blocked by CORS.
+      // Skip HTML fetch for those links to avoid noisy failures.
+      try {
+        var parsed = new URL(url, window.location.origin);
+        if (parsed.origin !== window.location.origin || parsed.pathname.indexOf('/search/click') > -1) {
+          return Promise.resolve([]);
+        }
+      } catch (e) {
+        return Promise.resolve([]);
+      }
+
+      articlePageTagCache[key] = fetch(url, {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'text/html' }
+      }).then(function(r) {
+        if (!r.ok) throw new Error(r.status);
+        return r.text();
+      }).then(function(html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var nodes = doc.querySelectorAll('.article-tags-custom a, .article-tag-link');
+        var tags = Array.from(nodes).map(function(n) {
+          return (n.textContent || '').trim();
+        }).filter(Boolean);
+
+        // Last-resort metadata fallback
+        if (!tags.length) {
+          var keywords = doc.querySelector('meta[name="keywords"]');
+          if (keywords && keywords.content) {
+            tags = keywords.content.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+          }
+        }
+
+        // Deduplicate while preserving order
+        var seen = {};
+        tags = tags.filter(function(tag) {
+          if (seen[tag]) return false;
+          seen[tag] = true;
+          return true;
+        });
+
+        articlePageTagCache[key] = tags;
+        return tags;
+      }).catch(function() {
+        articlePageTagCache[key] = [];
+        return [];
+      });
+
+      return articlePageTagCache[key];
+    }
+
+    function hydrateTagsFromArticleDetailsForVisibleCards(rows) {
+      var byTitle = {};
+      if (Array.isArray(rows)) {
+        rows.forEach(function(r) {
+          var key = normalizeTextKey(r && r.title);
+          if (key && !byTitle[key]) byTitle[key] = r;
+        });
+      }
+
+      var cards = document.querySelectorAll('.hc-result-card');
+      cards.forEach(function(card, index) {
+        if (card.querySelector('.hc-result-tags')) return;
+
+        var link = card.querySelector('.hc-result-title a');
+        if (!link) return;
+
+        var href = link.getAttribute('href');
+        var articleId = extractArticleIdFromUrl(href);
+
+        if (!articleId && Array.isArray(rows) && rows.length) {
+          var titleKey = normalizeTextKey(link.textContent);
+          var matched = (titleKey && byTitle[titleKey]) ? byTitle[titleKey] : rows[index];
+          if (matched && matched.id != null) articleId = String(matched.id);
+          if (!articleId && matched && matched.url) articleId = extractArticleIdFromUrl(matched.url);
+        }
+
+        if (!articleId) return;
+
+        var tagPromise = fetchArticleTagsById(articleId);
+
+        tagPromise.then(function(tags) {
+          insertTagsIntoCard(card, tags);
+        }).catch(function() {});
+      });
+    }
+
+    // Local-preview fallback: populate tags from search API for currently visible cards.
+    // This keeps tags working even when full API filtering is intentionally skipped.
+    function hydrateTagsOnlyFromSearchAPI() {
+      var localeMatch = window.location.pathname.match(/\/hc\/([^/]+)\//);
+      var locale = localeMatch ? localeMatch[1] : 'en-us';
+      var apiOrigin = window.location.origin;
+      var baseUrl = apiOrigin + '/api/v2/help_center/articles/search.json?locale='
+                  + encodeURIComponent(locale) + '&per_page=100&query=' + encodeURIComponent(cleanedQuery);
+
+      fetch(baseUrl + '&page=1', {
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).then(function(r) {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }).then(function(data) {
+        var rows = (data.results || []).map(function(article) {
+          return {
+            id: article.id || null,
+            url: article.html_url || null,
+            title: article.title || '',
+            tags: extractTagNames(article)
+          };
+        });
+        hydrateVisibleResultTags(rows);
+        hydrateTagsFromArticleDetailsForVisibleCards(rows);
+      }).catch(function() {
+        // Local-preview fallback when search endpoint is unavailable.
+        hydrateTagsFromArticleDetailsForVisibleCards();
+      });
     }
 
     // Compute which page numbers to show (always first, last, ±2 around current, with ... gaps).
@@ -1807,8 +2176,14 @@ document.addEventListener('DOMContentLoaded', function () {
       ]).then(function(results) {
         var categoryMap = {};  // id → name
         var sectionMap  = {};  // id → { name, categoryId }
-        (results[0].categories || []).forEach(function(c) { categoryMap[c.id] = c.name; });
-        (results[1].sections   || []).forEach(function(s) { sectionMap[s.id] = { name: s.name, categoryId: s.category_id }; });
+        (results[0].categories || []).forEach(function(c) {
+          if (!c || c.id == null) return;
+          categoryMap[c.id] = c.name || '';
+        });
+        (results[1].sections || []).forEach(function(s) {
+          if (!s || s.id == null) return;
+          sectionMap[s.id] = { name: s.name || '', categoryId: s.category_id };
+        });
 
         // Fetch all search result pages via API (up to 100 results per request)
         var allRows = {};
@@ -1820,18 +2195,30 @@ document.addEventListener('DOMContentLoaded', function () {
           // Strip HTML tags from snippet/body for safe text rendering
           function plainText(str) { return str ? str.replace(/<[^>]+>/g, '') : ''; }
           return {
+            id:           article.id || null,
             url:          article.html_url || null,
             title:        article.title    || '',
             snippet:      plainText(article.snippet || article.body || '').slice(0, 300),
             updatedAt:    article.updated_at || article.created_at || '',
             voteSum:      article.vote_sum      || 0,
             commentCount: article.comment_count || 0,
+            tags:         extractTagNames(article),
             category:     sec ? (categoryMap[sec.categoryId] || null) : null,
             section:      sec ? sec.name : null
           };
         }
 
         fetchJson(searchBase + '&page=1').then(function(data) {
+          if (data && data.results && data.results.length) {
+            try {
+              console.debug('[SearchTags] sample fields', {
+                label_names: data.results[0].label_names,
+                content_tag_names: data.results[0].content_tag_names,
+                tags: data.results[0].tags,
+                content_tags: data.results[0].content_tags
+              });
+            } catch (e) {}
+          }
           (data.results || []).forEach(function(a) { if (a.html_url) allRows[a.html_url] = mapArticle(a); });
 
           // Store total result count from the API.
@@ -1853,6 +2240,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
           Promise.all(moreFetches).then(function() {
             var allApiRows = Object.values(allRows);
+            hydrateVisibleResultTags(allApiRows);
+            hydrateTagsFromArticleDetailsForVisibleCards(allApiRows);
             // Counts must reflect the current page only (what's visible after filtering)
             // so the badge numbers always match what appears when a filter is clicked.
             var currentPageRows = parseResultsFromDoc(document);
@@ -1862,11 +2251,15 @@ document.addEventListener('DOMContentLoaded', function () {
               buildFiltersFromCurrentPage();
             }
           });
-        }).catch(function() { buildFiltersFromCurrentPage(); });
+        }).catch(function() {
+          buildFiltersFromCurrentPage();
+          hydrateTagsFromArticleDetailsForVisibleCards();
+        });
 
       }).catch(function() {
         // API unavailable — fall back to current page HTML
         buildFiltersFromCurrentPage();
+        hydrateTagsFromArticleDetailsForVisibleCards();
       });
     }
 
@@ -1991,6 +2384,7 @@ document.addEventListener('DOMContentLoaded', function () {
               if (matchArr.length) {
                 resultsList.innerHTML = slice.map(renderArticleCard).join('');
                 applyHighlights();
+                hydrateTagsFromArticleDetailsForVisibleCards(slice);
               } else {
                 resultsList.innerHTML = '<div class="hc-empty-state"><h2 class="hc-empty-title">No results for this filter</h2><p class="hc-empty-text">Try removing a filter to broaden your search.</p></div>';
               }
@@ -2191,6 +2585,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var isLocalPreview = window.location.pathname.indexOf('/admin/local_preview/') > -1;
       if (isLocalPreview) {
         buildFiltersFromCurrentPage();
+        hydrateTagsOnlyFromSearchAPI();
       } else {
         buildFiltersViaAPI();
       }

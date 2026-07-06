@@ -39,7 +39,7 @@
     <div class="search-bar-wrapper">
       <div class="search search-lg">
         {{search class='form-field mb-0' instant=true submit=false placeholder='Search articles...'}}
-        <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+        <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
           <use xlink:href="#icon-search" />
         </svg>
       </div>
@@ -114,6 +114,7 @@
               {{/is}}
             {{else}}
               No results for "<strong><span class="hc-clean-query"></span></strong>"
+                in all categories
             {{/if}}
           {{else}}
             Search Results
@@ -158,10 +159,12 @@
               {{#if path_steps}}
                 <div class="hc-result-category">
                   {{#each path_steps}}
-                    {{#unless @first}}
-                      <span class="hc-category-separator">›</span>
-                    {{/unless}}
-                    <a href="{{url}}" class="hc-category-link">{{name}}</a>
+                    {{#if @first}}
+                      <a href="{{url}}" class="hc-category-link">Home</a>
+                    {{else}}
+                      <span class="hc-category-separator">/</span>
+                      <a href="{{url}}" class="hc-category-link">{{name}}</a>
+                    {{/if}}
                   {{/each}}
                 </div>
               {{/if}}

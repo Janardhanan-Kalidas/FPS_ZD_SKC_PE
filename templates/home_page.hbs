@@ -40,16 +40,15 @@
           {{/if~}}
         </h1>
       {{/if~}}
-      {{~#if settings.hero_heading}}
-        <p class="font-size-4xl">
-          {{~#if settings.use_translations}}
-            {{dc 'how_can_we_help_you'}}
-          {{else}}
-            {{settings.hero_heading}}
-          {{/if~}}
-        </p>
-      {{/if~}}
-      
+        {{~#if settings.hero_heading}}
+  <p class="font-size-4xl">
+    {{~#if settings.use_translations}}
+      {{dc 'fps_-_how_can_we_help_you'}}
+    {{else}}
+      {{settings.hero_heading}}
+    {{/if~}}
+  </p>
+{{/if~}}
     </div>
 
     {{! Hero element search bar - Jana}}
@@ -64,7 +63,7 @@
       {{else}}
         {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button}}
       {{/if~}}
-      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
         <use xlink:href="#icon-search" />
       </svg>
     </div>
