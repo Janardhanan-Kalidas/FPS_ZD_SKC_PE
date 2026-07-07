@@ -8,28 +8,21 @@
 ============================================================ */
 
 /* ============================================================
-   SEARCH SUGGESTIONS – Hilti Brand Colors
-   Removed redundant inline styling IIFE (now handled by CSS)
-   Colors are applied via CSS rules:
-   - [id^="search-result-"] > *:first-child → Hilti Steel
-   - [id^="search-result-"] em → Hilti Red on yellow
-   - [id^="search-result-"] [role="directory"] → breadcrumb styling
-============================================================ */
-
-/* ============================================================
-   ZENDESK NATIVE AUTOCOMPLETE - ENHANCED
-   Using {{search instant=true}} from templates.
-   Enhancements: breadcrumb links, article summaries, view-all footer
+   CUSTOM AUTOCOMPLETE
+   Progressive enhancement over Zendesk's native search helper
 ============================================================ */
 ;(function () {
   'use strict';
 
-  var hcBase = (function () {
-    var m = location.pathname.match(/^(\/hc\/[^/]+)/);
-    return m ? m[1] : '/hc/en-us';
-  })();
+  var wrappers = document.querySelectorAll('.search[data-custom-autocomplete]');
+  if (!wrappers.length) return;
 
-  // Escape HTML to prevent XSS
+  var localeMatch = window.location.pathname.match(/\/hc\/([^/]+)\//);
+  var locale = localeMatch ? localeMatch[1] : (window.Theme && window.Theme.locale) || 'en-us';
+  var apiOrigin = window.location.origin;
+  var mapPromise = null;
+  var queryCache = Object.create(null);
+
   function escapeHtml(text) {
     var map = {
       '&': '&amp;',
@@ -38,135 +31,399 @@
       '"': '&quot;',
       "'": '&#039;'
     };
-    return String(text).replace(/[&<>"']/g, function (c) { return map[c]; });
+    return String(text).replace(/[&<>"']/g, function (char) {
+      return map[char];
+    });
   }
 
-  // Convert breadcrumb text "Home > Cat > Section" to enhanced HTML
-  function convertBreadcrumbToHtml(text) {
-    if (!text) return null;
-
-    var parts = text.split('>').map(function (s) { return s.trim(); }).filter(Boolean);
-    if (!parts.length) return null;
-
-    var html = '<div class="hc-result-category">' +
-      parts.map(function (p, i) {
-        return '<span class="hc-category-link">' + escapeHtml(p) + '</span>' +
-               (i < parts.length - 1 ? '<span class="hc-category-separator">/</span>' : '');
-      }).join('') +
-      '</div>';
-    
-    return html;
+  function stripHtml(text) {
+    return String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
-  // Enhance a single result
-  function enhanceResult(option) {
-    if (!option) return;
-    if (option.querySelector('.hc-result-category')) return; // Already enhanced
+  function highlightText(text, query) {
+    var safeText = escapeHtml(text || '');
+    var terms = String(query || '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
+    if (!terms.length) return safeText;
 
-    // Find directory element (breadcrumb)
-    var directory = option.querySelector('[role="directory"]');
-    if (!directory) return;
+    var pattern = new RegExp('(' + terms.map(function (term) {
+      return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }).join('|') + ')', 'gi');
 
-    var breadcrumbText = directory.textContent.trim();
-    if (!breadcrumbText) return;
-
-    var breadcrumbHtml = convertBreadcrumbToHtml(breadcrumbText);
-    if (!breadcrumbHtml) return;
-
-    // Replace directory with enhanced breadcrumb
-    var temp = document.createElement('div');
-    temp.innerHTML = breadcrumbHtml;
-    directory.replaceWith(temp.firstChild);
+    return safeText.replace(pattern, '<mark class="hc-autocomplete-mark">$1</mark>');
   }
 
-  // Enhance all results
-  function enhanceAllResults(listbox) {
-    if (!listbox) return;
-
-    // Get all option elements except the view-all footer
-    var options = listbox.querySelectorAll('[role="option"]');
-    options.forEach(function (option) {
-      if (option.id !== 'search-result-view-all') {
-        enhanceResult(option);
+  function fetchJson(url, signal) {
+    return fetch(url, {
+      credentials: 'same-origin',
+      signal: signal,
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
       }
+    }).then(function (response) {
+      if (!response.ok) throw new Error(String(response.status));
+      return response.json();
     });
   }
 
-  // Ensure view-all footer exists
-  function ensureViewAllFooter(listbox, query) {
-    if (!listbox || !query) return;
-    if (listbox.querySelector('#search-result-view-all')) return;
+  function getMaps(signal) {
+    if (!mapPromise) {
+      mapPromise = Promise.all([
+        fetchJson(apiOrigin + '/api/v2/help_center/categories.json?per_page=100', signal),
+        fetchJson(apiOrigin + '/api/v2/help_center/sections.json?per_page=100', signal)
+      ]).then(function (results) {
+        var categories = Object.create(null);
+        var sections = Object.create(null);
 
-    var li = document.createElement('li');
-    li.id = 'search-result-view-all';
-    li.setAttribute('role', 'option');
-    li.setAttribute('aria-selected', 'false');
-    li.className = 'hk-search-suggestion-footer';
+        (results[0].categories || []).forEach(function (category) {
+          if (category && category.id != null) categories[String(category.id)] = category.name || '';
+        });
 
-    var link = document.createElement('a');
-    link.href = hcBase + '/search?query=' + encodeURIComponent(query);
-    link.className = 'hc-view-all-link';
-    link.textContent = 'View all results for "' + query + '"';
+        (results[1].sections || []).forEach(function (section) {
+          if (!section || section.id == null) return;
+          sections[String(section.id)] = {
+            name: section.name || '',
+            categoryId: section.category_id != null ? String(section.category_id) : ''
+          };
+        });
 
-    li.appendChild(link);
-    li.addEventListener('click', function (e) {
-      e.preventDefault();
-      window.location.href = link.href;
-    });
+        return { categories: categories, sections: sections };
+      }).catch(function () {
+        mapPromise = null;
+        return { categories: Object.create(null), sections: Object.create(null) };
+      });
+    }
 
-    listbox.appendChild(li);
+    return mapPromise;
   }
 
-  // Remove blue left border from autocomplete options
-  function removeBlueBorder(option) {
-    if (!option) return;
-    // Remove border-left inline styles
-    option.style.borderLeft = '';
-    option.style.borderLeftColor = '';
-    option.style.borderLeftWidth = '';
-    option.style.borderLeftStyle = '';
-    option.style.borderInlineStart = '';
-    option.style.borderInlineStartColor = '';
-    option.style.borderInlineStartWidth = '';
-    option.style.borderInlineStartStyle = '';
-  }
+  function fetchSuggestions(query, signal) {
+    var cacheKey = String(query || '').trim().toLowerCase();
+    if (queryCache[cacheKey]) return Promise.resolve(queryCache[cacheKey]);
 
-  // Watch for autocomplete results
-  function watchAutocomplete() {
-    var lastEnhancedQuery = '';
+    var url = apiOrigin + '/api/v2/help_center/articles/search.json?locale='
+      + encodeURIComponent(locale)
+      + '&per_page=5&query='
+      + encodeURIComponent(query);
 
-    // Periodically check for listbox and enhance it
-    var checkInterval = setInterval(function () {
-      var listbox = document.querySelector('[role="listbox"]');
-      if (!listbox) return; // No listbox yet
+    return Promise.all([fetchJson(url, signal), getMaps(signal)]).then(function (results) {
+      var data = results[0] || {};
+      var maps = results[1] || { categories: Object.create(null), sections: Object.create(null) };
 
-      var input = document.querySelector('input[name="query"], input[type="search"]');
-      var query = (input && input.value) ? input.value.trim() : '';
+      var suggestions = (data.results || []).slice(0, 5).map(function (article) {
+        var section = article.section_id != null ? maps.sections[String(article.section_id)] : null;
+        var categoryName = section && section.categoryId ? maps.categories[section.categoryId] || '' : '';
+        var sectionName = section ? section.name || '' : '';
 
-      // Only process if query is 4+ chars
-      if (query.length < 4) return;
-
-      // Remove blue borders from all options
-      var allOptions = listbox.querySelectorAll('[role="option"]');
-      allOptions.forEach(function (option) {
-        removeBlueBorder(option);
+        return {
+          title: article.title || '',
+          url: article.html_url || '',
+          excerpt: stripHtml(article.snippet || article.body || '').slice(0, 180),
+          category: categoryName,
+          section: sectionName
+        };
       });
 
-      // Enhance if query changed
-      if (query !== lastEnhancedQuery) {
-        lastEnhancedQuery = query;
-        enhanceAllResults(listbox);
-        ensureViewAllFooter(listbox, query);
-      }
-    }, 200);
+      queryCache[cacheKey] = suggestions;
+      return suggestions;
+    });
   }
 
-  // Initialize
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', watchAutocomplete);
-  } else {
-    watchAutocomplete();
+  function buildSearchResultsUrl(form, query) {
+    var action = (form && form.action) ? form.action : (window.location.origin + '/hc/' + locale + '/search');
+    var url = new URL(action, window.location.origin);
+    url.searchParams.set('utf8', '✓');
+    url.searchParams.set('query', query);
+    return url.toString();
   }
+
+  function buildBreadcrumb(item) {
+    var parts = ['Home'];
+    if (item.category) parts.push(item.category);
+    if (item.section) parts.push(item.section);
+
+    return '<div class="hc-autocomplete-breadcrumb" title="' + escapeHtml(parts.join(' > ')) + '">' + parts.map(function (part, index) {
+      return '<span class="hc-autocomplete-breadcrumb-part">' + escapeHtml(part) + '</span>'
+        + (index < parts.length - 1 ? '<span class="hc-autocomplete-separator">/</span>' : '');
+    }).join('') + '</div>';
+  }
+
+  function renderList(state, query, suggestions, errorState) {
+    var optionIdPrefix = state.list.id + '-option-';
+    var searchResultsUrl = buildSearchResultsUrl(state.form, query);
+    var items = [];
+
+    suggestions.forEach(function (item, index) {
+      items.push(
+        '<li id="' + optionIdPrefix + index + '" class="hc-autocomplete-option hc-autocomplete-option--card" role="option" aria-selected="false" data-index="' + index + '" data-url="' + escapeHtml(item.url) + '">' +
+          '<a class="hc-autocomplete-link" href="' + escapeHtml(item.url) + '">' +
+            '<span class="hc-autocomplete-title">' + highlightText(item.title, query) + '</span>' +
+            buildBreadcrumb(item) +
+            (item.excerpt ? '<span class="hc-autocomplete-excerpt">' + highlightText(item.excerpt, query) + '</span>' : '') +
+          '</a>' +
+        '</li>'
+      );
+    });
+
+    if (!suggestions.length) {
+      items.push(
+        '<li class="hc-autocomplete-option hc-autocomplete-option--static" role="presentation">' +
+          '<div class="hc-autocomplete-empty' + (errorState ? '' : ' hc-autocomplete-empty--no-results') + '">' + escapeHtml(errorState ? 'Suggestions unavailable. Press Enter to search.' : 'No suggestions found yet.') + '</div>' +
+        '</li>'
+      );
+    }
+
+    if (suggestions.length || errorState) {
+      items.push(
+        '<li id="' + optionIdPrefix + suggestions.length + '" class="hc-autocomplete-option hc-autocomplete-option--footer" role="option" aria-selected="false" data-index="' + suggestions.length + '" data-url="' + escapeHtml(searchResultsUrl) + '">' +
+          '<a class="hc-autocomplete-link hc-autocomplete-link--footer view-toggle-btn" href="' + escapeHtml(searchResultsUrl) + '">View all results</a>' +
+        '</li>'
+      );
+    }
+
+    state.list.innerHTML = items.join('');
+    state.options = Array.prototype.slice.call(state.list.querySelectorAll('.hc-autocomplete-option[role="option"]'));
+    state.activeIndex = -1;
+    state.input.removeAttribute('aria-activedescendant');
+    positionPanel(state);
+    state.panel.hidden = false;
+    state.input.setAttribute('aria-expanded', 'true');
+  }
+
+  function setActiveOption(state, nextIndex) {
+    if (!state.options.length) return;
+
+    if (nextIndex < 0) nextIndex = state.options.length - 1;
+    if (nextIndex >= state.options.length) nextIndex = 0;
+
+    state.activeIndex = nextIndex;
+    state.options.forEach(function (option, index) {
+      var isActive = index === nextIndex;
+      option.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      option.classList.toggle('is-active', isActive);
+      if (isActive) {
+        state.input.setAttribute('aria-activedescendant', option.id);
+        option.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  function clearActiveOption(state) {
+    if (!state || !state.options.length) {
+      if (state) {
+        state.activeIndex = -1;
+        state.input.removeAttribute('aria-activedescendant');
+      }
+      return;
+    }
+
+    state.activeIndex = -1;
+    state.options.forEach(function (option) {
+      option.setAttribute('aria-selected', 'false');
+      option.classList.remove('is-active');
+    });
+    state.input.removeAttribute('aria-activedescendant');
+  }
+
+  function closePanel(state) {
+    state.panel.hidden = true;
+    state.list.innerHTML = '';
+    state.options = [];
+    state.activeIndex = -1;
+    state.input.setAttribute('aria-expanded', 'false');
+    state.input.removeAttribute('aria-activedescendant');
+  }
+
+  function renderLoading(state) {
+    state.list.innerHTML = '<li class="hc-autocomplete-option hc-autocomplete-option--static" role="presentation"><div class="hc-autocomplete-loading">Loading suggestions...</div></li>';
+    state.options = [];
+    state.activeIndex = -1;
+    positionPanel(state);
+    state.panel.hidden = false;
+    state.input.setAttribute('aria-expanded', 'true');
+    state.input.removeAttribute('aria-activedescendant');
+  }
+
+  function positionPanel(state) {
+    if (!state || !state.input || !state.panel) return;
+
+    var rect = state.input.getBoundingClientRect();
+    var viewportPadding = 8;
+    var left = Math.max(viewportPadding, rect.left);
+    var width = rect.width;
+    var maxWidth = window.innerWidth - (viewportPadding * 2);
+
+    if (left + width > window.innerWidth - viewportPadding) {
+      width = Math.max(260, window.innerWidth - left - viewportPadding);
+    }
+
+    state.panel.style.position = 'fixed';
+    state.panel.style.top = (rect.bottom + 4) + 'px';
+    state.panel.style.left = left + 'px';
+    state.panel.style.width = Math.min(width, maxWidth) + 'px';
+  }
+
+  function createState(wrapper, index) {
+    var form = wrapper.querySelector('form[role="search"]');
+    var input = form ? form.querySelector('input[name="query"][type="search"]') : null;
+    if (!form || !input) return null;
+    if (wrapper.getAttribute('data-custom-autocomplete-ready') === 'true') return null;
+
+    wrapper.setAttribute('data-custom-autocomplete-ready', 'true');
+
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-haspopup', 'listbox');
+    input.setAttribute('aria-expanded', 'false');
+
+    var panel = document.createElement('div');
+    panel.className = 'hc-autocomplete-panel';
+    panel.hidden = true;
+
+    var list = document.createElement('ul');
+    list.className = 'hc-autocomplete-list';
+    list.id = 'hc-autocomplete-list-' + index;
+    list.setAttribute('role', 'listbox');
+    list.setAttribute('aria-label', 'Search suggestions');
+
+    panel.appendChild(list);
+    document.body.appendChild(panel);
+    input.setAttribute('aria-controls', list.id);
+
+    return {
+      wrapper: wrapper,
+      form: form,
+      input: input,
+      panel: panel,
+      list: list,
+      options: [],
+      activeIndex: -1,
+      minChars: parseInt(wrapper.getAttribute('data-autocomplete-min-chars') || '2', 10),
+      timer: null,
+      abortController: null,
+      requestId: 0,
+      lastQuery: '',
+      interactionMode: 'pointer'
+    };
+  }
+
+  function loadSuggestions(state) {
+    var query = state.input.value.trim();
+    state.lastQuery = query;
+
+    if (query.length < state.minChars) {
+      if (state.abortController) state.abortController.abort();
+      closePanel(state);
+      return;
+    }
+
+    if (state.abortController) state.abortController.abort();
+    state.abortController = new AbortController();
+    state.requestId += 1;
+    var currentRequestId = state.requestId;
+
+    renderLoading(state);
+
+    fetchSuggestions(query, state.abortController.signal).then(function (suggestions) {
+      if (currentRequestId !== state.requestId || state.input.value.trim() !== query) return;
+      renderList(state, query, suggestions, false);
+    }).catch(function (error) {
+      if (error && error.name === 'AbortError') return;
+      if (currentRequestId !== state.requestId) return;
+      renderList(state, query, [], true);
+    });
+  }
+
+  wrappers.forEach(function (wrapper, index) {
+    var state = createState(wrapper, index);
+    if (!state) return;
+
+    state.input.addEventListener('input', function () {
+      clearTimeout(state.timer);
+      state.timer = window.setTimeout(function () {
+        loadSuggestions(state);
+      }, 180);
+    });
+
+    state.input.addEventListener('focus', function () {
+      if (state.options.length && state.lastQuery === state.input.value.trim()) {
+        positionPanel(state);
+        state.panel.hidden = false;
+        state.input.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    state.input.addEventListener('keydown', function (event) {
+      if (state.panel.hidden && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+        if (state.input.value.trim().length >= state.minChars) {
+          loadSuggestions(state);
+        }
+        return;
+      }
+
+      if (state.panel.hidden) {
+        if (event.key === 'Escape') closePanel(state);
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        state.interactionMode = 'keyboard';
+        event.preventDefault();
+        setActiveOption(state, state.activeIndex + 1);
+      } else if (event.key === 'ArrowUp') {
+        state.interactionMode = 'keyboard';
+        event.preventDefault();
+        setActiveOption(state, state.activeIndex - 1);
+      } else if (event.key === 'Enter') {
+        if (state.activeIndex >= 0 && state.options[state.activeIndex]) {
+          event.preventDefault();
+          window.location.href = state.options[state.activeIndex].getAttribute('data-url');
+        }
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closePanel(state);
+      }
+    });
+
+    state.panel.addEventListener('mousemove', function (event) {
+      state.interactionMode = 'pointer';
+      var option = event.target.closest('.hc-autocomplete-option[role="option"]');
+      if (!option) {
+        clearActiveOption(state);
+        return;
+      }
+
+      if (option.classList.contains('hc-autocomplete-option--footer') && !event.target.closest('.hc-autocomplete-link--footer')) {
+        clearActiveOption(state);
+        return;
+      }
+
+      setActiveOption(state, parseInt(option.getAttribute('data-index') || '-1', 10));
+    });
+
+    state.panel.addEventListener('mouseleave', function () {
+      if (state.interactionMode === 'pointer') clearActiveOption(state);
+    });
+
+    state.panel.addEventListener('mousedown', function (event) {
+      var option = event.target.closest('.hc-autocomplete-option[role="option"]');
+      if (!option) return;
+      event.preventDefault();
+      window.location.href = option.getAttribute('data-url');
+    });
+
+    window.addEventListener('resize', function () {
+      if (!state.panel.hidden) positionPanel(state);
+    });
+
+    window.addEventListener('scroll', function () {
+      if (!state.panel.hidden) positionPanel(state);
+    }, true);
+
+    document.addEventListener('click', function (event) {
+      if (!state.wrapper.contains(event.target) && !state.panel.contains(event.target)) closePanel(state);
+    });
+  });
 })();
 
 /* ---------- Small helpers (local, non-destructive) ---------- */
