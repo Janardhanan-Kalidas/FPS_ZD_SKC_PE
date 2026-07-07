@@ -52,16 +52,16 @@
     </div>
 
     {{! Hero element search bar - Jana}}
-    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4{{#is settings.hero_content_alignment 'center'}} mx-auto{{/is}}">
+    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4{{#is settings.hero_content_alignment 'center'}} mx-auto{{/is}}" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
       <h2 class="sr-only">{{ t 'search' }}</h2>
       {{~#if settings.search_placeholder}}
         {{#if settings.use_translations}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=(dc 'search')}}
+          {{search class='form-field mb-0' scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=(dc 'search')}}
         {{else}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=settings.search_placeholder}}
+          {{search class='form-field mb-0' scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=settings.search_placeholder}}
         {{/if}}
       {{else}}
-        {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button}}
+        {{search class='form-field mb-0' scoped=settings.scoped_kb_search submit=settings.show_search_button}}
       {{/if~}}
       <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
         <use xlink:href="#icon-search" />
