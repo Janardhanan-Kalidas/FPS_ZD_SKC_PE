@@ -2008,20 +2008,32 @@ document.addEventListener('DOMContentLoaded', function () {
     // 3. Sort dropdown - client-side sorting by timestamp
     var sortSelect = document.getElementById('sortSelect');
     if (sortSelect) {
-      sortSelect.addEventListener('change', function(e) {
-        var hasActiveFilters = !!document.querySelector('#hc-category-list .hc-category-input:checked, #hc-section-list .hc-section-input:checked');
-        if (hasActiveFilters && typeof rerenderFilteredResults === 'function') {
-          rerenderFilteredResults();
-          return;
-        }
+      var sortDropdown = sortSelect.closest('.hc-sort-dropdown');
+      var resultsList = document.querySelector('.hc-results-list');
+      var initialOrder = resultsList ? Array.from(resultsList.querySelectorAll('.hc-result-card')) : [];
 
-        var resultsList = document.querySelector('.hc-results-list');
+      function setSortDropdownOpen(isOpen) {
+        if (!sortDropdown) return;
+        sortDropdown.classList.toggle('is-open', !!isOpen);
+      }
+
+      function syncSortUrl(sortValue) {
+        var url = new URL(window.location.href);
+        if (sortValue === 'recent') {
+          url.searchParams.set('sort', 'recent');
+        } else {
+          url.searchParams.delete('sort');
+        }
+        window.history.replaceState(null, '', url.toString());
+      }
+
+      function applySort(sortValue) {
         if (!resultsList) return;
-        
+
         var resultCards = Array.from(resultsList.querySelectorAll('.hc-result-card'));
         if (resultCards.length === 0) return;
-        
-        if (this.value === 'recent') {
+
+        if (sortValue === 'recent') {
           // Sort by most recent - extract timestamps and sort descending
           resultCards.sort(function(a, b) {
             var timeA = a.querySelector('.hc-result-meta time');
@@ -2034,23 +2046,60 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isNaN(tsA)) return 1;
             if (isNaN(tsB)) return -1;
 
-            var dateA = new Date(tsA);
-            var dateB = new Date(tsB);
-
-            return dateB - dateA; // Descending order (most recent first)
+            return tsB - tsA; // Descending order (most recent first)
           });
-          
+
           // Re-append sorted cards to the list
           resultCards.forEach(function(card) {
             resultsList.appendChild(card);
           });
         } else {
-          // Sort by relevance - reload page with clean query
-          var baseUrl = helpCenterUrl + (helpCenterUrl.endsWith('/') ? '' : '/') + 'search';
-          var newUrl = baseUrl + '?utf8=%E2%9C%93&query=' + encodeURIComponent(cleanedQuery);
-          window.location.href = newUrl;
+          // Restore original server-rendered relevance order.
+          initialOrder.forEach(function(card) {
+            resultsList.appendChild(card);
+          });
+        }
+      }
+
+      // Native selects don't expose a reliable "opened" event.
+      // Use pointer/key open-intent events, then close on change/blur.
+      sortSelect.addEventListener('mousedown', function() {
+        setSortDropdownOpen(true);
+      });
+
+      sortSelect.addEventListener('keydown', function(e) {
+        var key = e.key;
+        if (key === 'ArrowDown' || key === 'ArrowUp' || key === ' ' || key === 'Enter' || key === 'F4') {
+          setSortDropdownOpen(true);
         }
       });
+
+      sortSelect.addEventListener('blur', function() {
+        setSortDropdownOpen(false);
+      });
+
+      sortSelect.addEventListener('change', function(e) {
+        // Selection means the dropdown interaction is complete.
+        setSortDropdownOpen(false);
+        syncSortUrl(this.value);
+
+        var hasActiveFilters = !!document.querySelector('#hc-category-list .hc-category-input:checked, #hc-section-list .hc-section-input:checked');
+        if (hasActiveFilters && typeof rerenderFilteredResults === 'function') {
+          rerenderFilteredResults();
+          return;
+        }
+
+        applySort(this.value);
+      });
+
+      // Apply URL-driven initial sort state without page reload.
+      var initialSort = new URLSearchParams(window.location.search).get('sort');
+      if (initialSort === 'recent') {
+        sortSelect.value = 'recent';
+        applySort('recent');
+      } else {
+        syncSortUrl(sortSelect.value);
+      }
     }
 
     // Reset button — clear persisted filter state then navigate to the clean query URL.

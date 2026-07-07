@@ -18919,8 +18919,31 @@ header.d-flex h1 {
   position: relative;
 }
 
+.hc-sort-dropdown::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  width: 10px;
+  height: 6px;
+  background-image: var(--theme-sort-chevron-icon);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hc-sort-dropdown.is-open::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
 .hc-sort-select {
-  padding: 0.5rem 2rem 0.5rem 1rem;
+  position: relative;
+  z-index: 1;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
   font-size: 0.875rem;
   border: 1px solid #E8E8E8;
   border-radius: 0px;
@@ -18928,10 +18951,6 @@ header.d-flex h1 {
   color: #524f53;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23524f53' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 12px;
   transition: border-color 0.2s ease;
 }
 
@@ -18942,7 +18961,7 @@ header.d-flex h1 {
 .hc-sort-select:focus {
   outline: none;
   border-color: #d2051e;
-  box-shadow: 0 0 0 3px rgba(210, 5, 30, 0.1);
+  box-shadow: none;
 }
 
 /* ===== RESULT CARDS ===== */
