@@ -113,6 +113,18 @@ This feature defines the placement and layout behaviour of two announcement bann
 5. WHEN a banner toggle is disabled, THE corresponding banner SHALL NOT render in the DOM.
 6. IF a banner toggle is enabled and its corresponding text field is empty, THEN THE corresponding banner SHALL NOT render in the DOM.
 7. THE banner Theme_Settings SHALL operate independently from the existing `notification_location` and `notification_content` settings, with no mutual interference in rendering behaviour.
+8. THE Theme_Settings SHALL provide a color picker setting for the Release_Banner background colour. The picker SHALL offer the following preset colours at 20% opacity: `#AB0115` (20% opacity → rgba(171,1,21,0.2)), `#524F53` (20% opacity → rgba(82,79,83,0.2)), `#19AF37` (20% opacity → rgba(25,175,55,0.2)), `#FFAF00` (20% opacity → rgba(255,175,0,0.2)). Default: `#AB0115` at 20% opacity.
+9. THE Theme_Settings SHALL provide a color picker setting for the Release_Banner text colour, with a default value of `#524F53`.
+10. THE Theme_Settings SHALL provide a color picker setting for the Notification_Banner background colour, with the same preset colours at 20% opacity as criterion 8. Default: `#524F53` at 20% opacity.
+11. THE Theme_Settings SHALL provide a color picker setting for the Notification_Banner text colour, with a default value of `#524F53`.
+12. WHEN a banner background colour is selected from the picker, THE corresponding banner SHALL automatically apply a left border with the following properties: position = left side, border-left-width = 4px, border-left-style = solid, and border-left-color = the full-opacity (100%) version of the selected background colour (i.e., `#AB0115`, `#524F53`, `#19AF37`, or `#FFAF00`).
+13. THE Theme_Settings SHALL provide a list (dropdown) setting for the Release_Banner icon, with options: "none", "alert_error", "alert_info", "alert_positive", "alert_warning", "notification", "custom". Default: "none".
+14. THE Theme_Settings SHALL provide a list (dropdown) setting for the Notification_Banner icon, with options: "none", "alert_error", "alert_info", "alert_positive", "alert_warning", "notification", "custom". Default: "none".
+15. THE Theme_Settings SHALL provide a file upload setting for the Release_Banner custom icon, accepting image files (SVG, PNG). This setting is used only when the Release_Banner icon dropdown is set to "custom".
+16. THE Theme_Settings SHALL provide a file upload setting for the Notification_Banner custom icon, accepting image files (SVG, PNG). This setting is used only when the Notification_Banner icon dropdown is set to "custom".
+17. WHEN a banner icon is set to a built-in option (alert_error, alert_info, alert_positive, alert_warning, notification), THE corresponding banner SHALL render the matching bundled SVG from the `assets/` folder (e.g., `assets/alert_error.svg`) inline before the banner content text, constrained to 20px × 20px.
+18. WHEN a banner icon is set to "custom" and a custom icon file is uploaded, THE corresponding banner SHALL render the uploaded image before the banner content text, constrained to 20px × 20px.
+19. WHEN a banner icon is set to "none", THE corresponding banner SHALL NOT render any icon element.
 
 ### Requirement 9: Template Insertion Point
 

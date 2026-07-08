@@ -52,8 +52,16 @@ New settings added under a dedicated `"banner_group_label"` group:
 |---|---|---|---|
 | `release_banner_enabled` | checkbox | `false` | Toggle Release Banner visibility |
 | `release_banner_content` | text | `""` | Release Banner message text |
+| `release_banner_bg_color` | color | `#d2051e` | Release Banner background colour |
+| `release_banner_text_color` | color | `#ffffff` | Release Banner text colour |
+| `release_banner_icon` | list | `"none"` | Release Banner icon selection (none, info, warning, megaphone, rocket, custom) |
+| `release_banner_custom_icon` | file | — | Release Banner custom icon upload (SVG/PNG) |
 | `notification_banner_enabled` | checkbox | `false` | Toggle Notification Banner visibility |
 | `notification_banner_content` | text | `""` | Notification Banner message text |
+| `notification_banner_bg_color` | color | `#f5f5f4` | Notification Banner background colour |
+| `notification_banner_text_color` | color | `#524f53` | Notification Banner text colour |
+| `notification_banner_icon` | list | `"none"` | Notification Banner icon selection (none, info, warning, megaphone, rocket, custom) |
+| `notification_banner_custom_icon` | file | — | Notification Banner custom icon upload (SVG/PNG) |
 
 These settings are namespaced separately from the existing `notification_location` and `notification_content` settings to avoid interference.
 
