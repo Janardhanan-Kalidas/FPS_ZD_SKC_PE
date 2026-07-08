@@ -17813,44 +17813,64 @@ header.d-flex h1 {
 }
 
 /* ===================================================================
-   HILTI PROFIS — Section Article List (Single Column Layout)
+   HILTI PROFIS — Section Article List (Responsive Column Layout)
    Author: Kalidas, Janardhanan
-   Date: 2026‑03‑29
+   Date: 2026‑03‑29 (Updated: 2026‑07‑07)
    Purpose:
-     - Convert Xavier grid → single-column article list
+     - Support responsive two/three-column layout for article lists
+     - Respect template's column classes (md:col-6, lg:col-4)
      - Apply Hilti Red hover effect
-     - Make CSS independent of layout class (.section-layout)
-     - Guaranteed override using direct selectors + !important
+     - Ensure single-article sections display in two-column grid
+     - Responsive: single column on mobile, multi-column on desktop
    =================================================================== */
 
 
 /* ---------------------------------------------------------------
    1. Target ALL article lists inside any Section page
-      UL row + LI columns → forced to single column
+      UL row + LI columns → respect responsive column layout
    --------------------------------------------------------------- */
 
 [id^="articles-"] ul.row,
 [id^="articles-"] ul.row-sm,
 [id^="articles-"] ul.list-unstyled {
-    display: block !important;
-    flex-wrap: unset !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
     margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+/* Allow LI to respect responsive column classes from template */
+[id^="articles-"] ul li {
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
     padding: 0 !important;
 }
 
-/* Force LI to be a full-width row */
-[id^="articles-"] ul li,
-[id^="articles-"] ul li[class*="col"] {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    flex: none !important;
-    margin-bottom: 10px !important;
+/* Respect template's responsive column classes (md:col-6, lg:col-4, etc.) */
+[id^="articles-"] ul li.md\:col-6 {
+    width: 50% !important;
+    max-width: 50% !important;
+}
+
+[id^="articles-"] ul li.lg\:col-4 {
+    width: 33.333% !important;
+    max-width: 33.333% !important;
+}
+
+/* Default: single column on small screens */
+@media (max-width: 768px) {
+    [id^="articles-"] ul li,
+    [id^="articles-"] ul li.md\:col-6 {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 
 /* ---------------------------------------------------------------
-   2. Clean up the article entry row
+   2. Clean up the article entry row (works with flex/grid)
    --------------------------------------------------------------- */
 
 [id^="articles-"] ul li .media {
@@ -18460,7 +18480,7 @@ header.d-flex h1 {
 /* Active / current category in sidebar */
 .category-page [data-element="navigation"] ul li a.underline,
 .category-page [data-element="navigation"] ul li a[aria-current="page"] {
-  background-color: #E7E5E2 !important;
+  background-color: #e8e8e8 !important;
   color: #d2051e !important;
   font-weight: 600 !important;
   text-decoration: none !important;
@@ -18673,7 +18693,7 @@ header.d-flex h1 {
 }
 
 .section-page [data-element="navigation"] .sidebar-section-link.is-active {
-  background-color: #E7E5E2 !important;
+  background-color: #e8e8e8 !important;
   color: #d2051e !important;
   font-weight: 600 !important;
 }
@@ -19442,7 +19462,7 @@ button.hc-page-btn {
 }
 
 .article-sidebar-link.is-active {
-  background-color: #E7E5E2 !important;
+  background-color: #e8e8e8 !important;
   color: #d2051e !important;
   font-weight: 600;
 }
@@ -19846,7 +19866,7 @@ button.hc-page-btn {
   font-size: 0.6875rem;
   font-weight: 500;
   color: #524f53 !important;
-  background: #CFCCC5;
+  background: #e8e8e8;
   border-radius: 0;
   text-decoration: none;
   transition: background 0.15s;
@@ -20002,23 +20022,41 @@ body.downvote-feedback-open {
   border-collapse: collapse;
   margin: 1rem 0;
   font-size: 0.875rem;
+  color: #524f53;
+  border: 1px solid #CFCCC5;
 }
 
 .article-content th {
-  background: ##D9D9D9;
-  color: #fff;
-  font-weight: 600;
+  background: #E7E5E2;
+  color: #524f53;
+  font-weight: 700;
   padding: 0.5rem 0.75rem;
   text-align: left;
+  border: 1px solid #CFCCC5;
 }
 
 .article-content td {
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #e8e8e8;
+  color: #524f53;
+  border: 1px solid #CFCCC5;
 }
 
 .article-content tr:nth-child(even) td {
   background: #f7f6f3;
+}
+
+.article-content td:first-child {
+  background: #E7E5E2;
+}
+
+.article-content table th *,
+.article-content table td * {
+  color: #524f53 !important;
+}
+
+.article-content table th,
+.article-content table th * {
+  font-weight: 700 !important;
 }
 
 /* ----------------------------------------------------------

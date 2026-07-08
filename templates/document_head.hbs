@@ -1,4 +1,44 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+{{#if article}}
+<meta name="description" content="{{article.title}} - Hilti PROFIS Engineering Knowledge Center article with practical guidance, troubleshooting steps, and engineering best practices." />
+<meta property="og:description" content="{{article.title}} - Hilti PROFIS Engineering Knowledge Center article with practical guidance, troubleshooting steps, and engineering best practices." />
+<meta name="twitter:description" content="{{article.title}} - Hilti PROFIS Engineering Knowledge Center article with practical guidance, troubleshooting steps, and engineering best practices." />
+<meta property="og:title" content="{{article.title}} | Hilti PROFIS Engineering Knowledge Center" />
+<meta name="twitter:title" content="{{article.title}} | Hilti PROFIS Engineering Knowledge Center" />
+{{else}}
+  {{#if section}}
+<meta name="description" content="{{section.name}} resources in the Hilti PROFIS Engineering Knowledge Center: technical help, product guidance, and troubleshooting for faster project delivery." />
+<meta property="og:description" content="{{section.name}} resources in the Hilti PROFIS Engineering Knowledge Center: technical help, product guidance, and troubleshooting for faster project delivery." />
+<meta name="twitter:description" content="{{section.name}} resources in the Hilti PROFIS Engineering Knowledge Center: technical help, product guidance, and troubleshooting for faster project delivery." />
+<meta property="og:title" content="{{section.name}} | Hilti PROFIS Engineering Knowledge Center" />
+<meta name="twitter:title" content="{{section.name}} | Hilti PROFIS Engineering Knowledge Center" />
+  {{else}}
+    {{#if category}}
+<meta name="description" content="{{category.name}} in the Hilti PROFIS Engineering Knowledge Center: discover support articles, updates, and proven engineering workflows." />
+<meta property="og:description" content="{{category.name}} in the Hilti PROFIS Engineering Knowledge Center: discover support articles, updates, and proven engineering workflows." />
+<meta name="twitter:description" content="{{category.name}} in the Hilti PROFIS Engineering Knowledge Center: discover support articles, updates, and proven engineering workflows." />
+<meta property="og:title" content="{{category.name}} | Hilti PROFIS Engineering Knowledge Center" />
+<meta name="twitter:title" content="{{category.name}} | Hilti PROFIS Engineering Knowledge Center" />
+    {{else}}
+      {{#if topic}}
+<meta name="description" content="{{topic.name}} discussions in the Hilti PROFIS Engineering community with practical questions, answers, and field-tested tips." />
+<meta property="og:description" content="{{topic.name}} discussions in the Hilti PROFIS Engineering community with practical questions, answers, and field-tested tips." />
+<meta name="twitter:description" content="{{topic.name}} discussions in the Hilti PROFIS Engineering community with practical questions, answers, and field-tested tips." />
+<meta property="og:title" content="{{topic.name}} | Hilti PROFIS Engineering Knowledge Center" />
+<meta name="twitter:title" content="{{topic.name}} | Hilti PROFIS Engineering Knowledge Center" />
+      {{else}}
+<meta name="description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
+<meta property="og:description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
+<meta name="twitter:description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
+<meta property="og:title" content="Hilti PROFIS Engineering Knowledge Center" />
+<meta name="twitter:title" content="Hilti PROFIS Engineering Knowledge Center" />
+      {{/if}}
+    {{/if}}
+  {{/if}}
+{{/if}}
+<meta property="og:site_name" content="Hilti PROFIS Engineering Knowledge Center" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
 <meta
   name="theme-settings-fingerprint"
   content="hide_sign_in_link={{#if settings.hide_sign_in_link}}1{{else}}0{{/if}};show_submit_a_request_link={{#if settings.show_submit_a_request_link}}1{{else}}0{{/if}};show_article_submit_cta={{#if settings.show_article_submit_cta}}1{{else}}0{{/if}}">
