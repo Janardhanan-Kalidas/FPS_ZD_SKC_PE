@@ -527,6 +527,153 @@
       ]
     },
     {
+      "label": "banner_group_label",
+      "variables": [
+        {
+          "identifier": "release_banner_enabled",
+          "type": "checkbox",
+          "description": "release_banner_enabled_description",
+          "label": "release_banner_enabled_label",
+          "value": false
+        },
+        {
+          "identifier": "release_banner_content",
+          "type": "text",
+          "description": "release_banner_content_description",
+          "label": "release_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "notification_banner_enabled",
+          "type": "checkbox",
+          "description": "notification_banner_enabled_description",
+          "label": "notification_banner_enabled_label",
+          "value": false
+        },
+        {
+          "identifier": "notification_banner_content",
+          "type": "text",
+          "description": "notification_banner_content_description",
+          "label": "notification_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "release_banner_background_color",
+          "type": "color",
+          "description": "release_banner_background_color_description",
+          "label": "release_banner_background_color_label",
+          "value": "#AB0115"
+        },
+        {
+          "identifier": "release_banner_text_color",
+          "type": "color",
+          "description": "release_banner_text_color_description",
+          "label": "release_banner_text_color_label",
+          "value": "#524F53"
+        },
+        {
+          "identifier": "notification_banner_background_color",
+          "type": "color",
+          "description": "notification_banner_background_color_description",
+          "label": "notification_banner_background_color_label",
+          "value": "#524F53"
+        },
+        {
+          "identifier": "notification_banner_text_color",
+          "type": "color",
+          "description": "notification_banner_text_color_description",
+          "label": "notification_banner_text_color_label",
+          "value": "#524F53"
+        },
+        {
+          "identifier": "release_banner_icon",
+          "type": "list",
+          "description": "release_banner_icon_description",
+          "label": "release_banner_icon_label",
+          "value": "none",
+          "options": [
+            {
+              "label": "None",
+              "value": "none"
+            },
+            {
+              "label": "Alert Error",
+              "value": "alert_error"
+            },
+            {
+              "label": "Alert Info",
+              "value": "alert_info"
+            },
+            {
+              "label": "Alert Positive",
+              "value": "alert_positive"
+            },
+            {
+              "label": "Alert Warning",
+              "value": "alert_warning"
+            },
+            {
+              "label": "Notification",
+              "value": "notification"
+            },
+            {
+              "label": "Custom",
+              "value": "custom"
+            }
+          ]
+        },
+        {
+          "identifier": "notification_banner_icon",
+          "type": "list",
+          "description": "notification_banner_icon_description",
+          "label": "notification_banner_icon_label",
+          "value": "none",
+          "options": [
+            {
+              "label": "None",
+              "value": "none"
+            },
+            {
+              "label": "Alert Error",
+              "value": "alert_error"
+            },
+            {
+              "label": "Alert Info",
+              "value": "alert_info"
+            },
+            {
+              "label": "Alert Positive",
+              "value": "alert_positive"
+            },
+            {
+              "label": "Alert Warning",
+              "value": "alert_warning"
+            },
+            {
+              "label": "Notification",
+              "value": "notification"
+            },
+            {
+              "label": "Custom",
+              "value": "custom"
+            }
+          ]
+        },
+        {
+          "identifier": "release_banner_custom_icon",
+          "type": "file",
+          "description": "release_banner_custom_icon_description",
+          "label": "release_banner_custom_icon_label"
+        },
+        {
+          "identifier": "notification_banner_custom_icon",
+          "type": "file",
+          "description": "notification_banner_custom_icon_description",
+          "label": "notification_banner_custom_icon_label"
+        }
+      ]
+    },
+    {
       "label": "home_page_group_label",
       "variables": [
         {
