@@ -562,28 +562,28 @@
           "type": "color",
           "description": "release_banner_background_color_description",
           "label": "release_banner_background_color_label",
-          "value": "#AB0115"
+          "value": "rgba(171, 1, 21, 1)"
         },
         {
           "identifier": "release_banner_text_color",
           "type": "color",
           "description": "release_banner_text_color_description",
           "label": "release_banner_text_color_label",
-          "value": "#524F53"
+          "value": "rgba(82, 79, 83, 1)"
         },
         {
           "identifier": "notification_banner_background_color",
           "type": "color",
           "description": "notification_banner_background_color_description",
           "label": "notification_banner_background_color_label",
-          "value": "#524F53"
+          "value": "rgba(82, 79, 83, 1)"
         },
         {
           "identifier": "notification_banner_text_color",
           "type": "color",
           "description": "notification_banner_text_color_description",
           "label": "notification_banner_text_color_label",
-          "value": "#524F53"
+          "value": "rgba(82, 79, 83, 1)"
         },
         {
           "identifier": "release_banner_icon",
