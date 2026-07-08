@@ -11,7 +11,7 @@ This implementation plan maps each task 1:1 to a requirement from the requiremen
 
 ## Tasks
 
-- [ ] 1. FPSKB-233 — Banner Configuration via Theme Settings
+- [x] 1. FPSKB-233 — Banner Configuration via Theme Settings
   - **Branch:** `git checkout -b FPSKB-233-theme-settings`
   - [x] 1.1 Add banner enable/content settings to manifest.json
     - Add a new settings group `"banner_group_label"` to `manifest.json`
@@ -37,7 +37,7 @@ This implementation plan maps each task 1:1 to a requirement from the requiremen
     - Add `notification_banner_custom_icon` (file upload, accepts SVG/PNG) — used only when icon dropdown is "custom"
     - Built-in icon assets referenced: `assets/alert_error.svg`, `assets/alert_info.svg`, `assets/alert_positive.svg`, `assets/alert_warning.svg`, `assets/notification.svg`
     - _Requirements: 8.13, 8.14, 8.15, 8.16, 8.17, 8.18, 8.19_
-  - [ ] 1.4 Verify settings independence from existing notification settings
+  - [x] 1.4 Verify settings independence from existing notification settings
     - Confirm `notification_location` and `notification_content` continue to function when banner settings are toggled
     - Validate that enabling/disabling banners does not interfere with existing notification rendering
     - _Requirements: 8.7_
