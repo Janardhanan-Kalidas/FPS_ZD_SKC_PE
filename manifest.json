@@ -558,10 +558,10 @@
           "value": ""
         },
         {
-          "identifier": "release_banner_background_color",
+          "identifier": "release_banner_bg_color",
           "type": "color",
-          "description": "release_banner_background_color_description",
-          "label": "release_banner_background_color_label",
+          "description": "release_banner_bg_color_description",
+          "label": "release_banner_bg_color_label",
           "value": "rgba(171, 1, 21, 1)"
         },
         {
@@ -572,10 +572,10 @@
           "value": "rgba(82, 79, 83, 1)"
         },
         {
-          "identifier": "notification_banner_background_color",
+          "identifier": "notif_banner_bg_color",
           "type": "color",
-          "description": "notification_banner_background_color_description",
-          "label": "notification_banner_background_color_label",
+          "description": "notif_banner_bg_color_description",
+          "label": "notif_banner_bg_color_label",
           "value": "rgba(82, 79, 83, 1)"
         },
         {
@@ -666,10 +666,10 @@
           "label": "release_banner_custom_icon_label"
         },
         {
-          "identifier": "notification_banner_custom_icon",
+          "identifier": "notif_banner_custom_icon",
           "type": "file",
-          "description": "notification_banner_custom_icon_description",
-          "label": "notification_banner_custom_icon_label"
+          "description": "notif_banner_custom_icon_description",
+          "label": "notif_banner_custom_icon_label"
         }
       ]
     },
