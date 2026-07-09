@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --test tests/",
     "version:theme": "node tooling/scripts/version-theme.mjs",
     "version:theme:dry": "node tooling/scripts/version-theme.mjs --dry-run",
     "version:theme:patch": "node tooling/scripts/version-theme.mjs --release-as patch",
