@@ -537,55 +537,6 @@
           "value": false
         },
         {
-          "identifier": "release_banner_content",
-          "type": "text",
-          "description": "release_banner_content_description",
-          "label": "release_banner_content_label",
-          "value": ""
-        },
-        {
-          "identifier": "notification_banner_enabled",
-          "type": "checkbox",
-          "description": "notification_banner_enabled_description",
-          "label": "notification_banner_enabled_label",
-          "value": false
-        },
-        {
-          "identifier": "notification_banner_content",
-          "type": "text",
-          "description": "notification_banner_content_description",
-          "label": "notification_banner_content_label",
-          "value": ""
-        },
-        {
-          "identifier": "release_banner_bg_color",
-          "type": "color",
-          "description": "release_banner_bg_color_description",
-          "label": "release_banner_bg_color_label",
-          "value": "rgba(171, 1, 21, 1)"
-        },
-        {
-          "identifier": "release_banner_text_color",
-          "type": "color",
-          "description": "release_banner_text_color_description",
-          "label": "release_banner_text_color_label",
-          "value": "rgba(82, 79, 83, 1)"
-        },
-        {
-          "identifier": "notif_banner_bg_color",
-          "type": "color",
-          "description": "notif_banner_bg_color_description",
-          "label": "notif_banner_bg_color_label",
-          "value": "rgba(82, 79, 83, 1)"
-        },
-        {
-          "identifier": "notification_banner_text_color",
-          "type": "color",
-          "description": "notification_banner_text_color_description",
-          "label": "notification_banner_text_color_label",
-          "value": "rgba(82, 79, 83, 1)"
-        },
-        {
           "identifier": "release_banner_icon",
           "type": "list",
           "description": "release_banner_icon_description",
@@ -621,6 +572,40 @@
               "value": "custom"
             }
           ]
+        },
+        {
+          "identifier": "release_banner_bg_color",
+          "type": "color",
+          "description": "release_banner_bg_color_description",
+          "label": "release_banner_bg_color_label",
+          "value": "rgba(171, 1, 21, 1)"
+        },
+        {
+          "identifier": "release_banner_content",
+          "type": "text",
+          "description": "release_banner_content_description",
+          "label": "release_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "release_banner_text_color",
+          "type": "color",
+          "description": "release_banner_text_color_description",
+          "label": "release_banner_text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "release_banner_custom_icon",
+          "type": "file",
+          "description": "release_banner_custom_icon_description",
+          "label": "release_banner_custom_icon_label"
+        },
+        {
+          "identifier": "notification_banner_enabled",
+          "type": "checkbox",
+          "description": "notification_banner_enabled_description",
+          "label": "notification_banner_enabled_label",
+          "value": false
         },
         {
           "identifier": "notification_banner_icon",
@@ -660,10 +645,25 @@
           ]
         },
         {
-          "identifier": "release_banner_custom_icon",
-          "type": "file",
-          "description": "release_banner_custom_icon_description",
-          "label": "release_banner_custom_icon_label"
+          "identifier": "notif_banner_bg_color",
+          "type": "color",
+          "description": "notif_banner_bg_color_description",
+          "label": "notif_banner_bg_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_content",
+          "type": "text",
+          "description": "notification_banner_content_description",
+          "label": "notification_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "notification_banner_text_color",
+          "type": "color",
+          "description": "notification_banner_text_color_description",
+          "label": "notification_banner_text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
         },
         {
           "identifier": "notif_banner_custom_icon",
