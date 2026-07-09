@@ -138,7 +138,6 @@ h1 {
 
 .hc-autocomplete-panel .hc-autocomplete-link:focus-visible,
 .hc-autocomplete-panel .hc-autocomplete-option--card.is-active .hc-autocomplete-link {
- 
   outline-offset: -2px;
 }
 
@@ -19398,7 +19397,7 @@ button.hc-page-btn {
 .article-3col-layout {
   display: grid;
   grid-template-columns: 220px 1fr 200px;
-  gap: 0;
+  gap: 12px;
   align-items: start;
   align-content: start;
 }
@@ -19411,30 +19410,31 @@ button.hc-page-btn {
   top: 1.5rem;
   align-self: start;
   height: fit-content;
-  padding-right: 0;
 }
 
 .article-sidebar-card {
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  padding-right: 1.25rem;
+  background-color: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  padding: 0 1.125rem 1rem;
+  margin-top: 0;
 }
 
 .article-sidebar-heading {
-  font-size: 1rem !important;
+  font-size: 0.875rem !important;
   font-weight: 700 !important;
-  text-transform: none;
-  letter-spacing: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
   color: #524F53 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0 0 0.5rem !important;
+  padding: 0.75rem 0 0.5rem 0 !important;
+  border-bottom: 1px solid #d8d5cf;
 }
 
 .article-sidebar-list {
   list-style: none !important;
-  margin: 0.625rem 0 0 !important;
+  margin: 0 !important;
   padding: 0;
 }
 
@@ -19445,12 +19445,14 @@ button.hc-page-btn {
 .article-sidebar-link {
   display: block;
   padding: 5px 6px;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #524f53 !important;
   text-decoration: none;
   border-radius: 2px;
   transition: background 0.15s, color 0.15s;
   line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .article-sidebar-link:hover {
@@ -19485,7 +19487,7 @@ button.hc-page-btn {
    Adjust: font-size, color, hover-color
 ---------------------------------------------------------- */
 .article-sidebar-link {
-  font-size: 0.75rem;       /* ← sidebar link font size */
+  font-size: 0.8125rem;       /* ← sidebar link font size (matches category/section) */
   color: #524f53 !important; /* ← sidebar link color */
 }
 
@@ -19566,6 +19568,15 @@ button.hc-page-btn {
   border-bottom: none;
   margin: 0 !important;
   margin-bottom: 0 !important;
+}
+
+.article-page .article-title h1 {
+  font-size: 1.625rem !important;
+  font-weight: 700;
+  color: #524f53 !important;
+  line-height: 1.25;
+  margin: 0 !important;
+  padding: calc(0.75rem + 1px) 0 0 0;
 }
 
 /* Row 1: Author | Date */
@@ -19826,15 +19837,6 @@ button.hc-page-btn {
   gap: 0.25rem;
 }
 
-.article-page .article-title h1 {
-  font-size: 1.625rem !important;
-  font-weight: 700;
-  color: #524f53 !important;
-  line-height: 1.25;
-  margin: 0 !important;
-  padding: 0;
-}
-
 /* Metadata row — author, date */
 .article-page .article-title .media {
   align-items: center;
@@ -20065,37 +20067,18 @@ body.downvote-feedback-open {
   top: 1.5rem;
   align-self: start;
   height: fit-content;
-  padding-left: 0;
 }
 
 .article-toc-heading {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #524f53;
-  letter-spacing: 0.05em;
-  margin: 0 0 1rem 0;
-  padding: 0;
-  border: none;
-}
-
-.article-toc-heading {
-  font-size: 1.25rem !important;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: normal;
-  color: #524f53 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
+  display: none !important;
 }
 
 .article-toc-card {
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  padding-left: 1.25rem;
+  background-color: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  padding: 0 1.125rem 1rem;
+  margin-top: 0;
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
 }
@@ -20109,6 +20092,11 @@ body.downvote-feedback-open {
 }
 
 /* Zendesk TOC wrapper — strip all default spacing on all nested divs */
+.article-toc-nav {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 .article-toc-nav > div,
 .article-toc-nav > div > div {
   background-color: transparent !important;
@@ -20118,14 +20106,18 @@ body.downvote-feedback-open {
   overflow: visible !important;
 }
 
-/* Zendesk TOC heading */
+/* Zendesk TOC heading — styled to match left sidebar */
 .article-toc-nav h3 {
-  font-size: 1rem !important;
+  font-size: 0.875rem !important;
   font-weight: 700 !important;
-  text-transform: none !important;
-  letter-spacing: normal;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em;
   color: #524f53 !important;
   margin: 0 0 0.5rem 0 !important;
+  padding: 0.75rem 0 0.5rem 0 !important;
+  border: none !important;
+  border-bottom: 1px solid #d8d5cf !important;
+}
   padding: 0 !important;
   border: none !important;
 }
@@ -20146,18 +20138,18 @@ body.downvote-feedback-open {
 .article-toc-nav a,
 .article-toc-nav .toc-link {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #524f53 !important;
   text-decoration: none !important;
-  padding: 0.375rem 0.5rem !important;
-  line-height: 1.4;
+  padding: 5px 6px !important;
+  line-height: 1.35;
   border-right: none;
-  border-radius: 2px;
+  border-radius: 0%;
   transition: color 0.15s, background 0.15s;
   background-color: transparent;
   font-weight: normal !important;
   text-align: left;
-  margin-bottom: 0.125rem;
+  margin-bottom: 0;
 }
 
 .article-toc-nav a:hover,
@@ -20187,7 +20179,7 @@ body.downvote-feedback-open {
 @media (max-width: 1200px) {
   .article-3col-layout {
     grid-template-columns: 200px 1fr 180px;
-    gap: 1.5rem;
+    gap: 12px;
   }
 }
 
@@ -20214,7 +20206,7 @@ body.downvote-feedback-open {
   }
   .article-3col-layout {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 12px;
   }
   .article-left-sidebar {
     position: static;
