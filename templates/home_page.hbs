@@ -1,3 +1,140 @@
+{{! Announcement Banners }}
+<section class="announcement-banners" aria-label="Announcements">
+  {{! Release Banner }}
+  {{#if settings.release_banner_enabled}}
+    {{#if settings.release_banner_content}}
+      <div class="announcement-banner announcement-banner--release"
+           data-banner-id="release"
+           role="alert"
+           {{#is settings.release_banner_bg_color 'custom'}}
+             {{#if settings.release_banner_custom_bg_color}}
+               style="background-color: {{settings.release_banner_custom_bg_color}}; color: {{settings.release_banner_text_color}};"
+             {{else}}
+               style="background-color: rgba(171, 1, 21, 1); color: {{settings.release_banner_text_color}};"
+             {{/if}}
+           {{else}}
+             {{#is settings.release_banner_bg_color 'red'}}
+               style="background-color: rgba(171, 1, 21, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+             {{#is settings.release_banner_bg_color 'dark_gray'}}
+               style="background-color: rgba(82, 79, 83, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+             {{#is settings.release_banner_bg_color 'blue'}}
+               style="background-color: rgba(0, 90, 158, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+             {{#is settings.release_banner_bg_color 'green'}}
+               style="background-color: rgba(0, 128, 53, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+             {{#is settings.release_banner_bg_color 'orange'}}
+               style="background-color: rgba(243, 146, 0, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+             {{#is settings.release_banner_bg_color 'black'}}
+               style="background-color: rgba(0, 0, 0, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+             {{#is settings.release_banner_bg_color 'white'}}
+               style="background-color: rgba(255, 255, 255, 1); color: {{settings.release_banner_text_color}};"
+             {{/is}}
+           {{/is}}>
+        <span class="announcement-banner__icon">
+          {{#is settings.release_banner_icon 'alert_error'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_error.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.release_banner_icon 'alert_info'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_info.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.release_banner_icon 'alert_positive'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_positive.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.release_banner_icon 'alert_warning'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_warning.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.release_banner_icon 'notification'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'notification.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+        </span>
+        <div class="announcement-banner__content">
+          {{settings.release_banner_content}}
+        </div>
+        <button class="announcement-banner__dismiss"
+                type="button"
+                aria-label="Dismiss release announcement"
+                data-dismiss-banner="release">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+    {{/if}}
+  {{/if}}
+
+  {{! Notification Banner }}
+  {{#if settings.notification_banner_enabled}}
+    {{#if settings.notification_banner_content}}
+      <div class="announcement-banner announcement-banner--notification"
+           data-banner-id="notification"
+           role="alert"
+           {{#is settings.notif_banner_bg_color 'custom'}}
+             {{#if settings.notif_banner_custom_bg_color}}
+               style="background-color: {{settings.notif_banner_custom_bg_color}}; color: {{settings.notification_banner_text_color}};"
+             {{else}}
+               style="background-color: rgba(82, 79, 83, 1); color: {{settings.notification_banner_text_color}};"
+             {{/if}}
+           {{else}}
+             {{#is settings.notif_banner_bg_color 'red'}}
+               style="background-color: rgba(171, 1, 21, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+             {{#is settings.notif_banner_bg_color 'dark_gray'}}
+               style="background-color: rgba(82, 79, 83, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+             {{#is settings.notif_banner_bg_color 'blue'}}
+               style="background-color: rgba(0, 90, 158, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+             {{#is settings.notif_banner_bg_color 'green'}}
+               style="background-color: rgba(0, 128, 53, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+             {{#is settings.notif_banner_bg_color 'orange'}}
+               style="background-color: rgba(243, 146, 0, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+             {{#is settings.notif_banner_bg_color 'black'}}
+               style="background-color: rgba(0, 0, 0, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+             {{#is settings.notif_banner_bg_color 'white'}}
+               style="background-color: rgba(255, 255, 255, 1); color: {{settings.notification_banner_text_color}};"
+             {{/is}}
+           {{/is}}>
+        <span class="announcement-banner__icon">
+          {{#is settings.notification_banner_icon 'alert_error'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_error.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.notification_banner_icon 'alert_info'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_info.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.notification_banner_icon 'alert_positive'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_positive.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.notification_banner_icon 'alert_warning'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'alert_warning.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+          {{#is settings.notification_banner_icon 'notification'}}
+            <img class="announcement-banner__icon-img" src="{{asset 'notification.svg'}}" alt="" aria-hidden="true" width="20" height="20" />
+          {{/is}}
+        </span>
+        <div class="announcement-banner__content">
+          {{settings.notification_banner_content}}
+        </div>
+        <button class="announcement-banner__dismiss"
+                type="button"
+                aria-label="Dismiss notification announcement"
+                data-dismiss-banner="notification">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+    {{/if}}
+  {{/if}}
+</section>
+
 {{! Hero element }}
 
 <div class="hero relative overflow-hidden{{#is settings.hero_image_style 'standard'}} bg-home bg-cover bg-center{{/is}}">

@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.17.1",
+  "version": "0.17.5",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -523,6 +523,215 @@
           "description": "bg_color_boxed_description",
           "label": "bg_color_boxed_label",
           "value": "rgba(255, 255, 255, 1)"
+        }
+      ]
+    },
+    {
+      "label": "banner_group_label",
+      "variables": [
+        {
+          "identifier": "release_banner_enabled",
+          "type": "checkbox",
+          "description": "release_banner_enabled_description",
+          "label": "release_banner_enabled_label",
+          "value": false
+        },
+        {
+          "identifier": "release_banner_icon",
+          "type": "list",
+          "description": "release_banner_icon_description",
+          "label": "release_banner_icon_label",
+          "value": "none",
+          "options": [
+            {
+              "label": "None",
+              "value": "none"
+            },
+            {
+              "label": "Alert Error",
+              "value": "alert_error"
+            },
+            {
+              "label": "Alert Info",
+              "value": "alert_info"
+            },
+            {
+              "label": "Alert Positive",
+              "value": "alert_positive"
+            },
+            {
+              "label": "Alert Warning",
+              "value": "alert_warning"
+            },
+            {
+              "label": "Notification",
+              "value": "notification"
+            }
+          ]
+        },
+        {
+          "identifier": "release_banner_content",
+          "type": "text",
+          "description": "release_banner_content_description",
+          "label": "release_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "release_banner_bg_color",
+          "type": "list",
+          "description": "release_banner_bg_color_description",
+          "label": "release_banner_bg_color_label",
+          "value": "red",
+          "options": [
+            {
+              "label": "Red",
+              "value": "red"
+            },
+            {
+              "label": "Dark Gray",
+              "value": "dark_gray"
+            },
+            {
+              "label": "Blue",
+              "value": "blue"
+            },
+            {
+              "label": "Green",
+              "value": "green"
+            },
+            {
+              "label": "Orange",
+              "value": "orange"
+            },
+            {
+              "label": "Black",
+              "value": "black"
+            },
+            {
+              "label": "White",
+              "value": "white"
+            },
+            {
+              "label": "Custom",
+              "value": "custom"
+            }
+          ]
+        },
+        {
+          "identifier": "release_banner_custom_bg_color",
+          "type": "color",
+          "description": "release_banner_custom_bg_color_description",
+          "label": "release_banner_custom_bg_color_label",
+          "value": "rgba(171, 1, 21, 1)"
+        },
+        {
+          "identifier": "release_banner_text_color",
+          "type": "color",
+          "description": "release_banner_text_color_description",
+          "label": "release_banner_text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_enabled",
+          "type": "checkbox",
+          "description": "notification_banner_enabled_description",
+          "label": "notification_banner_enabled_label",
+          "value": false
+        },
+        {
+          "identifier": "notification_banner_icon",
+          "type": "list",
+          "description": "notification_banner_icon_description",
+          "label": "notification_banner_icon_label",
+          "value": "none",
+          "options": [
+            {
+              "label": "None",
+              "value": "none"
+            },
+            {
+              "label": "Alert Error",
+              "value": "alert_error"
+            },
+            {
+              "label": "Alert Info",
+              "value": "alert_info"
+            },
+            {
+              "label": "Alert Positive",
+              "value": "alert_positive"
+            },
+            {
+              "label": "Alert Warning",
+              "value": "alert_warning"
+            },
+            {
+              "label": "Notification",
+              "value": "notification"
+            }
+          ]
+        },
+        {
+          "identifier": "notification_banner_content",
+          "type": "text",
+          "description": "notification_banner_content_description",
+          "label": "notification_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "notif_banner_bg_color",
+          "type": "list",
+          "description": "notif_banner_bg_color_description",
+          "label": "notif_banner_bg_color_label",
+          "value": "dark_gray",
+          "options": [
+            {
+              "label": "Red",
+              "value": "red"
+            },
+            {
+              "label": "Dark Gray",
+              "value": "dark_gray"
+            },
+            {
+              "label": "Blue",
+              "value": "blue"
+            },
+            {
+              "label": "Green",
+              "value": "green"
+            },
+            {
+              "label": "Orange",
+              "value": "orange"
+            },
+            {
+              "label": "Black",
+              "value": "black"
+            },
+            {
+              "label": "White",
+              "value": "white"
+            },
+            {
+              "label": "Custom",
+              "value": "custom"
+            }
+          ]
+        },
+        {
+          "identifier": "notif_banner_custom_bg_color",
+          "type": "color",
+          "description": "notif_banner_custom_bg_color_description",
+          "label": "notif_banner_custom_bg_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_text_color",
+          "type": "color",
+          "description": "notification_banner_text_color_description",
+          "label": "notification_banner_text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
         }
       ]
     },
