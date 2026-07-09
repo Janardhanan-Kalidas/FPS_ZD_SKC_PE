@@ -1,5 +1,4 @@
 {{! Announcement Banners }}
-{{#if (or (and settings.release_banner_enabled settings.release_banner_content) (and settings.notification_banner_enabled settings.notification_banner_content))}}
 <section class="announcement-banners" aria-label="Announcements">
   {{! Release Banner }}
   {{#if settings.release_banner_enabled}}
@@ -135,7 +134,6 @@
     {{/if}}
   {{/if}}
 </section>
-{{/if}}
 
 {{! Hero element }}
 
