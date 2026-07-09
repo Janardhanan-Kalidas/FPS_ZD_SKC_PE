@@ -20299,6 +20299,21 @@ body.downvote-feedback-open {
   flex-shrink: 0;
 }
 
+.announcement-banner__link {
+  display: inline;
+  margin-left: 0.5rem;
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.announcement-banner__link:hover,
+.announcement-banner__link:focus-visible {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
 /* Responsive: Mobile (< 576px) */
 @media (max-width: 575px) {
   .announcement-banner {
