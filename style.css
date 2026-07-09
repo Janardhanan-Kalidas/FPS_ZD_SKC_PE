@@ -20267,7 +20267,7 @@ body.downvote-feedback-open {
 .announcement-banner__content {
   flex: 1;
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: 1rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -20304,7 +20304,7 @@ body.downvote-feedback-open {
   margin-left: 0.5rem;
   color: inherit;
   text-decoration: underline;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
 }
 
