@@ -127,10 +127,12 @@ h1 {
   text-decoration: none;
   border: 1px solid #dddcdd;
   background: #fff;
+  transition: background-color 0.2s ease;
 }
 
 .hc-autocomplete-panel .hc-autocomplete-option--card.is-active .hc-autocomplete-link,
 .hc-autocomplete-panel .hc-autocomplete-option--card:hover .hc-autocomplete-link {
+  border-color: #dddcdd;
   background-color: #E7E5E2;
 }
 
@@ -169,14 +171,13 @@ h1 {
   color: #524f53 !important;
   font-size: 0.8rem;
   line-height: 1.45;
-  padding-top: 0.35rem;
-  border-top: 1px solid #f0f0f0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .hc-autocomplete-panel .hc-autocomplete-option--card.is-active .hc-autocomplete-excerpt,
 .hc-autocomplete-panel .hc-autocomplete-option--card:hover .hc-autocomplete-excerpt {
   color: #524f53 !important;
-  border-top-color: rgba(210, 5, 30, 0.12);
 }
 
 .hc-autocomplete-panel .hc-autocomplete-mark {

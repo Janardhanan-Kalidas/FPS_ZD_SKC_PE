@@ -158,7 +158,6 @@
         '<li id="' + optionIdPrefix + index + '" class="hc-autocomplete-option hc-autocomplete-option--card" role="option" aria-selected="false" data-index="' + index + '" data-url="' + escapeHtml(item.url) + '">' +
           '<a class="hc-autocomplete-link" href="' + escapeHtml(item.url) + '">' +
             '<span class="hc-autocomplete-title">' + highlightText(item.title, query) + '</span>' +
-            buildBreadcrumb(item) +
             (item.excerpt ? '<span class="hc-autocomplete-excerpt">' + highlightText(item.excerpt, query) + '</span>' : '') +
           '</a>' +
         '</li>'
