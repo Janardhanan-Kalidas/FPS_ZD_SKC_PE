@@ -138,7 +138,7 @@ h1 {
 
 .hc-autocomplete-panel .hc-autocomplete-link:focus-visible,
 .hc-autocomplete-panel .hc-autocomplete-option--card.is-active .hc-autocomplete-link {
-  outline: 2px solid #d2051e;
+ 
   outline-offset: -2px;
 }
 
@@ -16435,12 +16435,9 @@ a:hover .icon-circle {
   font-weight: bold;
   border-radius: 0px;
   cursor: pointer;
-  transition: 0.25s ease;
 }
 .view-toggle-btn:hover {
   background: #B10007;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 /* Keep tiles static during animation */

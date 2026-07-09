@@ -407,6 +407,12 @@
     state.panel.addEventListener('mousedown', function (event) {
       var option = event.target.closest('.hc-autocomplete-option[role="option"]');
       if (!option) return;
+
+      // For the footer option, only navigate when clicking the actual button link
+      if (option.classList.contains('hc-autocomplete-option--footer')) {
+        if (!event.target.closest('.hc-autocomplete-link--footer')) return;
+      }
+
       event.preventDefault();
       window.location.href = option.getAttribute('data-url');
     });
