@@ -511,6 +511,8 @@
   "release_banner_bg_color_description": "Select a preset background color for the release banner from the dropdown",
   "release_banner_content_label": "Release banner content",
   "release_banner_content_description": "The text content displayed in the release banner",
+  "release_banner_link_url_label": "Release banner link URL",
+  "release_banner_link_url_description": "Optional URL for the release banner link. If provided, a clickable link will appear in the banner",
   "release_banner_text_color_label": "Release banner text color",
   "release_banner_text_color_description": "The text color for the release banner content",
   "release_banner_custom_bg_color_label": "Release banner custom background color",

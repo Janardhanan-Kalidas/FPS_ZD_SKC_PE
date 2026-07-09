@@ -20302,7 +20302,7 @@ body.downvote-feedback-open {
 .announcement-banner__link {
   display: inline;
   margin-left: 0.5rem;
-  color: inherit;
+  color: #d2051e;
   text-decoration: underline;
   font-weight: 500;
   white-space: nowrap;
@@ -20310,7 +20310,7 @@ body.downvote-feedback-open {
 
 .announcement-banner__link:hover,
 .announcement-banner__link:focus-visible {
-  text-decoration: none;
+  text-decoration: underline;
   opacity: 0.8;
 }
 
