@@ -174,14 +174,7 @@
                 <p class="hc-result-snippet">{{text}}</p>
               {{/if}}
 
-              {{! Article Tags }}
-              {{#if label_names}}
-                <ul class="hc-result-tags">
-                  {{#each label_names}}
-                    <li class="hc-result-tag">{{this}}</li>
-                  {{/each}}
-                </ul>
-              {{/if}}
+              {{! Article Tags - label_names not available in search results context }}
 
               {{! Metadata Footer }}
               <div class="hc-result-meta">
