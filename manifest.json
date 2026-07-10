@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.17.5",
+  "version": "0.19.4",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -566,6 +566,10 @@
             {
               "label": "Notification",
               "value": "notification"
+            },
+            {
+              "label": "Announcement",
+              "value": "announcement"
             }
           ]
         },
@@ -574,14 +578,28 @@
           "type": "text",
           "description": "release_banner_content_description",
           "label": "release_banner_content_label",
+          "value": "Hooray! PE 1.32.4 released"
+        },
+        {
+          "identifier": "release_banner_link_url",
+          "type": "text",
+          "description": "release_banner_link_url_description",
+          "label": "release_banner_link_url_label",
           "value": ""
+        },
+        {
+          "identifier": "release_banner_version",
+          "type": "text",
+          "description": "release_banner_version_description",
+          "label": "release_banner_version_label",
+          "value": "1"
         },
         {
           "identifier": "release_banner_bg_color",
           "type": "list",
           "description": "release_banner_bg_color_description",
           "label": "release_banner_bg_color_label",
-          "value": "red",
+          "value": "green",
           "options": [
             {
               "label": "Red",
@@ -668,6 +686,10 @@
             {
               "label": "Notification",
               "value": "notification"
+            },
+            {
+              "label": "Announcement",
+              "value": "announcement"
             }
           ]
         },
@@ -732,6 +754,13 @@
           "description": "notification_banner_text_color_description",
           "label": "notification_banner_text_color_label",
           "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_version",
+          "type": "text",
+          "description": "notification_banner_version_description",
+          "label": "notification_banner_version_label",
+          "value": "1"
         }
       ]
     },
@@ -1960,7 +1989,7 @@
           "type": "checkbox",
           "description": "show_article_author_description",
           "label": "show_article_author_label",
-          "value": true
+          "value": false
         },
         {
           "identifier": "show_follow_article",

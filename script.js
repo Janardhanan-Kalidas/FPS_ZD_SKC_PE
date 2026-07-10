@@ -158,7 +158,6 @@
         '<li id="' + optionIdPrefix + index + '" class="hc-autocomplete-option hc-autocomplete-option--card" role="option" aria-selected="false" data-index="' + index + '" data-url="' + escapeHtml(item.url) + '">' +
           '<a class="hc-autocomplete-link" href="' + escapeHtml(item.url) + '">' +
             '<span class="hc-autocomplete-title">' + highlightText(item.title, query) + '</span>' +
-            buildBreadcrumb(item) +
             (item.excerpt ? '<span class="hc-autocomplete-excerpt">' + highlightText(item.excerpt, query) + '</span>' : '') +
           '</a>' +
         '</li>'
@@ -408,6 +407,12 @@
     state.panel.addEventListener('mousedown', function (event) {
       var option = event.target.closest('.hc-autocomplete-option[role="option"]');
       if (!option) return;
+
+      // For the footer option, only navigate when clicking the actual button link
+      if (option.classList.contains('hc-autocomplete-option--footer')) {
+        if (!event.target.closest('.hc-autocomplete-link--footer')) return;
+      }
+
       event.preventDefault();
       window.location.href = option.getAttribute('data-url');
     });
@@ -3264,3 +3269,125 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 })();
 
+
+/* === ANNOUNCEMENT BANNERS === */
+;(function() {
+  'use strict';
+
+  /**
+   * Returns the sessionStorage key for a given banner ID and version.
+   * @param {string} bannerId
+   * @param {string} version
+   * @returns {string}
+   */
+  function getStorageKey(bannerId, version) {
+    return 'banner_dismissed_' + bannerId + '_' + version;
+  }
+
+  /**
+   * Checks whether a banner has been dismissed in the current session.
+   * Fail-open: returns false if sessionStorage is unavailable or throws.
+   * @param {string} bannerId
+   * @returns {boolean}
+   */
+  function isDismissed(bannerId) {
+    try {
+      var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
+      var version = (banner && banner.getAttribute('data-banner-version')) || '';
+      return sessionStorage.getItem(getStorageKey(bannerId, version)) === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Dismisses a banner: hides it, persists state, and manages focus.
+   * @param {string} bannerId
+   */
+  function dismissBanner(bannerId) {
+    var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
+    if (!banner) return;
+
+    var version = banner.getAttribute('data-banner-version') || '';
+
+    // Hide the banner
+    banner.setAttribute('hidden', '');
+    banner.setAttribute('aria-hidden', 'true');
+
+    // Persist to sessionStorage (fail-silent on error)
+    try {
+      sessionStorage.setItem(getStorageKey(bannerId, version), 'true');
+    } catch (e) {
+      // Suppress storage errors — banner is already visually hidden
+    }
+
+    // Focus management: next visible banner's dismiss button → .hero → document.body
+    var nextBanner = document.querySelector('.announcement-banner:not([hidden])');
+    if (nextBanner) {
+      var nextDismissBtn = nextBanner.querySelector('[data-dismiss-banner]');
+      if (nextDismissBtn) {
+        nextDismissBtn.focus();
+        return;
+      }
+    }
+
+    var hero = document.querySelector('.hero');
+    if (hero) {
+      hero.setAttribute('tabindex', '-1');
+      hero.focus();
+    } else {
+      document.body.focus();
+    }
+  }
+
+  /**
+   * Click/keyboard event handler for dismiss buttons.
+   * @param {Event} event
+   */
+  function handleDismissClick(event) {
+    var button = event.currentTarget;
+    var bannerId = button.getAttribute('data-dismiss-banner');
+    if (!bannerId) return;
+    dismissBanner(bannerId);
+  }
+
+  /**
+   * Initializes banner dismissal listeners on DOMContentLoaded.
+   */
+  function init() {
+    var buttons = document.querySelectorAll('[data-dismiss-banner]');
+    if (!buttons.length) return;
+
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+
+      // Hide already-dismissed banners on init
+      var bannerId = btn.getAttribute('data-dismiss-banner');
+      if (bannerId && isDismissed(bannerId)) {
+        var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
+        if (banner) {
+          banner.setAttribute('hidden', '');
+          banner.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      // Attach click listener
+      btn.addEventListener('click', handleDismissClick);
+
+      // Attach keydown listener for Enter and Space
+      btn.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleDismissClick(event);
+        }
+      });
+    }
+  }
+
+  // Attach on DOMContentLoaded or immediately if DOM is already loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
