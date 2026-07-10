@@ -13,5 +13,9 @@
     "deploy:theme": "bash tooling/scripts/deploy-zendesk-theme.sh",
     "deploy:gitlab:interactive": "bash tooling/scripts/trigger-gitlab-branch-deploy-interactive.sh",
     "rollback:theme": "bash tooling/scripts/rollback-zendesk-theme.sh"
+  },
+  "devDependencies": {
+    "fast-check": "^4.9.0",
+    "jsdom": "^29.1.1"
   }
 }

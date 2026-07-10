@@ -19397,7 +19397,7 @@ button.hc-page-btn {
 .article-3col-layout {
   display: grid;
   grid-template-columns: 220px 1fr 200px;
-  gap: 12px;
+  gap: 8px;
   align-items: start;
   align-content: start;
 }
@@ -20179,7 +20179,7 @@ body.downvote-feedback-open {
 @media (max-width: 1200px) {
   .article-3col-layout {
     grid-template-columns: 200px 1fr 180px;
-    gap: 12px;
+    gap: 8px;
   }
 }
 
@@ -20206,7 +20206,7 @@ body.downvote-feedback-open {
   }
   .article-3col-layout {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
   }
   .article-left-sidebar {
     position: static;
