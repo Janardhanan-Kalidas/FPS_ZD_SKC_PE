@@ -14,9 +14,10 @@
 <script>
 try {
   var bannerIds = ['release', 'notification'];
+  var versions = ['{{settings.release_banner_version}}', '{{settings.notification_banner_version}}'];
   var css = '';
   for (var i = 0; i < bannerIds.length; i++) {
-    if (sessionStorage.getItem('banner_dismissed_' + bannerIds[i]) === 'true') {
+    if (sessionStorage.getItem('banner_dismissed_' + bannerIds[i] + '_' + versions[i]) === 'true') {
       css += '.announcement-banner[data-banner-id="' + bannerIds[i] + '"] { display: none !important; }';
     }
   }

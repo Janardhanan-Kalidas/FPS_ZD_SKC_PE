@@ -3275,12 +3275,13 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   /**
-   * Returns the sessionStorage key for a given banner ID.
+   * Returns the sessionStorage key for a given banner ID and version.
    * @param {string} bannerId
+   * @param {string} version
    * @returns {string}
    */
-  function getStorageKey(bannerId) {
-    return 'banner_dismissed_' + bannerId;
+  function getStorageKey(bannerId, version) {
+    return 'banner_dismissed_' + bannerId + '_' + version;
   }
 
   /**
@@ -3291,7 +3292,9 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   function isDismissed(bannerId) {
     try {
-      return sessionStorage.getItem(getStorageKey(bannerId)) === 'true';
+      var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
+      var version = (banner && banner.getAttribute('data-banner-version')) || '';
+      return sessionStorage.getItem(getStorageKey(bannerId, version)) === 'true';
     } catch (e) {
       return false;
     }
@@ -3305,13 +3308,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
     if (!banner) return;
 
+    var version = banner.getAttribute('data-banner-version') || '';
+
     // Hide the banner
     banner.setAttribute('hidden', '');
     banner.setAttribute('aria-hidden', 'true');
 
     // Persist to sessionStorage (fail-silent on error)
     try {
-      sessionStorage.setItem(getStorageKey(bannerId), 'true');
+      sessionStorage.setItem(getStorageKey(bannerId, version), 'true');
     } catch (e) {
       // Suppress storage errors — banner is already visually hidden
     }

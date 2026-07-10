@@ -18758,7 +18758,7 @@ header.d-flex h1 {
 .hc-search-sidebar {
   flex: 0 0 260px;   /* Fixed width sidebar including padding */
   padding-left: 1rem;   /* Match .col padding for alignment */
-  padding-right: 1rem;
+  padding-right: 0;     /* Gap handled by .hc-search-main padding-left */
   position: sticky;
   top: 20px;
 }
@@ -18916,7 +18916,7 @@ header.d-flex h1 {
 /* ===== MAIN CONTENT AREA (Match .col structure) ===== */
 .hc-search-main {
   flex: 1;          /* Expand to fill remaining space */
-  padding-left: 1rem;   /* Match .col padding */
+  padding-left: 24px;   /* 24px gap from sidebar */
   padding-right: 1rem;
   min-width: 0;     /* Allow content to shrink if needed */
   max-width: 100%;  /* Use all available space */
@@ -20511,63 +20511,9 @@ body.downvote-feedback-open {
 }
 
 /* --- Search Results Page Layout --- */
-
-.hc-search-container {
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-@media (min-width: 768px) {
-  .hc-search-container {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hc-search-container {
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-}
-
-@media (min-width: 1440px) {
-  .hc-search-container {
-    padding-left: 40px;
-    padding-right: 40px;
-  }
-}
-
-.hc-search-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .hc-search-layout {
-    flex-direction: row;
-  }
-  .hc-search-sidebar {
-    flex: 0 0 260px;
-    width: 260px;
-  }
-  .hc-search-main {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-@media (min-width: 1200px) {
-  .hc-search-sidebar {
-    flex: 0 0 280px;
-    width: 280px;
-  }
-}
+/* Removed duplicate overrides that set max-width: 1440px.
+   The primary .hc-search-container rules (above) already align
+   with .container at max-width: 1280px and padding: 0 2rem.  */
 
 /* --- Request/Form Page Layout --- */
 

@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.19.2",
+  "version": "0.19.4",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -588,6 +588,13 @@
           "value": ""
         },
         {
+          "identifier": "release_banner_version",
+          "type": "text",
+          "description": "release_banner_version_description",
+          "label": "release_banner_version_label",
+          "value": "1"
+        },
+        {
           "identifier": "release_banner_bg_color",
           "type": "list",
           "description": "release_banner_bg_color_description",
@@ -747,6 +754,13 @@
           "description": "notification_banner_text_color_description",
           "label": "notification_banner_text_color_label",
           "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_version",
+          "type": "text",
+          "description": "notification_banner_version_description",
+          "label": "notification_banner_version_label",
+          "value": "1"
         }
       ]
     },

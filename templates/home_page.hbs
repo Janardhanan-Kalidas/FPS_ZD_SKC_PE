@@ -5,6 +5,7 @@
     {{#if settings.release_banner_content}}
       <div class="announcement-banner announcement-banner--release"
            data-banner-id="release"
+           data-banner-version="{{settings.release_banner_version}}"
            role="alert"
            {{#is settings.release_banner_bg_color 'custom'}}
              {{#if settings.release_banner_custom_bg_color}}
@@ -78,6 +79,7 @@
     {{#if settings.notification_banner_content}}
       <div class="announcement-banner announcement-banner--notification"
            data-banner-id="notification"
+           data-banner-version="{{settings.notification_banner_version}}"
            role="alert"
            {{#is settings.notif_banner_bg_color 'custom'}}
              {{#if settings.notif_banner_custom_bg_color}}
