@@ -1629,6 +1629,36 @@ document.addEventListener('DOMContentLoaded', function () {
         : parts[0].toUpperCase();
     }
 
+    // Extract article ID from URL
+    function extractArticleIdFromUrl(url) {
+      if (!url) return null;
+      var m = String(url).match(/\/articles\/(\d+)(?:[-/?#]|$)/);
+      return m ? m[1] : null;
+    }
+
+    // Fetch article's correct URL from Zendesk API for target locale
+    // This ensures we get the correct slug for that locale (articles have different slugs in different locales)
+    function fetchArticleUrlForLocale(articleId, locale) {
+      var apiOrigin = window.location.origin;
+      var url = apiOrigin + '/api/v2/help_center/' + encodeURIComponent(locale) + '/articles/' + articleId + '.json';
+      
+      return fetch(url)
+        .then(function(response) {
+          if (!response.ok) throw new Error('Article not found in target locale');
+          return response.json();
+        })
+        .then(function(data) {
+          if (data.article && data.article.html_url) {
+            return data.article.html_url;
+          }
+          throw new Error('No html_url in response');
+        })
+        .catch(function(error) {
+          console.warn('Failed to fetch article URL for locale ' + locale + ':', error);
+          return null;
+        });
+    }
+
     // Build the redirect URL for a given locale code
     function buildLocaleUrl(locale) {
       return window.location.href.replace(
@@ -1796,7 +1826,25 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       updateHeaderLocaleLabel(locale);
-      window.location.href = buildLocaleUrl(locale);
+      
+      // Check if on article page and fetch correct URL for target locale
+      var articleId = extractArticleIdFromUrl(window.location.href);
+      if (articleId) {
+        // Fetch the article URL from API to get the correct slug for target locale
+        // This solves the issue where articles have different slugs in different locales
+        fetchArticleUrlForLocale(articleId, locale).then(function(apiUrl) {
+          if (apiUrl) {
+            // Use API URL (contains correct slug for target locale)
+            window.location.href = apiUrl;
+          } else {
+            // Fallback: use simple locale replacement if API fails
+            window.location.href = buildLocaleUrl(locale);
+          }
+        });
+      } else {
+        // Not an article page, use simple locale replacement
+        window.location.href = buildLocaleUrl(locale);
+      }
     }
 
     if (saveBtn) {
