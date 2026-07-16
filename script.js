@@ -3275,13 +3275,106 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   /**
-   * Returns the sessionStorage key for a given banner ID and version.
-   * @param {string} bannerId
-   * @param {string} version
-   * @returns {string}
+   * Normalizes banner content for fingerprinting.
+   * 1. Strips all HTML tags
+   * 2. Collapses consecutive whitespace to a single space
+   * 3. Trims leading and trailing whitespace
+   *
+   * @param {string} raw - Raw banner content (may contain HTML)
+   * @returns {string} Normalized plain text, or empty string for non-string/empty input
    */
-  function getStorageKey(bannerId, version) {
-    return 'banner_dismissed_' + bannerId + '_' + version;
+  function normalizeContent(raw) {
+    if (typeof raw !== 'string') return '';
+    var text = raw.replace(/<[^>]*>/g, '');      // Strip HTML tags
+    text = text.replace(/\s+/g, ' ');            // Collapse whitespace
+    text = text.trim();                          // Trim edges
+    return text;
+  }
+
+  /**
+   * Computes an FNV-1a 32-bit hash of the input string and returns
+   * a base-36 alphanumeric fingerprint (≤7 characters).
+   *
+   * Algorithm: FNV-1a 32-bit
+   * - Offset basis: 0x811c9dc5
+   * - Prime: 0x01000193
+   * - Output: base-36 string using [0-9a-z], always ≤10 chars
+   *
+   * @param {string} text - Normalized content string (already trimmed)
+   * @returns {string} Alphanumeric fingerprint, or '' if input is empty/falsy
+   */
+  function computeFingerprint(text) {
+    if (!text) return '';
+    var FNV_OFFSET = 0x811c9dc5;
+    var FNV_PRIME = 0x01000193;
+    var hash = FNV_OFFSET;
+    for (var i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, FNV_PRIME) >>> 0;  // Unsigned 32-bit multiply
+    }
+    return hash.toString(36);                    // base-36: [0-9a-z], ≤7 chars
+  }
+
+  /**
+   * Constructs the sessionStorage key for banner dismiss state.
+   * Format: banner_dismissed_{id}_{fingerprint}_{version}
+   *
+   * @param {string} bannerId    - 'release' or 'notification'
+   * @param {string} fingerprint - Computed content hash
+   * @param {string} version     - Force-reset version (defaults to '1' if empty/whitespace)
+   * @returns {string} Storage key
+   */
+  function buildStorageKey(bannerId, fingerprint, version) {
+    var ver = (version && version.trim()) ? version.trim() : '1';
+    return 'banner_dismissed_' + bannerId + '_' + fingerprint + '_' + ver;
+  }
+
+  /**
+   * Extracts the user-visible text content from a banner element,
+   * excluding link text (.announcement-banner__link) and button text.
+   *
+   * @param {Element} bannerElement - The .announcement-banner DOM element
+   * @returns {string} Raw text content for normalization
+   */
+  function extractBannerContent(bannerElement) {
+    var contentEl = bannerElement.querySelector('.announcement-banner__content');
+    if (!contentEl) return '';
+
+    // Clone to avoid mutating live DOM
+    var clone = contentEl.cloneNode(true);
+
+    // Remove link elements from the clone
+    var links = clone.querySelectorAll('.announcement-banner__link');
+    for (var i = 0; i < links.length; i++) {
+      links[i].parentNode.removeChild(links[i]);
+    }
+
+    return clone.textContent || '';
+  }
+
+  /**
+   * Computes the fingerprint-based sessionStorage key for a given banner.
+   * Queries the DOM for the banner element, extracts and normalizes content,
+   * computes the fingerprint, and builds the storage key.
+   *
+   * @param {string} bannerId - The banner's data-banner-id value
+   * @returns {string|null} The storage key, or null if banner not found or content is empty
+   */
+  function getStorageKey(bannerId) {
+    var banner = document.querySelector(
+      '.announcement-banner[data-banner-id="' + bannerId + '"]'
+    );
+    if (!banner) return null;
+
+    var version = banner.getAttribute('data-banner-version') || '';
+    var raw = extractBannerContent(banner);
+    var normalized = normalizeContent(raw);
+    if (!normalized) return null;
+
+    var fp = computeFingerprint(normalized);
+    if (!fp) return null;
+
+    return buildStorageKey(bannerId, fp, version);
   }
 
   /**
@@ -3292,9 +3385,9 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   function isDismissed(bannerId) {
     try {
-      var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
-      var version = (banner && banner.getAttribute('data-banner-version')) || '';
-      return sessionStorage.getItem(getStorageKey(bannerId, version)) === 'true';
+      var key = getStorageKey(bannerId);
+      if (!key) return false;
+      return sessionStorage.getItem(key) === 'true';
     } catch (e) {
       return false;
     }
@@ -3308,15 +3401,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
     if (!banner) return;
 
-    var version = banner.getAttribute('data-banner-version') || '';
-
     // Hide the banner
     banner.setAttribute('hidden', '');
     banner.setAttribute('aria-hidden', 'true');
 
     // Persist to sessionStorage (fail-silent on error)
     try {
-      sessionStorage.setItem(getStorageKey(bannerId, version), 'true');
+      var key = getStorageKey(bannerId);
+      if (key) sessionStorage.setItem(key, 'true');
     } catch (e) {
       // Suppress storage errors — banner is already visually hidden
     }

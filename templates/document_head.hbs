@@ -10,15 +10,47 @@
 <meta
   name="theme-settings-fingerprint"
   content="hide_sign_in_link={{#if settings.hide_sign_in_link}}1{{else}}0{{/if}};show_submit_a_request_link={{#if settings.show_submit_a_request_link}}1{{else}}0{{/if}};show_article_submit_cta={{#if settings.show_article_submit_cta}}1{{else}}0{{/if}}">
-{{! Banner Early Dismissal – prevents flash of dismissed banners }}
+{{! Banner Early Dismissal – prevents flash of dismissed banners (fingerprint-based) }}
 <script>
 try {
-  var bannerIds = ['release', 'notification'];
-  var versions = ['{{settings.release_banner_version}}', '{{settings.notification_banner_version}}'];
+  function normalizeContent(raw) {
+    if (typeof raw !== 'string') return '';
+    var text = raw.replace(/<[^>]*>/g, '');
+    text = text.replace(/\s+/g, ' ');
+    text = text.trim();
+    return text;
+  }
+  function computeFingerprint(text) {
+    if (!text) return '';
+    var FNV_OFFSET = 0x811c9dc5;
+    var FNV_PRIME = 0x01000193;
+    var hash = FNV_OFFSET;
+    for (var i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, FNV_PRIME) >>> 0;
+    }
+    return hash.toString(36);
+  }
+  function buildStorageKey(bannerId, fingerprint, version) {
+    var ver = (version && version.trim()) ? version.trim() : '1';
+    return 'banner_dismissed_' + bannerId + '_' + fingerprint + '_' + ver;
+  }
+
+  var banners = [
+    { id: 'release', content: '{{settings.release_banner_content}}', version: '{{settings.release_banner_version}}' },
+    { id: 'notification', content: '{{settings.notification_banner_content}}', version: '{{settings.notification_banner_version}}' }
+  ];
+
   var css = '';
-  for (var i = 0; i < bannerIds.length; i++) {
-    if (sessionStorage.getItem('banner_dismissed_' + bannerIds[i] + '_' + versions[i]) === 'true') {
-      css += '.announcement-banner[data-banner-id="' + bannerIds[i] + '"] { display: none !important; }';
+  for (var i = 0; i < banners.length; i++) {
+    var b = banners[i];
+    var normalized = normalizeContent(b.content);
+    if (!normalized) continue;
+    var fp = computeFingerprint(normalized);
+    if (!fp) continue;
+    var key = buildStorageKey(b.id, fp, b.version);
+    if (sessionStorage.getItem(key) === 'true') {
+      css += '.announcement-banner[data-banner-id="' + b.id + '"] { display: none !important; }';
     }
   }
   if (css) {
