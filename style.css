@@ -20699,3 +20699,73 @@ body.downvote-feedback-open {
     order: 0;
   }
 }
+
+
+/* ============================================================================
+   LOCALE UNAVAILABLE TOAST NOTIFICATION
+   Shown when an article is not available in the selected language
+   ============================================================================ */
+.hilti-locale-unavailable-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+}
+
+.hilti-locale-unavailable-toast.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.hilti-locale-unavailable-toast .hilti-locale-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #524f53;
+  color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  max-width: 480px;
+  white-space: nowrap;
+}
+
+.hilti-locale-unavailable-toast .hilti-locale-toast-content svg {
+  flex-shrink: 0;
+  color: #f39200;
+}
+
+.hilti-locale-unavailable-toast .hilti-locale-toast-content strong {
+  font-weight: 700;
+}
+
+.hilti-locale-unavailable-toast .hilti-locale-toast-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.hilti-locale-unavailable-toast .hilti-locale-toast-close:hover {
+  opacity: 1;
+}
+
+@media (max-width: 575px) {
+  .hilti-locale-unavailable-toast .hilti-locale-toast-content {
+    white-space: normal;
+    max-width: 90vw;
+    font-size: 0.8125rem;
+  }
+}

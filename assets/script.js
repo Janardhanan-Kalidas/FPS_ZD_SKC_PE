@@ -1638,6 +1638,99 @@ document.addEventListener('DOMContentLoaded', function () {
       );
     }
 
+    // Extract article ID from URL
+    function extractArticleIdFromUrl(url) {
+      if (!url) return null;
+      var m = String(url).match(/\/articles\/(\d+)(?:[-/?#]|$)/);
+      return m ? m[1] : null;
+    }
+
+    // Extract the slug portion from an article URL
+    function extractSlugFromUrl(url) {
+      var m = String(url).match(/\/articles\/\d+-(.*?)(?:\?|#|$)/);
+      if (!m) return null;
+      return decodeURIComponent(m[1]).replace(/-/g, ' ');
+    }
+
+    // Normalize article URL to use the current origin (API may return mapped domain)
+    function normalizeArticleUrl(apiUrl, currentOrigin) {
+      try {
+        var parsed = new URL(apiUrl);
+        var currentHost = new URL(currentOrigin);
+        if (parsed.host !== currentHost.host) {
+          return currentOrigin + parsed.pathname + parsed.search + parsed.hash;
+        }
+        return apiUrl;
+      } catch (e) {
+        return apiUrl;
+      }
+    }
+
+    // Fetch the correct article URL for a target locale using search API
+    function fetchArticleUrlForLocale(articleId, locale) {
+      var apiOrigin = window.location.origin;
+      var slug = extractSlugFromUrl(window.location.href);
+
+      if (!slug) {
+        return Promise.resolve(buildLocaleUrl(locale));
+      }
+
+      var searchTerms = slug.split(' ').slice(0, 8).join(' ');
+      var searchUrl = apiOrigin + '/api/v2/help_center/articles/search.json?query=' + encodeURIComponent(searchTerms) + '&locale=' + encodeURIComponent(locale) + '&per_page=10';
+
+      return fetch(searchUrl, { credentials: 'same-origin' })
+        .then(function(response) {
+          if (!response.ok) return null;
+          return response.json();
+        })
+        .then(function(data) {
+          if (!data || !data.results || data.results.length === 0) return null;
+
+          var slugLower = slug.toLowerCase();
+          for (var i = 0; i < data.results.length; i++) {
+            var result = data.results[i];
+            if (result.html_url) {
+              var resultSlug = extractSlugFromUrl(result.html_url);
+              if (resultSlug && resultSlug.toLowerCase() === slugLower) {
+                return normalizeArticleUrl(result.html_url, apiOrigin);
+              }
+            }
+          }
+          return null;
+        })
+        .catch(function(error) {
+          console.warn('Locale switch search failed:', error);
+          return null;
+        });
+    }
+
+    // Show toast when article is not available in target locale
+    function showLocaleNotAvailableMessage(locale) {
+      var localeName = locale.toUpperCase();
+      var msg = document.createElement('div');
+      msg.className = 'hilti-locale-unavailable-toast';
+      msg.setAttribute('role', 'alert');
+      msg.innerHTML = '<div class="hilti-locale-toast-content">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+        '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' +
+        '</svg>' +
+        '<span>This article is not available in <strong>' + localeName + '</strong>. You are viewing the current version.</span>' +
+        '<button type="button" class="hilti-locale-toast-close" aria-label="Dismiss">&times;</button>' +
+        '</div>';
+      document.body.appendChild(msg);
+      requestAnimationFrame(function() { msg.classList.add('is-visible'); });
+      msg.querySelector('.hilti-locale-toast-close').addEventListener('click', function() {
+        msg.classList.remove('is-visible');
+        setTimeout(function() { msg.remove(); }, 300);
+      });
+      setTimeout(function() {
+        if (msg.parentNode) {
+          msg.classList.remove('is-visible');
+          setTimeout(function() { msg.remove(); }, 300);
+        }
+      }, 6000);
+    }
+
     // Inject a <link rel="prefetch"> so the browser fetches the target page
     // in the background before the user clicks — reduces perceived load time
     function prefetchLocale(locale) {
@@ -1797,7 +1890,24 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       updateHeaderLocaleLabel(locale);
-      window.location.href = buildLocaleUrl(locale);
+
+      // Check if on article page and fetch correct URL for target locale
+      var articleId = extractArticleIdFromUrl(window.location.href);
+      if (articleId) {
+        fetchArticleUrlForLocale(articleId, locale).then(function(apiUrl) {
+          if (apiUrl) {
+            window.location.href = apiUrl;
+          } else {
+            // Article not available in the target locale — show message
+            bar.classList.remove('is-animating');
+            bar.remove();
+            showLocaleNotAvailableMessage(locale);
+          }
+        });
+      } else {
+        // Not an article page, use simple locale replacement
+        window.location.href = buildLocaleUrl(locale);
+      }
     }
 
     if (saveBtn) {

@@ -1637,26 +1637,79 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Fetch article's correct URL from Zendesk API for target locale
-    // This ensures we get the correct slug for that locale (articles have different slugs in different locales)
+    // Strategy:
+    // 1. Search for the article by slug in the target locale (using locale query param)
+    // 2. If found, navigate to the article URL
+    // 3. If not found, show a user-friendly message
     function fetchArticleUrlForLocale(articleId, locale) {
       var apiOrigin = window.location.origin;
-      var url = apiOrigin + '/api/v2/help_center/' + encodeURIComponent(locale) + '/articles/' + articleId + '.json';
+      var slug = extractSlugFromUrl(window.location.href);
       
-      return fetch(url)
+      if (!slug) {
+        // No slug in URL — fallback to simple locale swap
+        return Promise.resolve(buildLocaleUrl(locale));
+      }
+
+      // Use the locale query parameter format (not path-based) — Zendesk returns 404 for path-based locale
+      var searchTerms = slug.split(' ').slice(0, 8).join(' ');
+      var searchUrl = apiOrigin + '/api/v2/help_center/articles/search.json?query=' + encodeURIComponent(searchTerms) + '&locale=' + encodeURIComponent(locale) + '&per_page=10';
+
+      return fetch(searchUrl, { credentials: 'same-origin' })
         .then(function(response) {
-          if (!response.ok) throw new Error('Article not found in target locale');
+          if (!response.ok) {
+            return null;
+          }
           return response.json();
         })
         .then(function(data) {
-          if (data.article && data.article.html_url) {
-            return data.article.html_url;
+          if (!data || !data.results || data.results.length === 0) return null;
+          
+          // Find a result whose slug matches the current article
+          var slugLower = slug.toLowerCase();
+          for (var i = 0; i < data.results.length; i++) {
+            var result = data.results[i];
+            if (result.html_url) {
+              var resultSlug = extractSlugFromUrl(result.html_url);
+              if (resultSlug && resultSlug.toLowerCase() === slugLower) {
+                // Ensure URL uses current origin (API may return mapped domain)
+                return normalizeArticleUrl(result.html_url, apiOrigin, locale);
+              }
+            }
           }
-          throw new Error('No html_url in response');
+          
+          // No exact slug match found
+          return null;
         })
         .catch(function(error) {
-          console.warn('Failed to fetch article URL for locale ' + locale + ':', error);
+          console.warn('Locale switch search failed:', error);
           return null;
         });
+    }
+
+    // Normalize article URL to use the current origin
+    // Zendesk API may return URLs with a different host (e.g. help.profisengineering.hilti.com)
+    // when a host mapping is configured
+    function normalizeArticleUrl(apiUrl, currentOrigin, locale) {
+      try {
+        var parsed = new URL(apiUrl);
+        var currentHost = new URL(currentOrigin);
+        // If hosts differ, rebuild with current origin
+        if (parsed.host !== currentHost.host) {
+          return currentOrigin + parsed.pathname + parsed.search + parsed.hash;
+        }
+        return apiUrl;
+      } catch (e) {
+        return apiUrl;
+      }
+    }
+
+    // Extract the slug portion from an article URL
+    // e.g., /articles/12345-How-to-do-something → "How to do something"
+    function extractSlugFromUrl(url) {
+      var m = String(url).match(/\/articles\/\d+-(.*?)(?:\?|#|$)/);
+      if (!m) return null;
+      // Convert URL slug back to search-friendly text (hyphens → spaces)
+      return decodeURIComponent(m[1]).replace(/-/g, ' ');
     }
 
     // Build the redirect URL for a given locale code
@@ -1665,6 +1718,41 @@ document.addEventListener('DOMContentLoaded', function () {
         /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
         '$1' + locale
       );
+    }
+
+    // Show a user-friendly message when article is not available in the target locale
+    function showLocaleNotAvailableMessage(locale) {
+      var localeName = locale.toUpperCase();
+      var msg = document.createElement('div');
+      msg.className = 'hilti-locale-unavailable-toast';
+      msg.setAttribute('role', 'alert');
+      msg.innerHTML = '<div class="hilti-locale-toast-content">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+        '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' +
+        '</svg>' +
+        '<span>This article is not available in <strong>' + localeName + '</strong>. You are viewing the current version.</span>' +
+        '<button type="button" class="hilti-locale-toast-close" aria-label="Dismiss">&times;</button>' +
+        '</div>';
+      document.body.appendChild(msg);
+
+      // Animate in
+      requestAnimationFrame(function() {
+        msg.classList.add('is-visible');
+      });
+
+      // Close button
+      msg.querySelector('.hilti-locale-toast-close').addEventListener('click', function() {
+        msg.classList.remove('is-visible');
+        setTimeout(function() { msg.remove(); }, 300);
+      });
+
+      // Auto-dismiss after 6 seconds
+      setTimeout(function() {
+        if (msg.parentNode) {
+          msg.classList.remove('is-visible');
+          setTimeout(function() { msg.remove(); }, 300);
+        }
+      }, 6000);
     }
 
     // Inject a <link rel="prefetch"> so the browser fetches the target page
@@ -1837,8 +1925,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Use API URL (contains correct slug for target locale)
             window.location.href = apiUrl;
           } else {
-            // Fallback: use simple locale replacement if API fails
-            window.location.href = buildLocaleUrl(locale);
+            // Article not available in the target locale — show message to user
+            bar.classList.remove('is-animating');
+            bar.remove();
+            showLocaleNotAvailableMessage(locale);
           }
         });
       } else {
