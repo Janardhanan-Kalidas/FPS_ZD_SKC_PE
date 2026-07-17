@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.19.11",
+  "version": "0.19.13",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -38,122 +38,7 @@
     },
     {
       "label": "images_group_label",
-      "variables": [
-        {
-          "identifier": "homepage_background_image",
-          "type": "file",
-          "description": "homepage_background_image_description",
-          "label": "homepage_background_image_label"
-        },
-        {
-          "identifier": "community_background_image",
-          "type": "file",
-          "description": "community_background_image_description",
-          "label": "community_background_image_label"
-        },
-        {
-          "identifier": "content_block_1_image",
-          "type": "file",
-          "description": "content_block_1_image_description",
-          "label": "content_block_1_image_label"
-        },
-        {
-          "identifier": "content_block_2_image",
-          "type": "file",
-          "description": "content_block_2_image_description",
-          "label": "content_block_2_image_label"
-        },
-        {
-          "identifier": "content_block_3_image",
-          "type": "file",
-          "description": "content_block_3_image_description",
-          "label": "content_block_3_image_label"
-        },
-        {
-          "identifier": "content_block_4_image",
-          "type": "file",
-          "description": "content_block_4_image_description",
-          "label": "content_block_4_image_label"
-        },
-        {
-          "identifier": "content_block_5_image",
-          "type": "file",
-          "description": "content_block_5_image_description",
-          "label": "content_block_5_image_label"
-        },
-        {
-          "identifier": "content_block_6_image",
-          "type": "file",
-          "description": "content_block_6_image_description",
-          "label": "content_block_6_image_label"
-        },
-        {
-          "identifier": "content_block_7_image",
-          "type": "file",
-          "description": "content_block_7_image_description",
-          "label": "content_block_7_image_label"
-        },
-        {
-          "identifier": "content_block_8_image",
-          "type": "file",
-          "description": "content_block_8_image_description",
-          "label": "content_block_8_image_label"
-        },
-        {
-          "identifier": "custom_block_1_image",
-          "type": "file",
-          "description": "custom_block_1_image_description",
-          "label": "custom_block_1_image_label"
-        },
-        {
-          "identifier": "custom_block_2_image",
-          "type": "file",
-          "description": "custom_block_2_image_description",
-          "label": "custom_block_2_image_label"
-        },
-        {
-          "identifier": "custom_block_3_image",
-          "type": "file",
-          "description": "custom_block_3_image_description",
-          "label": "custom_block_3_image_label"
-        },
-        {
-          "identifier": "custom_block_4_image",
-          "type": "file",
-          "description": "custom_block_4_image_description",
-          "label": "custom_block_4_image_label"
-        },
-        {
-          "identifier": "contact_block_1_image",
-          "type": "file",
-          "description": "contact_block_1_image_description",
-          "label": "contact_block_1_image_label"
-        },
-        {
-          "identifier": "contact_block_2_image",
-          "type": "file",
-          "description": "contact_block_2_image_description",
-          "label": "contact_block_2_image_label"
-        },
-        {
-          "identifier": "contact_block_3_image",
-          "type": "file",
-          "description": "contact_block_3_image_description",
-          "label": "contact_block_3_image_label"
-        },
-        {
-          "identifier": "contact_block_4_image",
-          "type": "file",
-          "description": "contact_block_4_image_description",
-          "label": "contact_block_4_image_label"
-        },
-        {
-          "identifier": "cta_block_image",
-          "type": "file",
-          "description": "cta_block_image_description",
-          "label": "cta_block_image_label"
-        }
-      ]
+      "variables": []
     },
     {
       "label": "search_group_label",
@@ -794,66 +679,6 @@
           "description": "color_hero_text_description",
           "label": "color_hero_text_label",
           "value": "rgba(255, 255, 255, 1)"
-        },
-        {
-          "identifier": "hero_image_style",
-          "type": "list",
-          "description": "hero_image_style_description",
-          "label": "hero_image_style_label",
-          "value": "overlay",
-          "options": [
-            {
-              "label": "Behind background",
-              "value": "standard"
-            },
-            {
-              "label": "Overlay",
-              "value": "overlay"
-            },
-            {
-              "label": "Overlay (pattern)",
-              "value": "overlay-pattern"
-            },
-            {
-              "label": "Parallax effect",
-              "value": "parallax"
-            }
-          ]
-        },
-        {
-          "identifier": "bg_color_hero",
-          "type": "color",
-          "description": "bg_color_hero_description",
-          "label": "bg_color_hero_label",
-          "value": "rgba(255, 255, 255, 1)"
-        },
-        {
-          "identifier": "bg_color_secondary_hero",
-          "type": "color",
-          "description": "bg_color_secondary_hero_description",
-          "label": "bg_color_secondary_hero_label",
-          "value": "rgba(255, 255, 255, 1)"
-        },
-        {
-          "identifier": "bg_gradient_hero",
-          "type": "list",
-          "description": "bg_gradient_hero_description",
-          "label": "bg_gradient_hero_label",
-          "value": "radial",
-          "options": [
-            {
-              "label": "Conic",
-              "value": "conic"
-            },
-            {
-              "label": "Linear",
-              "value": "linear"
-            },
-            {
-              "label": "Radial",
-              "value": "radial"
-            }
-          ]
         },
         {
           "identifier": "hero_content_alignment",
@@ -2232,31 +2057,6 @@
     {
       "label": "community_group_label",
       "variables": [
-        {
-          "identifier": "community_image_style",
-          "type": "list",
-          "description": "community_image_style_description",
-          "label": "community_image_style_label",
-          "value": "standard",
-          "options": [
-            {
-              "label": "Behind background",
-              "value": "standard"
-            },
-            {
-              "label": "Overlay",
-              "value": "overlay"
-            },
-            {
-              "label": "Overlay (pattern)",
-              "value": "overlay-pattern"
-            },
-            {
-              "label": "Parallax effect",
-              "value": "parallax"
-            }
-          ]
-        },
         {
           "identifier": "show_recent_activity_community",
           "type": "checkbox",

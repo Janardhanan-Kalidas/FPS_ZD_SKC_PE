@@ -178,37 +178,13 @@
 
 {{! Hero element }}
 
-<div class="hero relative overflow-hidden{{#is settings.hero_image_style 'standard'}} bg-home bg-cover bg-center{{/is}}">
+<div class="hero relative overflow-hidden" style="background-image: url('{{asset 'SKC_hero_3.jpg'}}')">
 
-    {{! Hero background image (overlay) }}
-  {{#isnt settings.hero_image_style 'standard'}}
-    {{#isnt settings.hero_image_style 'parallax'}}
-      <div class="absolute z-20 top-0 left-0 h-full w-full bg-home{{#is settings.hero_image_style 'overlay'}} bg-cover bg-center{{/is}}{{#is settings.hero_image_style 'overlay-pattern'}} bg-contain bg-repeat{{/is}}"></div>
-    {{/isnt}}
-  {{/isnt}}
-
-  {{! Hero background color }}
-  <div class="absolute z-10 top-0 left-0 h-full w-full bg-hero"></div>
-
-  {{! Hero background image (parallax) }}
-  
-    {{#is settings.hero_image_style 'parallax'}}
-    <div class="absolute z-0 top-0 left-0 w-full h-full">
-      <div class="relative w-full h-full overflow-hidden">
-        <div class="absolute top-0 left-0 w-full bg-home bg-cover bg-center"
-             x-data="Widgets.parallaxImage"
-             style="height: 150%">
-        </div>
-      </div>
-    </div>
-  {{/is}}
-
-  
   {{! Hero element content }}
-  <div class="relative container z-30 hc-hero-content py-6 lg:p{{#if settings.fixed_header}}b{{else}}y{{/if}}-7"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
+  <div class="z-30 hc-hero-content"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
 
     {{! Hero element title - Jana Changes}}
-    <div class="my-5 text-{{settings.hero_content_alignment}}{{#unless settings.hero_heading}}{{#unless settings.hero_text}} hidden{{/unless}}{{/unless}}">
+    <div class="{{#unless settings.hero_heading}}{{#unless settings.hero_text}} hidden{{/unless}}{{/unless}}">
       {{~#if settings.hero_text}}
         <h1 class="font-size-xl">
           {{~#if settings.use_translations}}
@@ -230,7 +206,7 @@
     </div>
 
     {{! Hero element search bar - Jana}}
-    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4{{#is settings.hero_content_alignment 'center'}} mx-auto{{/is}}" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
+    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
       <h2 class="sr-only">{{ t 'search' }}</h2>
       {{~#if settings.search_placeholder}}
         {{#if settings.use_translations}}
@@ -438,8 +414,8 @@
                 templateData: {
                   heading: {{#if settings.use_translations}}{{json_stringify (dc 'recommended_help_topics')}}{{else}}{{json_stringify settings.content_blocks_heading}}{{/if}},
                   images: [
-                    "{{settings.content_block_1_image}}", "{{settings.content_block_2_image}}", "{{settings.content_block_3_image}}", "{{settings.content_block_4_image}}",
-                    "{{settings.content_block_5_image}}", "{{settings.content_block_6_image}}", "{{settings.content_block_7_image}}", "{{settings.content_block_8_image}}"
+                    "{{asset 'content_block_1_image.svg'}}", "{{asset 'content_block_2_image.svg'}}", "{{asset 'content_block_3_image.svg'}}", "{{asset 'content_block_4_image.svg'}}",
+                    "{{asset 'content_block_5_image.svg'}}", "{{asset 'content_block_6_image.svg'}}", "{{asset 'content_block_7_image.svg'}}", "{{asset 'content_block_8_image.svg'}}"
                   ],
                   imageHeight: "{{settings.content_block_image_height}}",
                   numberColumns: {{settings.number_content_block_columns}},

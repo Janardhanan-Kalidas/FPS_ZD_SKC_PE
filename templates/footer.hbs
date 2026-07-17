@@ -420,7 +420,7 @@
 {{~#isnt settings.cta_location 'none'}}
   {{~#is settings.cta_style 'banner'}}
     <script type="text/template" id="tmpl-call-to-action">
-      <div class="cta relative mt-6 -mb-6{{#is '#fff' settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')">
+      <div class="cta relative mt-6 -mb-6{{#is '#fff' settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{asset 'cta_block_image.jpg'}}')">>
         <div class="container relative z-10 py-6">
           <div class="max-w-lg mx-auto text-center">
             {{#if settings.cta_element_heading}}
@@ -506,7 +506,7 @@
       <div class="container">
         <div class="card cta overflow-hidden my-6{{#isnt '#fff' settings.bg_color_cta}} border-0{{/isnt}}">
           <div class="row">
-            <div class="p-9 sm:col-6 relative bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')"></div>
+            <div class="p-9 sm:col-6 relative bg-center bg-cover" style="background-image: url('{{asset 'cta_block_image.jpg'}}')"></div>
             <div class="p-6 sm:col-6 sm:px-6 sm:py-8">
               {{#if settings.cta_element_heading}}
                 <h3 class="h2 md:font-size-3xl">
@@ -823,7 +823,7 @@
     }].slice(0, {{settings.number_custom_blocks}}),
     heading: {{#if settings.custom_blocks_heading}}{{#if settings.use_translations}}{{json_stringify (dc settings.custom_blocks_heading)}}{{else}}{{json_stringify settings.custom_blocks_heading}}{{/if}}{{else}}""{{/if}},
     images: [
-      "{{settings.custom_block_1_image}}", "{{settings.custom_block_2_image}}", "{{settings.custom_block_3_image}}", "{{settings.custom_block_4_image}}"
+      "{{asset 'custom_block_1_image.svg'}}", "{{asset 'custom_block_2_image.svg'}}", "{{asset 'custom_block_3_image.svg'}}", "{{asset 'custom_block_4_image.svg'}}"
     ],
     imageHeight: "{{settings.custom_block_image_height}}",
     numberColumns: {{settings.number_custom_block_columns}},
@@ -860,7 +860,7 @@
     }].slice(0, {{settings.number_contact_blocks}}),
     heading: {{#if settings.contact_blocks_heading}}{{#if settings.use_translations}}{{json_stringify (dc settings.contact_blocks_heading)}}{{else}}{{json_stringify settings.contact_blocks_heading}}{{/if}}{{else}}""{{/if}},
     images: [
-      "{{settings.contact_block_1_image}}", "{{settings.contact_block_2_image}}", "{{settings.contact_block_3_image}}", "{{settings.contact_block_4_image}}"
+      "{{asset 'contact_block_1_image.svg'}}", "{{asset 'contact_block_2_image.svg'}}", "{{asset 'contact_block_3_image.svg'}}", "{{asset 'contact_block_4_image.svg'}}"
     ],
     imageHeight: "{{settings.contact_block_image_height}}",
     numberColumns: {{settings.number_contact_block_columns}},

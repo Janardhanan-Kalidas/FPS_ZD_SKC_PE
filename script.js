@@ -1512,6 +1512,11 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // Guard against redirect loops if localStorage is unavailable
+    if (window.location.search.indexOf('__lang_redirected=1') > -1) {
+      return;
+    }
+
     // Get current locale from URL
     var currentLocale = ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
 
@@ -1533,7 +1538,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Mark that we've applied browser language detection
-    localStorage.setItem(BROWSER_LANG_APPLIED_KEY, 'true');
+    try {
+      localStorage.setItem(BROWSER_LANG_APPLIED_KEY, 'true');
+    } catch (e) {
+      // localStorage unavailable — skip redirect to avoid loop
+      return;
+    }
 
     // Only redirect if target differs from current
     if (targetLocale !== currentLocale) {
@@ -1541,7 +1551,9 @@ document.addEventListener('DOMContentLoaded', function () {
         /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
         '$1' + targetLocale
       );
-      window.location.href = newUrl;
+      // Add loop guard parameter
+      var separator = newUrl.indexOf('?') > -1 ? '&' : '?';
+      window.location.href = newUrl + separator + '__lang_redirected=1';
     }
   });
 })();
