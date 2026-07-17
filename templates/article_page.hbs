@@ -33,8 +33,8 @@
     {{! ======================================================= }}
     {{! LEFT SIDEBAR — Articles in this section                 }}
     {{! ======================================================= }}
+    {{#isnt settings.article_sidebar 'none'}}
     <aside class="article-left-sidebar" aria-label="Articles in this section">
-      {{#isnt settings.article_sidebar 'none'}}
         {{#is settings.article_sidebar 'articles-in-section'}}
           <div class="article-sidebar-card">
             <h3 class="article-sidebar-heading">{{t 'articles_in_section'}}</h3>
@@ -54,8 +54,8 @@
         {{else}}
           <div data-element="navigation" data-template="{{settings.article_sidebar}}"></div>
         {{/is}}
-      {{/isnt}}
     </aside>
+    {{/isnt}}
 
     {{! ======================================================= }}
     {{! CENTER — Article content                               }}
@@ -456,8 +456,6 @@
 
         </section>
       {{/if}}
-
-    </article>
 
     </article>
 

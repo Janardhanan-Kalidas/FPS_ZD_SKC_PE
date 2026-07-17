@@ -19414,6 +19414,11 @@ button.hc-page-btn {
   align-content: start;
 }
 
+/* 2-column fallback when left sidebar is absent */
+.article-3col-layout:not(:has(.article-left-sidebar)) {
+  grid-template-columns: 1fr 200px;
+}
+
 /* ----------------------------------------------------------
    2. Left sidebar — Articles in this section
 ---------------------------------------------------------- */
@@ -19571,6 +19576,17 @@ button.hc-page-btn {
   border-right: 1px solid #e8e8e8;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
+}
+
+/* Hide empty Table of Contents container (no h2 headings in article) */
+.table-of-contents:empty {
+  display: none;
+}
+
+/* Zero footer margins when hidden (both related and recent articles disabled) */
+.article-main-content > footer.row.my-6.hidden {
+  margin: 0;
+  padding: 0;
 }
 
 /* Article title — aligned with sidebars top */
@@ -20193,6 +20209,9 @@ body.downvote-feedback-open {
     grid-template-columns: 200px 1fr 180px;
     gap: 8px;
   }
+  .article-3col-layout:not(:has(.article-left-sidebar)) {
+    grid-template-columns: 1fr 180px;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -20461,9 +20480,17 @@ body.downvote-feedback-open {
   gap: 8px;
 }
 
+/* 2-column fallback when left sidebar is absent */
+.article-3col-layout:not(:has(.article-left-sidebar)) {
+  grid-template-columns: 1fr 220px;
+}
+
 @media (min-width: 1025px) and (max-width: 1200px) {
   .article-3col-layout {
     grid-template-columns: 200px 1fr 180px;
+  }
+  .article-3col-layout:not(:has(.article-left-sidebar)) {
+    grid-template-columns: 1fr 180px;
   }
 }
 
