@@ -20004,12 +20004,11 @@ body.downvote-feedback-open {
 
 .article-content a {
   color: #d2051e;
-  font-size: 0.875rem;
   text-decoration: none;
 }
 
 .article-content a span {
-  font-size: 0.875rem;
+  color: inherit;
 }
 
 .article-content a:hover {
@@ -20020,8 +20019,6 @@ body.downvote-feedback-open {
   max-width: 100%;
   height: auto;
   border-radius: 2px;
-  display: block;
-  margin: 1rem 0;
 }
 
 .article-content blockquote {
@@ -20079,18 +20076,14 @@ body.downvote-feedback-open {
   background: #f7f6f3;
 }
 
-.article-content td:first-child {
-  background: #E7E5E2;
-}
-
 .article-content table th *,
 .article-content table td * {
-  color: #524f53 !important;
+  color: #524f53;
 }
 
 .article-content table th,
 .article-content table th * {
-  font-weight: 700 !important;
+  font-weight: 700;
 }
 
 /* ----------------------------------------------------------
@@ -20552,9 +20545,9 @@ body.downvote-feedback-open {
 }
 
 .article-content table {
-  display: block;
-  overflow-x: auto;
   max-width: 100%;
+  overflow-x: auto;
+  display: table;
 }
 
 .article-content iframe {
