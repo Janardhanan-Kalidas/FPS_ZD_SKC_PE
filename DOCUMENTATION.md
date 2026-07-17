@@ -189,6 +189,8 @@ style.css                    # Theme styling
 package.json                 # Tooling scripts for version/deploy/backup/rollback
 templates/*.hbs              # Page templates and settings consumption
 translations/*.json          # Locale strings
+assets/                      # Static images, icons, JS extensions (code-managed)
+settings/                    # Admin-uploadable defaults (favicon, logo only)
 tooling/scripts/*.sh|*.mjs   # Deployment and versioning automation
 ```
 
@@ -249,7 +251,101 @@ In promoted articles settings, `promoted_article_list_style` includes a `toggles
 
 This repository includes newer behavior that should be understood before making changes.
 
-### 1) Custom autocomplete (search)
+### 1) Hero Image (Code-Managed)
+
+The home page hero image is **hardcoded in the template** — no admin upload is needed.
+
+**How it works:**
+- The hero image is referenced via `{{asset 'SKC_hero_3.jpg'}}` inline in `templates/home_page.hbs`
+- CSS in `style.css` controls sizing: `aspect-ratio: 1920 / 340` with `background-size: 100% 100%`
+- The hero content (title + search bar) is absolutely positioned over the image
+
+**To change the hero image:**
+1. Place your new image in `assets/` (recommended: 1920×340px JPG)
+2. Update the `style="background-image: url('{{asset 'YOUR_FILENAME.jpg'}}')"` in `templates/home_page.hbs`
+3. If dimensions differ, update `aspect-ratio` in `.hero` CSS rule in `style.css`
+
+**Hero content positioning** (in `style.css`):
+- `.hero .hc-hero-content` — controls position (`top`, `left`, `transform`)
+- `.hero .hc-hero-content > div:first-child` — centers title text relative to search bar width
+- `.hero .search` — controls search bar width (`max-width: 520px`)
+
+**Community hero** uses the same pattern in `templates/community_post_list_page.hbs` and `templates/community_topic_list_page.hbs` referencing `{{asset 'community_background_image.jpg'}}`.
+
+### 2) Image Assets (All Code-Managed)
+
+All decorative images are managed in the `assets/` folder — **no uploads needed in Zendesk Admin**.
+
+| Image | File | Used In |
+|-------|------|---------|
+| Homepage hero | `assets/SKC_hero_3.jpg` | `templates/home_page.hbs` |
+| Community hero | `assets/community_background_image.jpg` | Community templates |
+| Content block icons (1-8) | `assets/content_block_N_image.svg` | `templates/home_page.hbs` |
+| Custom block icons (1-4) | `assets/custom_block_N_image.svg` | `templates/footer.hbs` |
+| Contact block icons (1-4) | `assets/contact_block_N_image.svg` | `templates/footer.hbs` |
+| CTA background | `assets/cta_block_image.jpg` | `templates/footer.hbs` |
+
+**Only `favicon` and `logo` remain as admin-uploadable settings** (defined in `manifest.json`, defaults in `settings/`).
+
+To swap any image: replace the file in `assets/` keeping the same filename, or update the `{{asset 'filename'}}` reference in the template.
+
+### 3) Announcement Banners
+
+Two dismissible banner slots appear at the top of the home page: **Release Banner** and **Notification Banner**.
+
+**Admin settings** (in Zendesk Admin → Theme Settings → Banners group):
+
+| Setting | Type | Description |
+|---------|------|-------------|
+| `release_banner_enabled` | checkbox | Show/hide the release banner |
+| `release_banner_icon` | list | Icon: alert_error, alert_info, alert_positive, alert_warning, notification, announcement |
+| `release_banner_content` | text | Banner message text |
+| `release_banner_link_url` | text | Optional "Learn more" link URL |
+| `release_banner_version` | text | Version ID — changing this resets dismiss state for all users |
+| `release_banner_bg_color` | list | Preset color: red, dark_gray, blue, green, orange, black, white, custom |
+| `release_banner_custom_bg_color` | color | Custom color (used when bg_color is 'custom') |
+| `release_banner_text_color` | color | Text color |
+| `notification_banner_enabled` | checkbox | Show/hide the notification banner |
+| `notification_banner_icon` | list | Same icon options as release banner |
+| `notification_banner_content` | text | Banner message text |
+| `notification_banner_version` | text | Version ID for dismiss reset |
+| `notif_banner_bg_color` | list | Same color presets |
+| `notif_banner_custom_bg_color` | color | Custom color |
+| `notification_banner_text_color` | color | Text color |
+
+**How dismiss works:**
+- Each banner stores its dismiss state in `localStorage` using key `hilti.banner.{id}.dismissed.{version}`
+- Changing `release_banner_version` or `notification_banner_version` resets the dismiss for all users (they'll see the banner again)
+- The dismiss button removes the banner from the DOM immediately
+
+**Implementation files:**
+- Template: `templates/home_page.hbs` (banner HTML + color logic)
+- Dismiss JS: `script.js` (banner dismiss handler with localStorage persistence)
+- Styling: `style.css` (`.announcement-banner` classes)
+
+### 4) Auto-Fingerprint Theme Refresh
+
+The theme automatically detects when settings change and refreshes the page.
+
+**How it works:**
+- A `<meta name="theme-settings-fingerprint">` tag is rendered in `templates/document_head.hbs`
+- `script.js` periodically checks if the fingerprint changed (via fetch + DOM comparison)
+- If a new fingerprint is detected, `window.location.replace()` reloads the page with updated settings
+- A `sessionStorage` guard (`theme_settings_last_reload_fingerprint`) prevents infinite reload loops
+
+**When this triggers:** After you change theme settings in Zendesk Admin and save — visitors with the page open will auto-refresh within ~60 seconds.
+
+### 5) Browser Language Auto-Redirect
+
+On first visit, the theme detects the browser language and redirects to the matching locale if different from the current URL locale.
+
+**Guard mechanisms:**
+- `localStorage` key `hilti.browser.lang.applied` prevents repeated redirects
+- URL parameter `__lang_redirected=1` acts as a fallback loop guard
+- If `localStorage.setItem` fails (private browsing), the redirect is skipped entirely
+- Manual country selection via `hilti.country.selection` localStorage key overrides auto-detection
+
+### 6) Custom autocomplete (search)
 
 Where enabled:
 
@@ -274,7 +370,7 @@ Styling:
 
 - Dedicated classes in `style.css` under `.hc-autocomplete-*`
 
-### 2) View more/view less list toggle behavior
+### 7) View more/view less list toggle behavior
 
 Implementation in `script.js`:
 
@@ -288,7 +384,7 @@ Styling hooks in `style.css`:
 - `.view-toggle-btn`
 - `.cards-wrapper`
 
-### 3) Search results enhancements
+### 8) Search results enhancements
 
 `templates/search_results.hbs` currently implements:
 

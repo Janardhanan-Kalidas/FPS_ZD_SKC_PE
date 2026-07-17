@@ -27,3 +27,6 @@ Thumbs.db
 # Dev/test tooling (not part of Zendesk theme)
 tests/
 .kiro/
+
+# Migration scripts (contain credentials — NEVER commit)
+tooling/migrate-*
