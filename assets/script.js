@@ -158,7 +158,6 @@
         '<li id="' + optionIdPrefix + index + '" class="hc-autocomplete-option hc-autocomplete-option--card" role="option" aria-selected="false" data-index="' + index + '" data-url="' + escapeHtml(item.url) + '">' +
           '<a class="hc-autocomplete-link" href="' + escapeHtml(item.url) + '">' +
             '<span class="hc-autocomplete-title">' + highlightText(item.title, query) + '</span>' +
-            buildBreadcrumb(item) +
             (item.excerpt ? '<span class="hc-autocomplete-excerpt">' + highlightText(item.excerpt, query) + '</span>' : '') +
           '</a>' +
         '</li>'
@@ -168,7 +167,7 @@
     if (!suggestions.length) {
       items.push(
         '<li class="hc-autocomplete-option hc-autocomplete-option--static" role="presentation">' +
-          '<div class="hc-autocomplete-empty' + (errorState ? '' : ' hc-autocomplete-empty--no-results') + '">' + escapeHtml(errorState ? 'Suggestions unavailable. Press Enter to search.' : 'No suggestions found. Please try with a different search keyword.') + '</div>' +
+          '<div class="hc-autocomplete-empty' + (errorState ? '' : ' hc-autocomplete-empty--no-results') + '">' + escapeHtml(errorState ? 'Suggestions unavailable. Press Enter to search.' : 'No suggestions found yet.') + '</div>' +
         '</li>'
       );
     }
@@ -1513,6 +1512,11 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // Guard against redirect loops if localStorage is unavailable
+    if (window.location.search.indexOf('__lang_redirected=1') > -1) {
+      return;
+    }
+
     // Get current locale from URL
     var currentLocale = ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
 
@@ -1534,7 +1538,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Mark that we've applied browser language detection
-    localStorage.setItem(BROWSER_LANG_APPLIED_KEY, 'true');
+    try {
+      localStorage.setItem(BROWSER_LANG_APPLIED_KEY, 'true');
+    } catch (e) {
+      // localStorage unavailable — skip redirect to avoid loop
+      return;
+    }
 
     // Only redirect if target differs from current
     if (targetLocale !== currentLocale) {
@@ -1542,7 +1551,9 @@ document.addEventListener('DOMContentLoaded', function () {
         /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
         '$1' + targetLocale
       );
-      window.location.href = newUrl;
+      // Add loop guard parameter
+      var separator = newUrl.indexOf('?') > -1 ? '&' : '?';
+      window.location.href = newUrl + separator + '__lang_redirected=1';
     }
   });
 })();
@@ -1630,14 +1641,6 @@ document.addEventListener('DOMContentLoaded', function () {
         : parts[0].toUpperCase();
     }
 
-    // Build the redirect URL for a given locale code
-    function buildLocaleUrl(locale) {
-      return window.location.href.replace(
-        /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
-        '$1' + locale
-      );
-    }
-
     // Extract article ID from URL
     function extractArticleIdFromUrl(url) {
       if (!url) return null;
@@ -1645,18 +1648,64 @@ document.addEventListener('DOMContentLoaded', function () {
       return m ? m[1] : null;
     }
 
-    // Extract the slug portion from an article URL
-    function extractSlugFromUrl(url) {
-      var m = String(url).match(/\/articles\/\d+-(.*?)(?:\?|#|$)/);
-      if (!m) return null;
-      return decodeURIComponent(m[1]).replace(/-/g, ' ');
+    // Fetch article's correct URL from Zendesk API for target locale
+    // Strategy:
+    // 1. Search for the article by slug in the target locale (using locale query param)
+    // 2. If found, navigate to the article URL
+    // 3. If not found, show a user-friendly message
+    function fetchArticleUrlForLocale(articleId, locale) {
+      var apiOrigin = window.location.origin;
+      var slug = extractSlugFromUrl(window.location.href);
+      
+      if (!slug) {
+        // No slug in URL — fallback to simple locale swap
+        return Promise.resolve(buildLocaleUrl(locale));
+      }
+
+      // Use the locale query parameter format (not path-based) — Zendesk returns 404 for path-based locale
+      var searchTerms = slug.split(' ').slice(0, 8).join(' ');
+      var searchUrl = apiOrigin + '/api/v2/help_center/articles/search.json?query=' + encodeURIComponent(searchTerms) + '&locale=' + encodeURIComponent(locale) + '&per_page=10';
+
+      return fetch(searchUrl, { credentials: 'same-origin' })
+        .then(function(response) {
+          if (!response.ok) {
+            return null;
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          if (!data || !data.results || data.results.length === 0) return null;
+          
+          // Find a result whose slug matches the current article
+          var slugLower = slug.toLowerCase();
+          for (var i = 0; i < data.results.length; i++) {
+            var result = data.results[i];
+            if (result.html_url) {
+              var resultSlug = extractSlugFromUrl(result.html_url);
+              if (resultSlug && resultSlug.toLowerCase() === slugLower) {
+                // Ensure URL uses current origin (API may return mapped domain)
+                return normalizeArticleUrl(result.html_url, apiOrigin, locale);
+              }
+            }
+          }
+          
+          // No exact slug match found
+          return null;
+        })
+        .catch(function(error) {
+          console.warn('Locale switch search failed:', error);
+          return null;
+        });
     }
 
-    // Normalize article URL to use the current origin (API may return mapped domain)
-    function normalizeArticleUrl(apiUrl, currentOrigin) {
+    // Normalize article URL to use the current origin
+    // Zendesk API may return URLs with a different host (e.g. help.profisengineering.hilti.com)
+    // when a host mapping is configured
+    function normalizeArticleUrl(apiUrl, currentOrigin, locale) {
       try {
         var parsed = new URL(apiUrl);
         var currentHost = new URL(currentOrigin);
+        // If hosts differ, rebuild with current origin
         if (parsed.host !== currentHost.host) {
           return currentOrigin + parsed.pathname + parsed.search + parsed.hash;
         }
@@ -1666,45 +1715,24 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // Fetch the correct article URL for a target locale using search API
-    function fetchArticleUrlForLocale(articleId, locale) {
-      var apiOrigin = window.location.origin;
-      var slug = extractSlugFromUrl(window.location.href);
-
-      if (!slug) {
-        return Promise.resolve(buildLocaleUrl(locale));
-      }
-
-      var searchTerms = slug.split(' ').slice(0, 8).join(' ');
-      var searchUrl = apiOrigin + '/api/v2/help_center/articles/search.json?query=' + encodeURIComponent(searchTerms) + '&locale=' + encodeURIComponent(locale) + '&per_page=10';
-
-      return fetch(searchUrl, { credentials: 'same-origin' })
-        .then(function(response) {
-          if (!response.ok) return null;
-          return response.json();
-        })
-        .then(function(data) {
-          if (!data || !data.results || data.results.length === 0) return null;
-
-          var slugLower = slug.toLowerCase();
-          for (var i = 0; i < data.results.length; i++) {
-            var result = data.results[i];
-            if (result.html_url) {
-              var resultSlug = extractSlugFromUrl(result.html_url);
-              if (resultSlug && resultSlug.toLowerCase() === slugLower) {
-                return normalizeArticleUrl(result.html_url, apiOrigin);
-              }
-            }
-          }
-          return null;
-        })
-        .catch(function(error) {
-          console.warn('Locale switch search failed:', error);
-          return null;
-        });
+    // Extract the slug portion from an article URL
+    // e.g., /articles/12345-How-to-do-something → "How to do something"
+    function extractSlugFromUrl(url) {
+      var m = String(url).match(/\/articles\/\d+-(.*?)(?:\?|#|$)/);
+      if (!m) return null;
+      // Convert URL slug back to search-friendly text (hyphens → spaces)
+      return decodeURIComponent(m[1]).replace(/-/g, ' ');
     }
 
-    // Show toast when article is not available in target locale
+    // Build the redirect URL for a given locale code
+    function buildLocaleUrl(locale) {
+      return window.location.href.replace(
+        /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
+        '$1' + locale
+      );
+    }
+
+    // Show a user-friendly message when article is not available in the target locale
     function showLocaleNotAvailableMessage(locale) {
       var localeName = locale.toUpperCase();
       var msg = document.createElement('div');
@@ -1718,11 +1746,19 @@ document.addEventListener('DOMContentLoaded', function () {
         '<button type="button" class="hilti-locale-toast-close" aria-label="Dismiss">&times;</button>' +
         '</div>';
       document.body.appendChild(msg);
-      requestAnimationFrame(function() { msg.classList.add('is-visible'); });
+
+      // Animate in
+      requestAnimationFrame(function() {
+        msg.classList.add('is-visible');
+      });
+
+      // Close button
       msg.querySelector('.hilti-locale-toast-close').addEventListener('click', function() {
         msg.classList.remove('is-visible');
         setTimeout(function() { msg.remove(); }, 300);
       });
+
+      // Auto-dismiss after 6 seconds
       setTimeout(function() {
         if (msg.parentNode) {
           msg.classList.remove('is-visible');
@@ -1890,15 +1926,18 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       updateHeaderLocaleLabel(locale);
-
+      
       // Check if on article page and fetch correct URL for target locale
       var articleId = extractArticleIdFromUrl(window.location.href);
       if (articleId) {
+        // Fetch the article URL from API to get the correct slug for target locale
+        // This solves the issue where articles have different slugs in different locales
         fetchArticleUrlForLocale(articleId, locale).then(function(apiUrl) {
           if (apiUrl) {
+            // Use API URL (contains correct slug for target locale)
             window.location.href = apiUrl;
           } else {
-            // Article not available in the target locale — show message
+            // Article not available in the target locale — show message to user
             bar.classList.remove('is-animating');
             bar.remove();
             showLocaleNotAvailableMessage(locale);
@@ -3380,3 +3419,217 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 })();
 
+
+/* === ANNOUNCEMENT BANNERS === */
+;(function() {
+  'use strict';
+
+  /**
+   * Normalizes banner content for fingerprinting.
+   * 1. Strips all HTML tags
+   * 2. Collapses consecutive whitespace to a single space
+   * 3. Trims leading and trailing whitespace
+   *
+   * @param {string} raw - Raw banner content (may contain HTML)
+   * @returns {string} Normalized plain text, or empty string for non-string/empty input
+   */
+  function normalizeContent(raw) {
+    if (typeof raw !== 'string') return '';
+    var text = raw.replace(/<[^>]*>/g, '');      // Strip HTML tags
+    text = text.replace(/\s+/g, ' ');            // Collapse whitespace
+    text = text.trim();                          // Trim edges
+    return text;
+  }
+
+  /**
+   * Computes an FNV-1a 32-bit hash of the input string and returns
+   * a base-36 alphanumeric fingerprint (≤7 characters).
+   *
+   * Algorithm: FNV-1a 32-bit
+   * - Offset basis: 0x811c9dc5
+   * - Prime: 0x01000193
+   * - Output: base-36 string using [0-9a-z], always ≤10 chars
+   *
+   * @param {string} text - Normalized content string (already trimmed)
+   * @returns {string} Alphanumeric fingerprint, or '' if input is empty/falsy
+   */
+  function computeFingerprint(text) {
+    if (!text) return '';
+    var FNV_OFFSET = 0x811c9dc5;
+    var FNV_PRIME = 0x01000193;
+    var hash = FNV_OFFSET;
+    for (var i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, FNV_PRIME) >>> 0;  // Unsigned 32-bit multiply
+    }
+    return hash.toString(36);                    // base-36: [0-9a-z], ≤7 chars
+  }
+
+  /**
+   * Constructs the sessionStorage key for banner dismiss state.
+   * Format: banner_dismissed_{id}_{fingerprint}_{version}
+   *
+   * @param {string} bannerId    - 'release' or 'notification'
+   * @param {string} fingerprint - Computed content hash
+   * @param {string} version     - Force-reset version (defaults to '1' if empty/whitespace)
+   * @returns {string} Storage key
+   */
+  function buildStorageKey(bannerId, fingerprint, version) {
+    var ver = (version && version.trim()) ? version.trim() : '1';
+    return 'banner_dismissed_' + bannerId + '_' + fingerprint + '_' + ver;
+  }
+
+  /**
+   * Extracts the user-visible text content from a banner element,
+   * excluding link text (.announcement-banner__link) and button text.
+   *
+   * @param {Element} bannerElement - The .announcement-banner DOM element
+   * @returns {string} Raw text content for normalization
+   */
+  function extractBannerContent(bannerElement) {
+    var contentEl = bannerElement.querySelector('.announcement-banner__content');
+    if (!contentEl) return '';
+
+    // Clone to avoid mutating live DOM
+    var clone = contentEl.cloneNode(true);
+
+    // Remove link elements from the clone
+    var links = clone.querySelectorAll('.announcement-banner__link');
+    for (var i = 0; i < links.length; i++) {
+      links[i].parentNode.removeChild(links[i]);
+    }
+
+    return clone.textContent || '';
+  }
+
+  /**
+   * Computes the fingerprint-based sessionStorage key for a given banner.
+   * Queries the DOM for the banner element, extracts and normalizes content,
+   * computes the fingerprint, and builds the storage key.
+   *
+   * @param {string} bannerId - The banner's data-banner-id value
+   * @returns {string|null} The storage key, or null if banner not found or content is empty
+   */
+  function getStorageKey(bannerId) {
+    var banner = document.querySelector(
+      '.announcement-banner[data-banner-id="' + bannerId + '"]'
+    );
+    if (!banner) return null;
+
+    var version = banner.getAttribute('data-banner-version') || '';
+    var raw = extractBannerContent(banner);
+    var normalized = normalizeContent(raw);
+    if (!normalized) return null;
+
+    var fp = computeFingerprint(normalized);
+    if (!fp) return null;
+
+    return buildStorageKey(bannerId, fp, version);
+  }
+
+  /**
+   * Checks whether a banner has been dismissed in the current session.
+   * Fail-open: returns false if sessionStorage is unavailable or throws.
+   * @param {string} bannerId
+   * @returns {boolean}
+   */
+  function isDismissed(bannerId) {
+    try {
+      var key = getStorageKey(bannerId);
+      if (!key) return false;
+      return sessionStorage.getItem(key) === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Dismisses a banner: hides it, persists state, and manages focus.
+   * @param {string} bannerId
+   */
+  function dismissBanner(bannerId) {
+    var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
+    if (!banner) return;
+
+    // Hide the banner
+    banner.setAttribute('hidden', '');
+    banner.setAttribute('aria-hidden', 'true');
+
+    // Persist to sessionStorage (fail-silent on error)
+    try {
+      var key = getStorageKey(bannerId);
+      if (key) sessionStorage.setItem(key, 'true');
+    } catch (e) {
+      // Suppress storage errors — banner is already visually hidden
+    }
+
+    // Focus management: next visible banner's dismiss button → .hero → document.body
+    var nextBanner = document.querySelector('.announcement-banner:not([hidden])');
+    if (nextBanner) {
+      var nextDismissBtn = nextBanner.querySelector('[data-dismiss-banner]');
+      if (nextDismissBtn) {
+        nextDismissBtn.focus();
+        return;
+      }
+    }
+
+    var hero = document.querySelector('.hero');
+    if (hero) {
+      hero.setAttribute('tabindex', '-1');
+      hero.focus();
+    } else {
+      document.body.focus();
+    }
+  }
+
+  /**
+   * Click/keyboard event handler for dismiss buttons.
+   * @param {Event} event
+   */
+  function handleDismissClick(event) {
+    var button = event.currentTarget;
+    var bannerId = button.getAttribute('data-dismiss-banner');
+    if (!bannerId) return;
+    dismissBanner(bannerId);
+  }
+
+  /**
+   * Initializes banner dismissal listeners on DOMContentLoaded.
+   */
+  function init() {
+    var buttons = document.querySelectorAll('[data-dismiss-banner]');
+    if (!buttons.length) return;
+
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+
+      // Hide already-dismissed banners on init
+      var bannerId = btn.getAttribute('data-dismiss-banner');
+      if (bannerId && isDismissed(bannerId)) {
+        var banner = document.querySelector('.announcement-banner[data-banner-id="' + bannerId + '"]');
+        if (banner) {
+          banner.setAttribute('hidden', '');
+          banner.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      // Attach click listener
+      btn.addEventListener('click', handleDismissClick);
+
+      // Attach keydown listener for Enter and Space
+      btn.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleDismissClick(event);
+        }
+      });
+    }
+  }
+
+  // Attach on DOMContentLoaded or immediately if DOM is already loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
