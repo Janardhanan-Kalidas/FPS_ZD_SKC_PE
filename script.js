@@ -1485,78 +1485,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /* ============================================================
    BROWSER LANGUAGE AUTO-DETECTION
-   - Runs once on first visit
-   - Maps browser language to available locales
-   - Respects manual country selection from localStorage
+   DISABLED — was causing redirect loops in production.
+   The Help Center default locale (en-us) handles this via
+   Zendesk's built-in locale routing. The language switcher
+   modal (below) provides manual locale selection.
    ============================================================ */
-;(function () {
-  'use strict';
-
-  function onReady(fn) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn, { once: true });
-    } else {
-      fn();
-    }
-  }
-
-  onReady(function () {
-    var BROWSER_LANG_APPLIED_KEY = 'hilti.browser.lang.applied';
-    var COUNTRY_PREF_KEY = 'hilti.country.selection';
-
-    // Skip if already applied or user has made manual selection
-    var alreadyApplied = localStorage.getItem(BROWSER_LANG_APPLIED_KEY);
-    var manualCountry = localStorage.getItem(COUNTRY_PREF_KEY);
-
-    if (alreadyApplied || manualCountry) {
-      return;
-    }
-
-    // Guard against redirect loops if localStorage is unavailable
-    if (window.location.search.indexOf('__lang_redirected=1') > -1) {
-      return;
-    }
-
-    // Get current locale from URL
-    var currentLocale = ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
-
-    // Browser language detection: map to available locales
-    var browserLangs = navigator.languages || [navigator.language];
-    var targetLocale = 'en-us'; // default
-
-    // Check if browser language is English variant
-    for (var i = 0; i < browserLangs.length; i++) {
-      var lang = (browserLangs[i] || '').toLowerCase();
-      var langPrefix = lang.split('-')[0];
-
-      // For now, all English variants map to en-us
-      // Future: could use en-gb for UK/AU/NZ browser languages
-      if (langPrefix === 'en') {
-        targetLocale = 'en-us';
-        break;
-      }
-    }
-
-    // Mark that we've applied browser language detection
-    try {
-      localStorage.setItem(BROWSER_LANG_APPLIED_KEY, 'true');
-    } catch (e) {
-      // localStorage unavailable — skip redirect to avoid loop
-      return;
-    }
-
-    // Only redirect if target differs from current
-    if (targetLocale !== currentLocale) {
-      var newUrl = window.location.href.replace(
-        /(\/hc\/)[a-z]{2}(-[a-z0-9]+)?(?=\/|$|\?|#)/i,
-        '$1' + targetLocale
-      );
-      // Add loop guard parameter
-      var separator = newUrl.indexOf('?') > -1 ? '&' : '?';
-      window.location.href = newUrl + separator + '__lang_redirected=1';
-    }
-  });
-})();
 
 /* ============================================================
    HILTI LANGUAGE SWITCHER MODAL
