@@ -8,6 +8,10 @@ include:
 variables:
   ZCLI_VERSION: "1.0.0-beta.56"
   APPROVE_FOR_PROJECT: "fps_skc_pe"
+  ### Set these vars to dummy values for bypass check and do not break deployed theme
+  ZD_SUBDOMAIN: "my.subdomain"
+  ZD_EMAIL: "john.doe@gmail.com"
+  ZD_API_TOKEN: "1234567890"
   ### Move these variables to template:
   # GIT_DEPTH: "0"
   # DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
