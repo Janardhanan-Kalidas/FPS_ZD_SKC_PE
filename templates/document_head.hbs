@@ -1,4 +1,40 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+{{! Page loading progress bar — visible on every page load and on link navigation }}
+<style>
+.hilti-page-loading-bar{position:fixed;top:0;left:0;height:3px;width:0;background:#D2051E;z-index:9999999;pointer-events:none;transition:width 1.2s cubic-bezier(.1,.6,.4,1)}
+.hilti-page-loading-bar.is-animating{width:85%}
+.hilti-page-loading-bar.is-complete{width:100%!important;opacity:0;transition:width .3s ease,opacity .4s ease .2s}
+</style>
+<script>
+(function() {
+  var bar = document.createElement('div');
+  bar.className = 'hilti-page-loading-bar';
+  bar.id = 'hiltiPageLoadBar';
+  document.documentElement.appendChild(bar);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { bar.classList.add('is-animating'); });
+  });
+  window.addEventListener('load', function() {
+    bar.classList.remove('is-animating');
+    bar.classList.add('is-complete');
+    setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+  });
+  // Show loading bar on internal link click (before browser navigates away)
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    var navBar = document.createElement('div');
+    navBar.className = 'hilti-page-loading-bar';
+    document.documentElement.appendChild(navBar);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { navBar.classList.add('is-animating'); });
+    });
+  });
+})();
+</script>
 <meta name="description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
 <meta property="og:description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
 <meta name="twitter:description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />

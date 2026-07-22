@@ -874,44 +874,6 @@
 })();
 </script>
 
-{{!-- Back-to-Top Button --}}
-<script>
-(function() {
-  if (!document.querySelector('.article-page')) return;
-
-  var articleContentEl = document.querySelector('.article-content');
-  if (!articleContentEl) return;
-
-  var btn = document.createElement('button');
-  btn.id = 'article-back-to-top';
-  btn.className = 'article-back-to-top';
-  btn.setAttribute('aria-label', 'Back to top');
-  btn.setAttribute('title', 'Back to top');
-  btn.setAttribute('hidden', '');
-  btn.innerHTML = '&#8593;';
-  document.body.appendChild(btn);
-
-  function toggleVisibility() {
-    if (window.scrollY > window.innerHeight) {
-      btn.removeAttribute('hidden');
-    } else {
-      btn.setAttribute('hidden', '');
-    }
-  }
-
-  window.addEventListener('scroll', function() {
-    requestAnimationFrame(toggleVisibility);
-  });
-
-  btn.addEventListener('click', function() {
-    var articleContentTop = articleContentEl.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: articleContentTop, behavior: 'smooth' });
-  });
-
-  toggleVisibility();
-})();
-</script>
-
 {{!---------------
    Micro-templates
    ---------------}}

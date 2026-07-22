@@ -1665,40 +1665,70 @@ document.addEventListener('DOMContentLoaded', function () {
       );
     }
 
-    // Show a user-friendly message when article is not available in the target locale
-    function showLocaleNotAvailableMessage(locale) {
-      var localeName = locale.toUpperCase();
-      var msg = document.createElement('div');
-      msg.className = 'hilti-locale-unavailable-toast';
-      msg.setAttribute('role', 'alert');
-      msg.innerHTML = '<div class="hilti-locale-toast-content">' +
-        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
-        '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' +
-        '</svg>' +
-        '<span>This article is not available in <strong>' + localeName + '</strong>. You are viewing the current version.</span>' +
-        '<button type="button" class="hilti-locale-toast-close" aria-label="Dismiss">&times;</button>' +
-        '</div>';
-      document.body.appendChild(msg);
-
-      // Animate in
-      requestAnimationFrame(function() {
-        msg.classList.add('is-visible');
-      });
-
-      // Close button
-      msg.querySelector('.hilti-locale-toast-close').addEventListener('click', function() {
-        msg.classList.remove('is-visible');
-        setTimeout(function() { msg.remove(); }, 300);
-      });
-
-      // Auto-dismiss after 6 seconds
-      setTimeout(function() {
-        if (msg.parentNode) {
-          msg.classList.remove('is-visible');
-          setTimeout(function() { msg.remove(); }, 300);
-        }
-      }, 6000);
+    // ─── Inline error helpers ───────────────────────────────────────────
+    function showInlineError() {
+      var errorEl = document.getElementById('hiltiLangError');
+      if (!errorEl) {
+        console.warn('showInlineError: #hiltiLangError element not found');
+        return;
+      }
+      errorEl.removeAttribute('hidden');
+      errorEl.classList.add('is-visible');
     }
+
+    function hideInlineError() {
+      var errorEl = document.getElementById('hiltiLangError');
+      if (!errorEl) return;
+      errorEl.setAttribute('hidden', '');
+      errorEl.classList.remove('is-visible');
+    }
+
+    // ─── Article page detection ─────────────────────────────────────────
+    function isArticlePage() {
+      return /\/articles\/\d+/.test(window.location.pathname);
+    }
+
+    // ─── Article availability check ─────────────────────────────────────
+    function checkArticleAvailability(articleId, locale) {
+      var slug = extractSlugFromUrl(window.location.href);
+      if (!slug) {
+        return Promise.resolve(null);
+      }
+
+      var searchTerms = slug.split(' ').slice(0, 8).join(' ');
+      var url = '/api/v2/help_center/articles/search.json?query=' + encodeURIComponent(searchTerms) + '&locale=' + encodeURIComponent(locale) + '&per_page=10';
+
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function () { controller.abort(); }, 10000);
+
+      return fetch(url, { signal: controller.signal, credentials: 'same-origin' })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data || !data.results || data.results.length === 0) return null;
+
+          var slugLower = slug.toLowerCase();
+          for (var i = 0; i < data.results.length; i++) {
+            var result = data.results[i];
+            if (result.html_url) {
+              var resultSlug = extractSlugFromUrl(result.html_url);
+              if (resultSlug && resultSlug.toLowerCase() === slugLower) {
+                return normalizeArticleUrl(result.html_url, window.location.origin, locale);
+              }
+            }
+          }
+          return null;
+        })
+        .finally(function () {
+          clearTimeout(timeoutId);
+        });
+    }
+
+
 
     // Inject a <link rel="prefetch"> so the browser fetches the target page
     // in the background before the user clicks — reduces perceived load time
@@ -1786,6 +1816,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { once: true });
 
     function openModal() {
+      // Remove any legacy body-level toast elements
+      var legacyToasts = document.querySelectorAll('.hilti-locale-unavailable-toast');
+      legacyToasts.forEach(function(toast) { toast.remove(); });
+
       Object.keys(COUNTRY_LANGUAGE_MAP).forEach(function (countryCode) {
         COUNTRY_LANGUAGE_MAP[countryCode].languages.forEach(function (lang) {
           prefetchLocale(lang.locale);
@@ -1799,8 +1833,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (countrySelect && languageSelect) {
         populateCountries();
         var currentLocale = getCurrentLocale();
-        var savedCountry = localStorage.getItem(STORAGE_KEY);
-        var initialCountry = COUNTRY_LANGUAGE_MAP[savedCountry] ? savedCountry : resolveCountryFromLocale(currentLocale);
+        var initialCountry = resolveCountryFromLocale(currentLocale);
 
         countrySelect.value = initialCountry;
         populateLanguages(initialCountry);
@@ -1815,6 +1848,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function closeModal() {
+      hideInlineError();
       overlay.classList.remove('is-open');
       overlay.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
@@ -1836,6 +1870,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (countrySelect) {
       countrySelect.addEventListener('change', function () {
+        hideInlineError();
         var selectedCountry = countrySelect.value;
         if (selectedCountry) {
           localStorage.setItem(STORAGE_KEY, selectedCountry);
@@ -1845,48 +1880,71 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (languageSelect) {
-      languageSelect.addEventListener('change', setSaveState);
+      languageSelect.addEventListener('change', function () {
+        hideInlineError();
+        setSaveState();
+      });
     }
 
-    function redirectToLocale(locale) {
-      closeModal();
+    function handleSave() {
+      var locale = languageSelect.value;
 
-      var bar = document.createElement('div');
-      bar.className = 'hilti-page-loading-bar';
-      document.body.appendChild(bar);
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () { bar.classList.add('is-animating'); });
-      });
+      if (!isArticlePage()) {
+        // Non-article page: close modal and navigate via locale URL replacement
+        closeModal();
 
-      updateHeaderLocaleLabel(locale);
-      
-      // Check if on article page and fetch correct URL for target locale
-      var articleId = extractArticleIdFromUrl(window.location.href);
-      if (articleId) {
-        // Fetch the article URL from API to get the correct slug for target locale
-        // This solves the issue where articles have different slugs in different locales
-        fetchArticleUrlForLocale(articleId, locale).then(function(apiUrl) {
-          if (apiUrl) {
-            // Use API URL (contains correct slug for target locale)
-            window.location.href = apiUrl;
-          } else {
-            // Article not available in the target locale — show message to user
-            bar.classList.remove('is-animating');
-            bar.remove();
-            showLocaleNotAvailableMessage(locale);
-          }
+        var bar = document.createElement('div');
+        bar.className = 'hilti-page-loading-bar';
+        document.body.appendChild(bar);
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { bar.classList.add('is-animating'); });
         });
-      } else {
-        // Not an article page, use simple locale replacement
+
+        updateHeaderLocaleLabel(locale);
         window.location.href = buildLocaleUrl(locale);
+        return;
       }
+
+      // Article page: check availability before navigating
+      saveBtn.disabled = true;
+
+      var articleId = extractArticleIdFromUrl(window.location.href);
+      var languageName = languageSelect.options[languageSelect.selectedIndex].text;
+
+      checkArticleAvailability(articleId, locale)
+        .then(function (url) {
+          if (url) {
+            // Article available — close modal and navigate
+            closeModal();
+
+            var bar = document.createElement('div');
+            bar.className = 'hilti-page-loading-bar';
+            document.body.appendChild(bar);
+            requestAnimationFrame(function () {
+              requestAnimationFrame(function () { bar.classList.add('is-animating'); });
+            });
+
+            updateHeaderLocaleLabel(locale);
+            window.location.href = url;
+          } else {
+            // Article not available in the selected locale
+            showInlineError();
+          }
+        })
+        .catch(function () {
+          // Network error or timeout
+          showInlineError();
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+        });
     }
 
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
         if (!countrySelect || !languageSelect) return;
         if (!countrySelect.value || !languageSelect.value) return;
-        redirectToLocale(languageSelect.value);
+        handleSave();
       });
     }
 
@@ -3634,40 +3692,4 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   updateProgress();
-})();
-
-/* === Back-to-Top Button === */
-(function() {
-  if (!document.querySelector('.article-page')) return;
-
-  var articleContentEl = document.querySelector('.article-content');
-  if (!articleContentEl) return;
-
-  var btn = document.createElement('button');
-  btn.id = 'article-back-to-top';
-  btn.className = 'article-back-to-top';
-  btn.setAttribute('aria-label', 'Back to top');
-  btn.setAttribute('title', 'Back to top');
-  btn.setAttribute('hidden', '');
-  btn.innerHTML = '&#8593;';
-  document.body.appendChild(btn);
-
-  function toggleVisibility() {
-    if (window.scrollY > window.innerHeight) {
-      btn.removeAttribute('hidden');
-    } else {
-      btn.setAttribute('hidden', '');
-    }
-  }
-
-  window.addEventListener('scroll', function() {
-    requestAnimationFrame(toggleVisibility);
-  });
-
-  btn.addEventListener('click', function() {
-    var articleContentTop = articleContentEl.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: articleContentTop, behavior: 'smooth' });
-  });
-
-  toggleVisibility();
 })();

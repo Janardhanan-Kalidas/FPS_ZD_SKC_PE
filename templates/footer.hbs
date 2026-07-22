@@ -577,65 +577,109 @@
 
 
 
-{{! Back to Top — New floating button (site-wide, replaces old footer-anchored version) }}
+{{! Back to Top — Floating draggable button (site-wide) }}
 <script>
 (function() {
   var btn = document.createElement('div');
   btn.id = 'article-back-to-top';
   btn.className = 'article-back-to-top';
   btn.setAttribute('role', 'button');
+  btn.setAttribute('tabindex', '0');
   btn.setAttribute('aria-label', 'Back to top');
-  btn.setAttribute('title', 'Back to top');
+  btn.setAttribute('title', 'Drag to move, click to scroll to top');
   btn.setAttribute('hidden', '');
-  btn.innerHTML = '<button class="not-a-button">' +
-    '<span class="sr-only">Back to top</span>' +
-    '<svg class="svg-icon fill-current absolute-center pointer-events-none back-to-top-arrow" viewBox="0 0 48 48" aria-hidden="true">' +
+  btn.style.touchAction = 'none';
+  btn.innerHTML =
+    '<svg class="svg-icon fill-current back-to-top-arrow" viewBox="0 0 48 48" aria-hidden="true" style="pointer-events:none">' +
       '<path d="M24,0.229749535 C23.3,0.22 22.62,0.51 22.13,1 L0.68,22.45 L4.43,26.2 L21.35,9.28 L21.35,41.35 C21.35,42.64 21.34,43.71 21.34,44.38 L21.34,45.09 C21.35,46.78 22.7,47.79 24,47.79 C24.03,47.79 26.52,47.75 26.65,45.07 L26.65,44.98 C26.65,44.94 26.66,44.9 26.66,44.86 L26.66,9.28 L43.57,26.2 L47.32,22.45 L25.88,1 C25.38,0.5 24.7,0.229749535 24,0.229749535 Z" fill-rule="nonzero"/>' +
-    '</svg>' +
-  '</button>';
+    '</svg>';
   document.body.appendChild(btn);
 
-  var ticking = false;
+  var userDragged = false; // true once user has moved the button manually
+  var isDragging = false;
+  var hasMoved = false;
+  var startX = 0, startY = 0, btnX = 0, btnY = 0;
 
-  function updateVisibility() {
+  // Visibility + auto-position above footer (only when not manually dragged)
+  function updatePosition() {
     if (window.scrollY > window.innerHeight) {
       btn.removeAttribute('hidden');
     } else {
       btn.setAttribute('hidden', '');
     }
-
-    // Position above footer when scrolled near it
-    var footer = document.getElementById('footer');
-    if (footer) {
-      var footerRect = footer.getBoundingClientRect();
-      var btnHeight = 60;
-      var margin = 20;
-      var viewportBottom = window.innerHeight;
-
-      if (footerRect.top < viewportBottom) {
-        // Footer is visible — position button above it
-        var newBottom = (viewportBottom - footerRect.top) + margin;
-        btn.style.bottom = newBottom + 'px';
-      } else {
-        btn.style.bottom = '2rem';
+    if (!userDragged) {
+      var footer = document.getElementById('footer');
+      if (footer) {
+        var footerRect = footer.getBoundingClientRect();
+        if (footerRect.top < window.innerHeight) {
+          btn.style.bottom = (window.innerHeight - footerRect.top + 20) + 'px';
+        } else {
+          btn.style.bottom = '2rem';
+        }
       }
     }
-
-    ticking = false;
   }
 
+  var ticking = false;
   window.addEventListener('scroll', function() {
-    if (!ticking) {
-      ticking = true;
-      requestAnimationFrame(updateVisibility);
+    if (!ticking) { ticking = true; requestAnimationFrame(function() { updatePosition(); ticking = false; }); }
+  });
+
+  // Drag logic using pointer events directly on the btn
+  btn.addEventListener('pointerdown', function(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    hasMoved = false;
+    isDragging = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    var rect = btn.getBoundingClientRect();
+    btnX = rect.left;
+    btnY = rect.top;
+    btn.setPointerCapture(e.pointerId);
+    btn.style.transition = 'none';
+  });
+
+  btn.addEventListener('pointermove', function(e) {
+    if (!btn.hasPointerCapture(e.pointerId)) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    if (!hasMoved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+    hasMoved = true;
+    isDragging = true;
+    var newX = Math.max(0, Math.min(btnX + dx, window.innerWidth - btn.offsetWidth));
+    var newY = Math.max(0, Math.min(btnY + dy, window.innerHeight - btn.offsetHeight));
+    btn.style.position = 'fixed';
+    btn.style.left = newX + 'px';
+    btn.style.top = newY + 'px';
+    btn.style.right = 'auto';
+    btn.style.bottom = 'auto';
+  });
+
+  btn.addEventListener('pointerup', function(e) {
+    btn.releasePointerCapture(e.pointerId);
+    btn.style.transition = '';
+    if (hasMoved) {
+      userDragged = true;
+      setTimeout(function() { isDragging = false; }, 100);
     }
   });
 
-  btn.addEventListener('click', function() {
+  // Click scrolls to top (only if not dragged)
+  btn.addEventListener('click', function(e) {
+    if (isDragging) { e.preventDefault(); return; }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  updateVisibility();
+  // Keyboard support
+  btn.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  updatePosition();
 })();
 </script>
 
