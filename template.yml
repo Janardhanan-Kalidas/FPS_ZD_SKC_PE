@@ -31,6 +31,7 @@ stages:
 ### Environments
 # Used to target PROD environment using Linux docker runner in DEV
 .env_prod_docker_anchor: &env_prod_docker
+  image: node:$NODE_VERSION
   variables:
     ENVIRONMENT: "prod"
   environment:
@@ -196,7 +197,8 @@ default:
 
 .base_backup:
   stage: backup
-  <<: *env_prod_mac
+  # <<: *env_prod_mac
+  <<: *env_prod_docker
   script:
     - *production_backup
   artifacts:
@@ -208,7 +210,8 @@ default:
 
 .base_deploy_branch:
   stage: deploy
-  <<: *env_test_mac
+  # <<: *env_test_mac
+  <<: *env_prod_docker
   script:
     - *required_vars_check_cmd
     - *branch_deploy_confirm_check_cmd
@@ -216,7 +219,8 @@ default:
 
 .base_deploy_production:
   stage: deploy
-  <<: *env_prod_mac
+  # <<: *env_prod_mac
+  <<: *env_prod_docker
   needs: ["theme_backup_production"]
   resource_group: production
   script:
@@ -226,7 +230,8 @@ default:
 
 .base_rollback_production:
   stage: deploy
-  <<: *env_prod_mac
+  # <<: *env_prod_mac
+  <<: *env_prod_docker
   needs: ["theme_backup_production"]
   resource_group: production
   script:

@@ -7,6 +7,7 @@ include:
 
 variables:
   ZCLI_VERSION: "1.0.0-beta.56"
+  NODE_VERSION: "25.9.0"
   APPROVE_FOR_PROJECT: "fps_skc_pe"
   ### Set these vars to dummy values for bypass check and do not break deployed theme
   ZD_SUBDOMAIN: "my.subdomain"
