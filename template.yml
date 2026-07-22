@@ -64,8 +64,6 @@ stages:
 
 .before_script_anchor: &before_script |
   # before_script
-  node --version
-  npm --version
   if [[ -f package-lock.json ]]; then
     npm ci
   else
@@ -75,7 +73,9 @@ stages:
   if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
     npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
   fi
-  npx zcli --version
+  echo "node version: $(node --version)"
+  echo "npm version : $(npm --version)"
+  echo "zcli version : $(npx zcli --version)"
 
 .required_vars_check_cmd: &required_vars_check_cmd |
   required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
@@ -151,7 +151,7 @@ stages:
         echo "Make sure that group with ID ${APPROVAL_GROUP_ID} has CI/CD variable NEED_APPROVE_PROD defined."
         exit 1
       fi
-      if [[ "$ENVIRONMENT" == "prod" && "$NEED_APPROVE_PROD" == "yes") ]];then
+      if [[ "$ENVIRONMENT" == "prod" && "$NEED_APPROVE_PROD" == "yes" ]];then
         CHECK_APPROVAL="yes"
       fi
       if [ "$CHECK_APPROVAL" != "yes" ]; then
