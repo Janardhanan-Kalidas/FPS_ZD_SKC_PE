@@ -176,9 +176,6 @@ default:
   script:
     - *required_vars_check_cmd
     - *production_rollback
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
 
 ### --- Jobs --- ###
 
