@@ -356,6 +356,5 @@ theme_deploy_production:
 theme_rollback_production:
   extends: .base_rollback_production
   rules:
-    - if: [.base_rules, condition, is_release_branch]
+    - if: !reference [.base_rules, condition, is_release_branch]
       when: manual
-
