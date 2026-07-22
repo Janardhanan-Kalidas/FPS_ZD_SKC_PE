@@ -73,7 +73,7 @@ stages:
   if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
     npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
   fi
-  DEBIAN_FRONTEND=noninteractive apt-get update && apt-get apt-get install -yq jq || true
+  DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -yq jq || true
   apk update && apk add -q jq || true
   echo "node version : $(node --version)"
   echo "npm version  : $(npm --version)"
