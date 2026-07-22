@@ -73,8 +73,9 @@ stages:
   if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
     npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
   fi
-  echo "node version: $(node --version)"
-  echo "npm version : $(npm --version)"
+  apt-get apt-get install -y jq
+  echo "node version : $(node --version)"
+  echo "npm version  : $(npm --version)"
   echo "zcli version : $(npx zcli --version)"
 
 .required_vars_check_cmd: &required_vars_check_cmd |
@@ -221,7 +222,7 @@ default:
   stage: deploy
   # <<: *env_prod_mac
   <<: *env_prod_docker
-  needs: ["theme_backup_production"]
+  needs: ["backup:prod"]
   resource_group: production
   script:
     - *required_vars_check_cmd
@@ -232,7 +233,7 @@ default:
   stage: deploy
   # <<: *env_prod_mac
   <<: *env_prod_docker
-  needs: ["theme_backup_production"]
+  needs: ["backup:prod"]
   resource_group: production
   script:
     - *required_vars_check_cmd
@@ -242,14 +243,14 @@ default:
 ### --- Jobs --- ###
 
 ### Bump version for default branch
-theme_version_release:
+version:release:
   extends: .base_theme_version_release
   rules:
     - if: !reference [.base_rules, condition, is_default_branch]
       when: manual
 
 ### Jobs for non-release branches
-theme_deploy_branch:
+deploy:branch:
   extends: .base_deploy_branch
   rules:
     - if: !reference [.base_rules, condition, is_triggered]
@@ -258,13 +259,13 @@ theme_deploy_branch:
       when: manual
 
 ### Jobs for release branches only - backup|deploy|rollback
-theme_backup_production:
+backup:prod:
   extends: .base_backup
   rules:
     - if: !reference [.base_rules, condition, is_release_branch]
       when: manual
 
-theme_deploy_production:
+deploy:prod:
   extends: .base_deploy_production
   rules:
     - if: !reference [.base_rules, condition, is_release_branch]
@@ -273,7 +274,7 @@ theme_deploy_production:
 # !!! Rule changed 
 # from [.base_rules, condition, is_default_branch]
 # to   [.base_rules, condition, is_release_branch]
-theme_rollback_production:
+rollback:prod:
   extends: .base_rollback_production
   rules:
     - if: !reference [.base_rules, condition, is_release_branch]
