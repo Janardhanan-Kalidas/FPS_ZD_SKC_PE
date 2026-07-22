@@ -16452,9 +16452,9 @@ a:hover .icon-circle {
   .cards-wrapper { transition: none; }
 }
 
-/* Disable hover border on home page category cards */
+/* Hover border on home page category cards — Hilti Red */
 .content-blocks .card.hover\:border-primary:hover {
-  border-color: rgba(221, 220, 221, 1);
+  border-color: #d2051e;
 }
 
 /* Legacy no-op (safe to keep) */
@@ -16477,42 +16477,7 @@ a:hover .icon-circle {
   position: relative !important;
 }
 
-/* Back to Top — FIXED POSITION ACROSS ALL SCREEN SIZES */
-.back-to-top-offset {
-  position: absolute !important;
-
-  /* EXACT placement inside footer */
-  /* right: 350px; */
-  right: clamp(20px, 8vw, 400px) !important;   /* Consistent placement using responsive clamp */
-  top: -30px !important;      /* <-- stays aligned vertically always */
-
-  margin: 0 !important;
-  z-index: 99999 !important;
-}
-
-/* Keep your existing styling */
-.back-to-top-circle {
-  background-color: #FFFFFF !important;
-  color: #D2051E !important;
-  border: 1px solid #D2051E !important;
-  transition: background-color 0.25s ease, color 0.25s ease;
-}
-
-.back-to-top-circle:hover {
-  background-color: #d2051e !important;
-  color: #fff !important;
-}
-
-.back-to-top-large {
-  height: 60px !important;
-  width: 60px !important;
-  border-radius: 50%;
-}
-
-.back-to-top-arrow {
-  width: 20px !important;
-  height: 20px !important;
-}
+/* Back to Top — OLD STYLES REMOVED (replaced by .article-back-to-top in footer) */
 
 /* Make footer a stacking context so children z-index works together- Jana */
 /* --- Core Footer Layout --- */
@@ -19955,7 +19920,7 @@ body.downvote-feedback-open {
    4. Article body typography
 ---------------------------------------------------------- */
 .article-content {
-  font-size: 0.875rem;
+  font-size: 0.875rem !important;
   line-height: 1.75;
   color: #3d3d3d;
 }
@@ -19999,12 +19964,48 @@ body.downvote-feedback-open {
 }
 
 .article-content li {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Zendesk article builder wraps content in <p> inside <li> — kill extra spacing */
+.article-content li > p {
+  margin: 0;
+}
+
+.article-content li > p + p {
+  margin-top: 0.25rem;
+}
+
+/* Tighten nested list spacing (remove 1rem gap between parent text and child list) */
+.article-content li > ul,
+.article-content li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Nested list markers — all depths use solid disc for ul */
+.article-content ul,
+.article-content ul ul,
+.article-content ul ul ul,
+.article-content ul ul ul ul {
+  list-style-type: disc;
+}
+
+/* Ordered list nesting */
+.article-content ol ol {
+  list-style-type: lower-alpha;
+}
+.article-content ol ol ol {
+  list-style-type: lower-roman;
+}
+.article-content ol ol ol ol {
+  list-style-type: decimal;
 }
 
 .article-content a {
   color: #d2051e;
   text-decoration: none;
+  font-size: inherit;
 }
 
 .article-content a span {
@@ -20084,6 +20085,56 @@ body.downvote-feedback-open {
 .article-content table th,
 .article-content table th * {
   font-weight: 700;
+}
+
+/* ----------------------------------------------------------
+   4b. Article Attachments — Card-style layout
+---------------------------------------------------------- */
+.article-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.article-attachment-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #CFCCC5;
+  border-radius: 0px;
+  padding: 0.75rem 1rem;
+  max-width: 320px;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.article-attachment-card:hover {
+  background-color: #f7f6f3;
+  text-decoration: none;
+  color: inherit;
+}
+
+.article-attachment-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: #6B6560;
+}
+
+.article-attachment-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.article-attachment-size {
+  color: #6B6560;
+  font-size: 0.8125rem;
+  flex-shrink: 0;
 }
 
 /* ----------------------------------------------------------
@@ -20481,6 +20532,17 @@ body.downvote-feedback-open {
   padding-left: 0;
   padding-right: 0;
   width: auto;
+  margin-bottom: 0; /* override mb-5 — grid gap handles spacing */
+}
+
+/* Ensure all cards in the grid have uniform size per row, auto-adapting to tallest card */
+.content-blocks .list-unstyled > li > .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
 }
 
 @media (min-width: 768px) {
@@ -20819,3 +20881,81 @@ body.downvote-feedback-open {
     font-size: 0.8125rem;
   }
 }
+
+
+/* ============================================================
+   READING PROGRESS BAR
+   Fixed bar at top of viewport — fills as user scrolls article
+   ============================================================ */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: #d2051e;
+  z-index: 100000;
+  transition: width 50ms linear;
+  pointer-events: none;
+}
+
+/* ============================================================
+   BACK-TO-TOP BUTTON (Article Page)
+   Reuses old footer back-to-top styling (white circle + red arrow)
+   Fixed position bottom-right — appears after one viewport scroll
+   ============================================================ */
+.article-back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: clamp(20px, 8vw, 400px);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 1px solid #D2051E;
+  color: #D2051E;
+  cursor: pointer;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease;
+}
+
+.article-back-to-top[hidden] {
+  display: none;
+}
+
+.article-back-to-top:hover {
+  background-color: #d2051e;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.article-back-to-top:hover .back-to-top-arrow {
+  fill: #fff;
+}
+
+.article-back-to-top:focus-visible {
+  outline: 2px solid #d2051e;
+  outline-offset: 2px;
+}
+
+.article-back-to-top .back-to-top-arrow {
+  width: 20px;
+  height: 20px;
+  fill: #D2051E;
+  transition: fill 0.25s ease;
+}
+
+.article-back-to-top .not-a-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+

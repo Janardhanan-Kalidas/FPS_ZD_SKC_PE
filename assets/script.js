@@ -3566,3 +3566,108 @@ document.addEventListener('DOMContentLoaded', function () {
     init();
   }
 })();
+
+/* === Article View Count === */
+(function() {
+  var el = document.getElementById('article-view-count');
+  if (!el) return;
+  var id = el.getAttribute('data-article-id');
+  if (!id) return;
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+  fetch('/api/v2/help_center/articles/' + id + '.json', { signal: controller.signal })
+    .then(function(r) {
+      if (!r.ok) throw new Error();
+      return r.json();
+    })
+    .then(function(d) {
+      if (d && d.article && Number.isFinite(d.article.view_count)) {
+        el.textContent = d.article.view_count;
+      } else {
+        el.textContent = '0';
+      }
+    })
+    .catch(function() { el.textContent = '0'; })
+    .finally(function() { clearTimeout(timeoutId); });
+})();
+
+/* === Reading Progress Bar === */
+(function() {
+  if (!document.querySelector('.article-page')) return;
+
+  var articleContentEl = document.querySelector('.article-content');
+  if (!articleContentEl) return;
+
+  var bar = document.createElement('div');
+  bar.id = 'reading-progress-bar';
+  bar.className = 'reading-progress-bar';
+  bar.setAttribute('role', 'progressbar');
+  bar.setAttribute('aria-valuenow', '0');
+  bar.setAttribute('aria-valuemin', '0');
+  bar.setAttribute('aria-valuemax', '100');
+  bar.setAttribute('aria-label', 'Reading progress');
+  document.body.appendChild(bar);
+
+  var ticking = false;
+
+  function updateProgress() {
+    var articleTop = articleContentEl.getBoundingClientRect().top + window.scrollY;
+    var articleHeight = articleContentEl.offsetHeight;
+    var scrollY = window.scrollY;
+
+    var percentage = 0;
+    if (articleHeight > 0) {
+      percentage = ((scrollY - articleTop) / articleHeight) * 100;
+      percentage = Math.max(0, Math.min(100, percentage));
+    }
+
+    bar.style.width = percentage + '%';
+    bar.setAttribute('aria-valuenow', String(Math.round(percentage)));
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(updateProgress);
+    }
+  });
+
+  updateProgress();
+})();
+
+/* === Back-to-Top Button === */
+(function() {
+  if (!document.querySelector('.article-page')) return;
+
+  var articleContentEl = document.querySelector('.article-content');
+  if (!articleContentEl) return;
+
+  var btn = document.createElement('button');
+  btn.id = 'article-back-to-top';
+  btn.className = 'article-back-to-top';
+  btn.setAttribute('aria-label', 'Back to top');
+  btn.setAttribute('title', 'Back to top');
+  btn.setAttribute('hidden', '');
+  btn.innerHTML = '&#8593;';
+  document.body.appendChild(btn);
+
+  function toggleVisibility() {
+    if (window.scrollY > window.innerHeight) {
+      btn.removeAttribute('hidden');
+    } else {
+      btn.setAttribute('hidden', '');
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    requestAnimationFrame(toggleVisibility);
+  });
+
+  btn.addEventListener('click', function() {
+    var articleContentTop = articleContentEl.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: articleContentTop, behavior: 'smooth' });
+  });
+
+  toggleVisibility();
+})();

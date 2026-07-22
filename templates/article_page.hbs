@@ -75,7 +75,8 @@
           {{/if}}
         </h1>
 
-        {{! Row 1: Author | Date | Follow }}
+        {{! Row 1: Author | Date | Follow — only render if at least one child is visible }}
+        {{#if settings.show_article_author}}
         <div class="article-meta-row">
           {{#if settings.show_article_author}}
             <span class="article-meta-author">
@@ -94,6 +95,32 @@
             </span>
           {{/if}}
         </div>
+        {{else}}
+        {{#isnt settings.article_metadata 'none'}}
+        <div class="article-meta-row">
+          {{#isnt settings.article_metadata 'none'}}
+            <span class="article-meta-date" data-created-at="{{article.created_at}}">
+              {{date article.created_at}}
+            </span>
+          {{/isnt}}
+          {{#if settings.show_follow_article}}
+            <span class="article-meta-follow">
+              {{subscribe}}
+            </span>
+          {{/if}}
+        </div>
+        {{else}}
+        {{#if settings.show_follow_article}}
+        <div class="article-meta-row">
+          {{#if settings.show_follow_article}}
+            <span class="article-meta-follow">
+              {{subscribe}}
+            </span>
+          {{/if}}
+        </div>
+        {{/if}}
+        {{/isnt}}
+        {{/if}}
 
         {{! Row 2: Content tags }}
         {{#if (compare article.content_tags.length ">" 0)}}
@@ -115,11 +142,13 @@
             <img src="{{asset 'views.svg'}}" width="16" height="16" alt="" aria-hidden="true">
             <span class="article-action-count" id="article-view-count" data-article-id="{{article.id}}">0</span>
           </span>
+          {{#if settings.show_article_voting}}
           {{! Likes }}
           <span class="article-action-item article-action-likes" title="Helpful votes">
             <img src="{{asset 'thumb_up.svg'}}" width="16" height="16" alt="" aria-hidden="true">
             <span class="article-action-count">{{article.vote_sum}}</span>
           </span>
+          {{/if}}
           {{! Share — right-aligned }}
           <button class="article-action-share" type="button" id="article-share-trigger" title="Share" aria-label="Open share options" aria-haspopup="dialog" aria-expanded="false" aria-controls="article-share-modal">
             <img src="{{asset 'share.svg'}}" width="16" height="16" alt="" aria-hidden="true">
@@ -192,16 +221,20 @@
 
         {{! Attachments }}
         {{#if attachments}}
-          <ul class="list-unstyled my-6">
+          <div class="article-attachments">
             {{#each attachments}}
-              <li class="list-item">
-                <svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">
-                  <path fill="none" stroke="currentColor" stroke-linecap="round" d="M9.5 4v7.7c0 .8-.7 1.5-1.5 1.5s-1.5-.7-1.5-1.5V3C6.5 1.6 7.6.5 9 .5s2.5 1.1 2.5 2.5v9c0 1.9-1.6 3.5-3.5 3.5S4.5 13.9 4.5 12V4"/>
+              <a class="article-attachment-card" href="{{url}}" target="_blank" rel="noopener">
+                <svg class="article-attachment-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <polyline points="9 15 12 18 15 15"/>
                 </svg>
-                <a class="mr-2" href="{{url}}" target="_blank">{{name}}</a><span class="font-size-md text-gray-600">{{size}}</span>
-              </li>
+                <span class="article-attachment-name">{{name}}</span>
+                <span class="article-attachment-size">{{size}}</span>
+              </a>
             {{/each}}
-          </ul>
+          </div>
         {{/if}}
 
         {{! Article metadata }}
@@ -502,10 +535,22 @@
   if (!el) return;
   var id = el.getAttribute('data-article-id');
   if (!id) return;
-  fetch('/api/v2/help_center/articles/' + id + '.json')
-    .then(function(r){ return r.json(); })
-    .then(function(d){ if (d && d.article && typeof d.article.view_count !== 'undefined') { el.textContent = d.article.view_count; } })
-    .catch(function(){ el.textContent = '0'; });
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+  fetch('/api/v2/help_center/articles/' + id + '.json', { signal: controller.signal })
+    .then(function(r) {
+      if (!r.ok) throw new Error();
+      return r.json();
+    })
+    .then(function(d) {
+      if (d && d.article && Number.isFinite(d.article.view_count)) {
+        el.textContent = d.article.view_count;
+      } else {
+        el.textContent = '0';
+      }
+    })
+    .catch(function() { el.textContent = '0'; })
+    .finally(function() { clearTimeout(timeoutId); });
 })();
 </script>
 <script>
@@ -779,6 +824,91 @@
         submitBtn.disabled = false;
       });
   });
+})();
+</script>
+
+{{!-- Reading Progress Bar --}}
+<script>
+(function() {
+  if (!document.querySelector('.article-page')) return;
+
+  var articleContentEl = document.querySelector('.article-content');
+  if (!articleContentEl) return;
+
+  var bar = document.createElement('div');
+  bar.id = 'reading-progress-bar';
+  bar.className = 'reading-progress-bar';
+  bar.setAttribute('role', 'progressbar');
+  bar.setAttribute('aria-valuenow', '0');
+  bar.setAttribute('aria-valuemin', '0');
+  bar.setAttribute('aria-valuemax', '100');
+  bar.setAttribute('aria-label', 'Reading progress');
+  document.body.appendChild(bar);
+
+  var ticking = false;
+
+  function updateProgress() {
+    var articleTop = articleContentEl.getBoundingClientRect().top + window.scrollY;
+    var articleHeight = articleContentEl.offsetHeight;
+    var scrollY = window.scrollY;
+
+    var percentage = 0;
+    if (articleHeight > 0) {
+      percentage = ((scrollY - articleTop) / articleHeight) * 100;
+      percentage = Math.max(0, Math.min(100, percentage));
+    }
+
+    bar.style.width = percentage + '%';
+    bar.setAttribute('aria-valuenow', String(Math.round(percentage)));
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(updateProgress);
+    }
+  });
+
+  updateProgress();
+})();
+</script>
+
+{{!-- Back-to-Top Button --}}
+<script>
+(function() {
+  if (!document.querySelector('.article-page')) return;
+
+  var articleContentEl = document.querySelector('.article-content');
+  if (!articleContentEl) return;
+
+  var btn = document.createElement('button');
+  btn.id = 'article-back-to-top';
+  btn.className = 'article-back-to-top';
+  btn.setAttribute('aria-label', 'Back to top');
+  btn.setAttribute('title', 'Back to top');
+  btn.setAttribute('hidden', '');
+  btn.innerHTML = '&#8593;';
+  document.body.appendChild(btn);
+
+  function toggleVisibility() {
+    if (window.scrollY > window.innerHeight) {
+      btn.removeAttribute('hidden');
+    } else {
+      btn.setAttribute('hidden', '');
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    requestAnimationFrame(toggleVisibility);
+  });
+
+  btn.addEventListener('click', function() {
+    var articleContentTop = articleContentEl.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: articleContentTop, behavior: 'smooth' });
+  });
+
+  toggleVisibility();
 })();
 </script>
 
