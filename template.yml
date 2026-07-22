@@ -31,24 +31,32 @@ stages:
 ### Environments
 # Used to target PROD environment using Linux docker runner in DEV
 .env_prod_docker_anchor: &env_prod_docker
+  variables:
+    ENVIRONMENT: "prod"
   environment:
     name: production
   tags: [aws, type-docker, environment-dev]
 
 # Used to target PROD environment using local Mac runner
 .env_prod_mac_anchor: &env_prod_mac
+  variables:
+    ENVIRONMENT: "prod"
   environment:
     name: production
   tags: [shell, macos]
 
 # Used to target TEST environment using Linux docker runner in DEV
 .env_test_docker_anchor: &env_test_docker
+  variables:
+    ENVIRONMENT: "test"
   environment:
     name: preview/$CI_COMMIT_REF_SLUG
   tags: [aws, type-docker, environment-dev]
 
 # Used to target TEST environment using local Mac runner
 .env_test_mac_anchor: &env_test_mac
+  variables:
+    ENVIRONMENT: "test"
   environment:
     name: preview/$CI_COMMIT_REF_SLUG
   tags: [shell, macos]
@@ -126,6 +134,53 @@ stages:
     exit 1
   fi
 
+### GateKeeper check
+.check_approval_anchor: &check_approval
+  - |
+    echo "Checking if approval is needed."
+    if [[ "$ENVIRONMENT" != "prod" ]]; then
+      echo "Approval is not needed for deploy in the environment ${ENVIRONMENT^^}."
+    else
+      echo "Checking approval requrements for ${ENVIRONMENT^^} environment."
+      HEADER="Private-Token: ${APPROVAL_CHECK_TOKEN}"
+      NEED_APPROVE_PROD=$(curl -sS --header "${HEADER}" "${CI_API_V4_URL}/groups/${APPROVAL_GROUP_ID}/variables/NEED_APPROVE_PROD" | jq -r .value)
+      echo "APPROVAL_PROJECT_ID=${APPROVAL_PROJECT_ID} APPROVAL_GROUP_ID=${APPROVAL_GROUP_ID} APPROVE_FOR_PROJECT=${APPROVE_FOR_PROJECT} NEED_APPROVE_PROD=${NEED_APPROVE_PROD}"
+      if [[ "$NEED_APPROVE_PROD" == "null" ]]; then
+        echo "ERROR: Can't find requirements for approval."
+        echo "Make sure that group with ID ${APPROVAL_GROUP_ID} has CI/CD variable NEED_APPROVE_PROD defined."
+        exit 1
+      fi
+      if [[ "$ENVIRONMENT" == "prod" && "$NEED_APPROVE_PROD" == "yes") ]];then
+        CHECK_APPROVAL="yes"
+      fi
+      if [ "$CHECK_APPROVAL" != "yes" ]; then
+        echo "Approval is not requred for deploy in the environment ${ENVIRONMENT^^}."
+      else
+        echo "Approval is needed for ${ENVIRONMENT^^}."
+        echo "Checking approval..."
+        PACKAGE_NAME="${APPROVE_FOR_PROJECT}_${ENVIRONMENT}"
+        PACKAGE_VERSION=$(echo $CI_COMMIT_REF_NAME | tr '/.-' '___' )
+        echo -n "Approval project url is "
+        curl -sS --header "${HEADER}" "${CI_API_V4_URL}/projects/${APPROVAL_PROJECT_ID}" | jq -r .web_url
+        APPROVED=$(curl -sS --header "${HEADER}" "${CI_API_V4_URL}/projects/${APPROVAL_PROJECT_ID}/packages?package_name=${PACKAGE_NAME}&package_version=${PACKAGE_VERSION}" | jq -r .[0].created_at)
+        if [ "$APPROVED" != "null" ]; then
+          echo "Release ${CI_COMMIT_REF_NAME} is approved for deploy to ${ENVIRONMENT^^}."
+          DOWNLOAD=$(curl -sS --header "${HEADER}" "${CI_API_V4_URL}/projects/${APPROVAL_PROJECT_ID}/packages/generic/${PACKAGE_NAME}/${PACKAGE_VERSION}/${APPROVE_PACKAGE_FILE}" -o "./${APPROVE_PACKAGE_FILE}" || echo "FAILED")
+          if [ "$DOWNLOAD" != "FAILED" ]; then
+            echo;echo "============================ APPROVAL CONTENT ============================"
+            cat $APPROVE_PACKAGE_FILE
+            echo;echo "=========================================================================="
+          fi
+        else
+          echo;echo "========================= DEPLOY IS NOT APPROVED ========================="
+               echo "Release ${CI_COMMIT_REF_NAME} is not approved yet for deploy to ${ENVIRONMENT^^}."
+          echo "Restart this job again when deploy will be approved."
+          echo;echo "=========================================================================="
+          exit 1
+        fi
+      fi
+    fi
+
 ### --- Job templates --- ###
 
 default:
@@ -166,6 +221,7 @@ default:
   resource_group: production
   script:
     - *required_vars_check_cmd
+    - *check_approval
     - *production_deploy
 
 .base_rollback_production:
@@ -175,6 +231,7 @@ default:
   resource_group: production
   script:
     - *required_vars_check_cmd
+    - *check_approval
     - *production_rollback
 
 ### --- Jobs --- ###
