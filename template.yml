@@ -1,0 +1,221 @@
+### Review these rules!
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+variables:
+  GIT_DEPTH: "0"
+  DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
+  ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
+  DRY_RUN: "true"
+
+stages:
+  - release
+  - backup
+  - deploy
+
+### --- Rules --- ###
+.base_rules:
+  condition:
+    is_default_branch:     '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    is_not_default_branch: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+    is_triggered:          '$CI_PIPELINE_SOURCE == "trigger" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+    is_release_branch:     '$CI_COMMIT_BRANCH =~ /^release\/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/'
+    is_not_release_branch: '$CI_COMMIT_BRANCH !~ /^release\/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/'
+
+### --- Anchors --- ###
+### Environments
+# Used to target PROD environment using Linux docker runner in DEV
+.env_prod_docker_anchor: &env_prod_docker
+  environment:
+    name: production
+  tags: [aws, type-docker, environment-dev]
+
+# Used to target PROD environment using local Mac runner
+.env_prod_mac_anchor: &env_prod_mac
+  environment:
+    name: production
+  tags: [shell, macos]
+
+# Used to target TEST environment using Linux docker runner in DEV
+.env_test_docker_anchor: &env_test_docker
+  environment:
+    name: preview/$CI_COMMIT_REF_SLUG
+  tags: [aws, type-docker, environment-dev]
+
+# Used to target TEST environment using local Mac runner
+.env_test_mac_anchor: &env_test_mac
+  environment:
+    name: preview/$CI_COMMIT_REF_SLUG
+  tags: [shell, macos]
+
+.before_script_anchor: &before_script |
+  # before_script
+  node --version
+  npm --version
+  if [[ -f package-lock.json ]]; then
+    npm ci
+  else
+    npm install
+  fi
+  INSTALLED_ZCLI="$(npx zcli --version 2>/dev/null || true)"
+  if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
+    npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
+  fi
+  npx zcli --version
+
+.required_vars_check_cmd: &required_vars_check_cmd |
+  required=("ZD_SUBDOMAIN" "ZD_EMAIL" "ZD_API_TOKEN")
+  for name in "${required[@]}"; do
+    if [[ -z "${!name:-}" ]]; then
+      echo "Blocked: missing required variable '$name'"
+      exit 1
+    fi
+  done
+
+.branch_deploy_confirm_check_cmd: &branch_deploy_confirm_check_cmd |
+  if [[ "${DEPLOY_CONFIRM_BRANCH:-}" != "DEPLOY_TO_BRANCH" ]]; then
+    echo "Branch deploy blocked: set DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH"
+    exit 1
+  fi
+
+.production_backup: &production_backup |
+  if [[ "${DRY_RUN:-}" != "true" ]]; then
+    npm run backup:theme
+  else
+    echo "DRY_RUN is set to 'true'. Command 'npm run backup:theme' is allowed, but will not be executed."
+  fi
+
+.production_deploy: &production_deploy |
+  # if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
+  #   echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
+  #   exit 1
+  # fi
+  if [[ "${DRY_RUN:-}" != "true" ]]; then
+    npm run deploy:theme
+  else
+    echo "DRY_RUN is set to 'true'. Command 'npm run deploy:theme' is allowed, but will not be executed."
+  fi
+
+.production_rollback: &production_rollback |
+  # if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
+  #   echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
+  #   exit 1
+  # fi
+  if [[ "${DRY_RUN:-}" != "true" ]]; then
+    npm run rollback:theme
+  else
+    echo "DRY_RUN is set to 'true'. Command 'npm run rollback:theme' is allowed, but will not be executed."
+  fi
+
+### Do we need the following scripts after Gatekeeper implementation?
+
+.production_deploy_confirm_check_cmd: &production_deploy_confirm_check_cmd |
+  if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
+    echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
+    exit 1
+  fi
+
+.rollback_confirm_check_cmd: &rollback_confirm_check_cmd |
+  if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
+    echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
+    exit 1
+  fi
+
+### --- Job templates --- ###
+
+default:
+  before_script:
+    - *before_script
+
+.base_theme_version_release:
+  stage: release
+  <<: *env_test_mac
+  script:
+    - npm run version:theme
+    - echo "Version bumped. Commit and push manifest.json manually or extend this job with a deploy token."
+
+.base_backup:
+  stage: backup
+  <<: *env_prod_mac
+  script:
+    - *production_backup
+  artifacts:
+    name: "theme-backup-${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_ID}"
+    when: always
+    expire_in: 14 days
+    paths:
+      - backups/
+
+.base_deploy_branch:
+  stage: deploy
+  <<: *env_test_mac
+  script:
+    - *required_vars_check_cmd
+    - *branch_deploy_confirm_check_cmd
+    - npm run deploy:theme
+
+.base_deploy_production:
+  stage: deploy
+  <<: *env_prod_mac
+  needs: ["theme_backup_production"]
+  resource_group: production
+  script:
+    - *required_vars_check_cmd
+    - *production_deploy
+
+.base_rollback_production:
+  stage: deploy
+  <<: *env_prod_mac
+  needs: ["theme_backup_production"]
+  resource_group: production
+  script:
+    - *required_vars_check_cmd
+    - *production_rollback
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+
+### --- Jobs --- ###
+
+### Bump version for default branch
+theme_version_release:
+  extends: .bate_theme_version_release
+  rules:
+    - if: !reference [.base_rules, condition, is_default_branch]
+      when: manual
+
+### Jobs for non-release branches
+theme_deploy_branch:
+  extends: .base_deploy_branch
+  rules:
+    - if: !reference [.base_rules, condition, is_triggered]
+      when: on_success
+    - if: !reference [.base_rules, condition, is_not_default_branch]
+      when: manual
+
+### Jobs for release branches only - backup|deploy|rollback
+theme_backup_production:
+  extends: .base_backup
+  rules:
+    - if: !reference [.base_rules, condition, is_release_branch]
+      when: manual
+
+theme_deploy_production:
+  extends: .base_deploy_production
+  rules:
+    - if: !reference [.base_rules, condition, is_release_branch]
+      when: manual
+
+# !!! Rule changed 
+# from [.base_rules, condition, is_default_branch]
+# to   [.base_rules, condition, is_release_branch]
+theme_rollback_production:
+  extends: .base_rollback_production
+  rules:
+    - if: [.base_rules, condition, is_release_branch]
+      when: manual
