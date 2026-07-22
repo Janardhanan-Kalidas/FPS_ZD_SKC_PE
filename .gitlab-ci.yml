@@ -3,7 +3,7 @@
 
 ### use pipeline template (temporary local, later from gitlab)
 include:
-  - local: './template.yml'
+  - local: 'template.yml'
 
 # workflow:
 #   rules:

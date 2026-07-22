@@ -184,7 +184,7 @@ default:
 
 ### Bump version for default branch
 theme_version_release:
-  extends: .bate_theme_version_release
+  extends: .base_theme_version_release
   rules:
     - if: !reference [.base_rules, condition, is_default_branch]
       when: manual
