@@ -1,34 +1,35 @@
-<div class="container text-center py-6">
-  <h1>
-    {{t 'oops'}}
-  </h1>
+<div class="error-page-container">
+  <div class="error-page-illustration">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#D2051E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="200" height="200">
+      <circle cx="28" cy="28" r="18"/>
+      <line x1="40.5" y1="40.5" x2="56" y2="56"/>
+      <line x1="20" y1="28" x2="36" y2="28"/>
+      <line x1="28" y1="20" x2="28" y2="36"/>
+    </svg>
+  </div>
+
+  <h1 class="error-page-title">{{t 'oops'}}</h1>
 
   {{#is error 'unauthorized'}}
     {{#unless settings.hide_sign_in_link}}
-      <h2>
-        {{link 'sign_in'}}
-      </h2>
+      <p class="error-page-description">{{link 'sign_in'}}</p>
     {{/unless}}
   {{/is}}
 
   {{#is error 'forbidden'}}
-    <h2>
-      {{t 'not_authorized'}}
-    </h2>
+    <p class="error-page-description">{{t 'not_authorized'}}</p>
   {{/is}}
 
   {{#is error 'not_found'}}
-    <h2>
-      {{t 'nonexistent_page'}}
-    </h2>
-    <p>
-      {{t 'mistyped_address_or_moved_page'}}
-    </p>
+    <p class="error-page-description">{{t 'nonexistent_page'}}</p>
+    <p class="error-page-description">{{t 'mistyped_address_or_moved_page'}}</p>
   {{/is}}
 
-  {{#link 'help_center'}}
-    {{t 'back_to_homepage'}}
-  {{/link}}
+  <div class="error-page-links">
+    {{#link 'help_center' class="error-page-link"}}Home{{/link}}
+    <a href="{{help_center.url}}search" class="error-page-link">Search</a>
+    {{#link 'help_center' class="error-page-link"}}{{t 'back_to_homepage'}}{{/link}}
+  </div>
 </div>
 
 <script type="text/javascript">

@@ -95,8 +95,11 @@
         x-transition:leave-end="{{~#is settings.nav_style 'slide-in'}}translate-x-full{{else}}opacity-0{{/is}} text-header">
 
        {{! Mobile search bar }}
-       <!-- {{~#isnt settings.header_search_style 'none'}}
-          <div class="search flex text-base mx-4 mb-4 flex-first {{settings.nav_breakpoint}}:max-w-13 {{settings.nav_breakpoint}}:flex-1 {{settings.nav_breakpoint}}:mx-5 {{settings.nav_breakpoint}}:mb-0{{#isnt settings.header_search_style 'inline'}} {{settings.nav_breakpoint}}:hidden{{/isnt}}" x-data="Widgets.search">
+       {{~#isnt settings.header_search_style 'none'}}
+          <div class="search flex text-base mx-4 mb-4 flex-first {{settings.nav_breakpoint}}:max-w-13 {{settings.nav_breakpoint}}:flex-1 {{settings.nav_breakpoint}}:mx-5 {{settings.nav_breakpoint}}:mb-0{{#isnt settings.header_search_style 'inline'}} {{settings.nav_breakpoint}}:hidden{{/isnt}}"
+            data-custom-autocomplete="articles"
+            data-autocomplete-min-chars="2"
+            x-data="Widgets.search">
             {{~#if settings.search_placeholder}}
               {{#if settings.use_translations}}
             		{{search class='form-field flex-1 mb-0' submit=false placeholder=(dc settings.search_placeholder)}}
@@ -110,7 +113,7 @@
               <use xlink:href="#icon-search" />
             </svg>
           </div>
-        {{/isnt}} -->
+        {{/isnt}}
  
         {{! Custom links }}
         {{~#if settings.header_link_1_text}}
