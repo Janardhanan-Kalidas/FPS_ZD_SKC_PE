@@ -20997,3 +20997,152 @@ body.downvote-feedback-open {
   flex-shrink: 0;
   color: #D2051E;
 }
+
+/* ============================================================================
+   SCROLL-SPY: Active TOC link highlight
+   ============================================================================ */
+.article-toc-nav .toc-active {
+  border-left: 3px solid #D2051E;
+  font-weight: 700;
+}
+
+/* ============================================================================
+   CODE BLOCK COPY BUTTON
+   ============================================================================ */
+.cb-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(82, 79, 83, 0.85);
+  color: #fff;
+  font-size: 12px;
+  border-radius: 4px;
+  padding: 4px 8px;
+  border: none;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   ARTICLE READING TIME
+   ============================================================================ */
+.article-reading-time {
+  font-size: 0.875rem;
+  color: #524f53;
+  font-family: var(--font-text);
+}
+
+.article-meta-sep {
+  margin: 0 0.5rem;
+  color: #524f53;
+}
+
+/* ============================================================================
+   VOTING MICRO-INTERACTIONS — Smooth press & pulse feedback
+   Requirements: 1.1, 1.2, 1.3, 1.4, 1.7
+   ============================================================================ */
+
+/* Transition for vote buttons — smooth transform, background-color, border-color */
+#article-voting .button-outline-primary {
+  transition: transform 150ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+
+/* Press-in scale effect applied via JS on click */
+.vote-btn-pressed {
+  transform: scale(0.92);
+}
+
+/* Active (selected) vote button styling */
+#article-voting .button-outline-primary.is-active {
+  background-color: #D2051E;
+  border-color: #D2051E;
+  color: #fff;
+}
+
+/* Keyframes for vote label pulse animation */
+@keyframes vote-label-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Vote label pulse animation class applied via JS on count change */
+.vote-label-animate {
+  animation: vote-label-pulse 400ms ease;
+}
+
+/* === Breadcrumb Truncation on Mobile === */
+
+/* Hide middle breadcrumb items on mobile viewports */
+@media (max-width: 767px) {
+  .bc-truncated-hidden {
+    display: none;
+  }
+}
+
+/* Ellipsis expand button styled to match breadcrumb text */
+.bc-ellipsis-btn {
+  font-family: var(--font-text);
+  font-size: 0.875rem;
+  color: #524f53;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+/* === 404 Error Page Branding === */
+
+.error-page-container {
+  font-family: var(--font-text);
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.error-page-illustration {
+  max-width: 200px;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  display: block;
+}
+
+.error-page-title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  color: #524f53;
+  margin-bottom: 1rem;
+}
+
+.error-page-description {
+  font-size: 1.125rem;
+  color: #524f53;
+  margin-bottom: 2rem;
+}
+
+.error-page-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-page-links a,
+.error-page-link {
+  background-color: #D2051E;
+  color: #fff;
+  padding: 0.625rem 1.5rem;
+  border-radius: 4px;
+  font-family: var(--font-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.error-page-link:hover {
+  background-color: #ab0115;
+}

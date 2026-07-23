@@ -3691,3 +3691,278 @@ document.addEventListener('DOMContentLoaded', function () {
 
   updateProgress();
 })();
+
+/* ============================================================
+   TABLE OF CONTENTS SCROLL-SPY
+   Highlights active TOC link as reader scrolls through headings
+============================================================ */
+;(function () {
+  'use strict';
+
+  var tocNav = document.querySelector('.article-toc-nav');
+  if (!tocNav) return;
+
+  var selector = tocNav.getAttribute('data-selector') || '.article-content h2, .article-content h3';
+  var offset = parseInt(tocNav.getAttribute('data-offset'), 10) || 160;
+
+  var headings = document.querySelectorAll(selector);
+  if (!headings.length) return;
+
+  var tocAnchors = tocNav.querySelectorAll('a');
+  if (!tocAnchors.length) return;
+
+  // Build Map: heading id → corresponding TOC anchor
+  var headingToTocMap = new Map();
+  for (var i = 0; i < headings.length; i++) {
+    var id = headings[i].id;
+    if (!id) continue;
+    for (var j = 0; j < tocAnchors.length; j++) {
+      var href = tocAnchors[j].getAttribute('href');
+      if (href && href === '#' + id) {
+        headingToTocMap.set(id, tocAnchors[j]);
+        break;
+      }
+    }
+  }
+
+  if (!headingToTocMap.size) return;
+
+  var activeLink = null;
+
+  function setActive(anchor) {
+    if (activeLink === anchor) return;
+    if (activeLink) activeLink.classList.remove('toc-active');
+    activeLink = anchor || null;
+    if (activeLink) activeLink.classList.add('toc-active');
+  }
+
+  // Track visible headings
+  var visibleHeadings = new Set();
+
+  var observer = new IntersectionObserver(function (entries) {
+    for (var k = 0; k < entries.length; k++) {
+      var entry = entries[k];
+      var headingId = entry.target.id;
+      if (entry.isIntersecting) {
+        visibleHeadings.add(headingId);
+      } else {
+        visibleHeadings.delete(headingId);
+      }
+    }
+
+    // Find the highest (earliest in DOM order) visible heading
+    var topHeading = null;
+    for (var m = 0; m < headings.length; m++) {
+      if (visibleHeadings.has(headings[m].id)) {
+        topHeading = headings[m].id;
+        break;
+      }
+    }
+
+    if (topHeading) {
+      setActive(headingToTocMap.get(topHeading) || null);
+    } else {
+      setActive(null);
+    }
+  }, {
+    rootMargin: '-' + offset + 'px 0px -60% 0px'
+  });
+
+  for (var n = 0; n < headings.length; n++) {
+    observer.observe(headings[n]);
+  }
+})();
+
+
+/* ============================================================
+   CODE BLOCK COPY BUTTON
+   Injects a copy-to-clipboard button on each <pre> block
+============================================================ */
+;(function () {
+  'use strict';
+
+  var articleContent = document.querySelector('.content.article-content');
+  if (!articleContent) return;
+
+  var pres = articleContent.querySelectorAll('pre');
+  if (!pres.length) return;
+
+  for (var i = 0; i < pres.length; i++) {
+    var pre = pres[i];
+
+    // Set position: relative only if computed position is static
+    if (window.getComputedStyle(pre).position === 'static') {
+      pre.style.position = 'relative';
+    }
+
+    // Create copy button
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cb-copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+
+    pre.appendChild(btn);
+  }
+
+  // Delegated click listener on .article-content for .cb-copy-btn clicks
+  articleContent.addEventListener('click', function (e) {
+    var btn = e.target.closest('.cb-copy-btn');
+    if (!btn) return;
+
+    var pre = btn.parentElement;
+    if (!pre) return;
+
+    // Get code text excluding the button's own text
+    var codeEl = pre.querySelector('code');
+    var text = codeEl ? codeEl.textContent : '';
+    if (!text && pre.firstChild && pre.firstChild !== btn) {
+      text = pre.firstChild.textContent || '';
+    }
+
+    // Attempt clipboard write
+    navigator.clipboard.writeText(text).then(function () {
+      btn.textContent = 'Copied!';
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+      }, 2000);
+    }).catch(function () {
+      btn.textContent = 'Error';
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+      }, 2000);
+    });
+  });
+})();
+
+/* ============================================================
+   ARTICLE READING TIME ESTIMATE
+   Computes word count and displays estimated reading time
+============================================================ */
+;(function () {
+  'use strict';
+
+  var content = document.querySelector('.content.article-content');
+  if (!content) return;
+
+  var words = content.textContent.split(/\s+/).filter(function (w) { return w.length > 0; });
+  if (words.length < 10) return;
+
+  var minutes = Math.ceil(words.length / 200);
+
+  var metaRow = document.querySelector('.article-meta-row');
+  if (!metaRow) return;
+
+  var separator = document.createElement('span');
+  separator.className = 'article-meta-sep';
+  separator.textContent = '|';
+
+  var readingTime = document.createElement('span');
+  readingTime.className = 'article-reading-time';
+  readingTime.textContent = minutes + ' min read';
+
+  metaRow.appendChild(separator);
+  metaRow.appendChild(readingTime);
+})();
+
+
+/* ============================================================
+   VOTE MICRO-INTERACTION
+   Adds press-in scale animation on vote button click and
+   pulse animation on vote count label change.
+   Requirements: 1.5, 1.6, 1.8, 1.9, 1.10, 1.11
+============================================================ */
+;(function () {
+  'use strict';
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var votingContainer = document.getElementById('article-voting');
+    if (!votingContainer) return;
+
+    // Attach click listeners to vote buttons
+    var buttons = votingContainer.querySelectorAll('.button-outline-primary');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener('click', function () {
+        var btn = this;
+        btn.classList.add('vote-btn-pressed');
+        setTimeout(function () {
+          btn.classList.remove('vote-btn-pressed');
+        }, 150);
+      });
+    }
+
+    // Find the vote label element (rendered by {{vote 'label'}})
+    // It has the classes: block text-gray-600 font-size-sm mb-4
+    var voteLabel = votingContainer.querySelector('.block.text-gray-600.font-size-sm.mb-4');
+    if (!voteLabel) return;
+
+    // Observe text content changes on the vote label
+    var observer = new MutationObserver(function () {
+      voteLabel.classList.add('vote-label-animate');
+      setTimeout(function () {
+        voteLabel.classList.remove('vote-label-animate');
+      }, 400);
+    });
+
+    observer.observe(voteLabel, {
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
+  });
+})();
+
+/* === Breadcrumb Truncation on Mobile === */
+;(function () {
+  'use strict';
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // Only run on mobile viewports (767px or narrower)
+    if (window.innerWidth > 767) return;
+
+    // Find the breadcrumbs wrapper
+    var wrapper = document.querySelector('.breadcrumbs-wrapper');
+    if (!wrapper) return;
+
+    // Collect breadcrumb items:
+    // Item 0 = .bc-home link
+    // Items 1..N = each <li> in .bc-native ol.breadcrumbs
+    var homeLink = wrapper.querySelector('.bc-home');
+    if (!homeLink) return;
+
+    var ol = wrapper.querySelector('.bc-native ol.breadcrumbs');
+    if (!ol) return;
+
+    var listItems = ol.querySelectorAll('li');
+    var totalCount = 1 + listItems.length; // bc-home + li elements
+
+    // If 3 or fewer items, no truncation needed
+    if (totalCount <= 3) return;
+
+    // Hide middle items: indices 1 through N-3 (inclusive)
+    // Since item 0 is bc-home, middle items are li[0] through li[totalCount-4]
+    // (totalCount - 3 - 1 = totalCount - 4 is the last hidden li index)
+    var lastHiddenIndex = totalCount - 4; // index in listItems array
+    for (var i = 0; i <= lastHiddenIndex; i++) {
+      listItems[i].classList.add('bc-truncated-hidden');
+    }
+
+    // Create the ellipsis button
+    var ellipsisBtn = document.createElement('button');
+    ellipsisBtn.className = 'bc-ellipsis-btn';
+    ellipsisBtn.textContent = '\u2026';
+    ellipsisBtn.setAttribute('aria-label', 'Show full breadcrumb');
+
+    // Insert the button after .bc-home (as a sibling in .breadcrumbs-wrapper)
+    homeLink.parentNode.insertBefore(ellipsisBtn, homeLink.nextSibling);
+
+    // Click handler: reveal all hidden items and remove the button
+    ellipsisBtn.addEventListener('click', function () {
+      var hiddenItems = ol.querySelectorAll('.bc-truncated-hidden');
+      for (var j = 0; j < hiddenItems.length; j++) {
+        hiddenItems[j].classList.remove('bc-truncated-hidden');
+      }
+      ellipsisBtn.parentNode.removeChild(ellipsisBtn);
+    });
+  });
+})();
