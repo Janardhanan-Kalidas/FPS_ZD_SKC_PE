@@ -12,6 +12,7 @@ variables:
   DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
   ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
   DRY_RUN: "true"
+  APPROVE_PACKAGE_FILE: "approval.txt"
 
 stages:
   - release
