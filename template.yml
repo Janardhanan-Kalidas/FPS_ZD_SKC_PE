@@ -73,8 +73,6 @@ stages:
   if [[ "$INSTALLED_ZCLI" != "$ZCLI_VERSION" ]]; then
     npm install -g "@zendesk/zcli@${ZCLI_VERSION}"
   fi
-  DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -yq jq || true
-  apk update && apk add -q jq || true
   echo "node version : $(node --version)"
   echo "npm version  : $(npm --version)"
   echo "zcli version : $(npx zcli --version)"
@@ -102,10 +100,6 @@ stages:
   fi
 
 .production_deploy: &production_deploy |
-  # if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
-  #   echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
-  #   exit 1
-  # fi
   if [[ "${DRY_RUN:-}" != "true" ]]; then
     npm run deploy:theme
   else
@@ -113,10 +107,6 @@ stages:
   fi
 
 .production_rollback: &production_rollback |
-  # if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
-  #   echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
-  #   exit 1
-  # fi
   if [[ "${DRY_RUN:-}" != "true" ]]; then
     npm run rollback:theme
   else
@@ -140,6 +130,9 @@ stages:
 ### GateKeeper check
 .check_approval_anchor: &check_approval
   - |
+    ### We need JQ installed but do not know which image we're using Debian or Alpine
+    DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -yq jq || true
+    apk update && apk add -q jq || true
     echo "Checking if approval is needed."
     if [[ "$ENVIRONMENT" != "prod" ]]; then
       echo "Approval is not needed for deploy in the environment ${ENVIRONMENT^^}."
@@ -254,6 +247,9 @@ version:release:
 deploy:branch:
   extends: .base_deploy_branch
   rules:
+    ### This job is disallowed for release branches
+    - if: !reference [.base_rules, condition, is_release_branch]
+      when: never
     - if: !reference [.base_rules, condition, is_triggered]
       when: on_success
     - if: !reference [.base_rules, condition, is_not_default_branch]
