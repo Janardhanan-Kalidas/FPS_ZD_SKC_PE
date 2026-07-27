@@ -1,18 +1,18 @@
 ### Review these rules!
-workflow:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
-      when: never
-    - if: '$CI_COMMIT_BRANCH'
+# workflow:
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#     - if: '$CI_PIPELINE_SOURCE == "web"'
+#     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+#       when: never
+#     - if: '$CI_COMMIT_BRANCH'
 
 variables:
+  APPROVE_PACKAGE_FILE: "approval.txt"
   GIT_DEPTH: "0"
+  ### These 2 variables will not be needed after GateKeeper implementation
   DEPLOY_CONFIRM_REQUIRED: "DEPLOY_TO_PROD"
   ROLLBACK_CONFIRM_REQUIRED: "ROLLBACK_TO_PROD"
-  DRY_RUN: "true"
-  APPROVE_PACKAGE_FILE: "approval.txt"
 
 stages:
   - release
@@ -30,7 +30,16 @@ stages:
 
 ### --- Anchors --- ###
 ### Environments
-# Used to target PROD environment using Linux docker runner in DEV
+# Used to target PROD environment using local Mac runner
+# Local runner should not be used - it is violating Hilti rules!
+.env_prod_mac_anchor: &env_prod_mac
+  variables:
+    ENVIRONMENT: "prod"
+  environment:
+    name: production
+  tags: [shell, macos]
+
+# Used to target PROD environment using Linux docker runner
 .env_prod_docker_anchor: &env_prod_docker
   image: node:$NODE_VERSION
   variables:
@@ -39,15 +48,7 @@ stages:
     name: production
   tags: [aws, type-docker, environment-dev]
 
-# Used to target PROD environment using local Mac runner
-.env_prod_mac_anchor: &env_prod_mac
-  variables:
-    ENVIRONMENT: "prod"
-  environment:
-    name: production
-  tags: [shell, macos]
-
-# Used to target TEST environment using Linux docker runner in DEV
+# Used to target TEST environment using Linux docker runner in the future
 .env_test_docker_anchor: &env_test_docker
   variables:
     ENVIRONMENT: "test"
@@ -55,14 +56,7 @@ stages:
     name: preview/$CI_COMMIT_REF_SLUG
   tags: [aws, type-docker, environment-dev]
 
-# Used to target TEST environment using local Mac runner
-.env_test_mac_anchor: &env_test_mac
-  variables:
-    ENVIRONMENT: "test"
-  environment:
-    name: preview/$CI_COMMIT_REF_SLUG
-  tags: [shell, macos]
-
+### Anchors for scripts
 .before_script_anchor: &before_script |
   # before_script
   if [[ -f package-lock.json ]]; then
@@ -114,21 +108,7 @@ stages:
     echo "DRY_RUN is set to 'true'. Command 'npm run rollback:theme' is allowed, but will not be executed."
   fi
 
-### Do we need the following scripts after Gatekeeper implementation?
-
-.production_deploy_confirm_check_cmd: &production_deploy_confirm_check_cmd |
-  if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
-    echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
-    exit 1
-  fi
-
-.rollback_confirm_check_cmd: &rollback_confirm_check_cmd |
-  if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
-    echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
-    exit 1
-  fi
-
-### GateKeeper check
+### GateKeeper check approval
 .check_approval_anchor: &check_approval
   - |
     ### We need JQ installed but do not know which image we're using Debian or Alpine
@@ -177,6 +157,20 @@ stages:
         fi
       fi
     fi
+
+### We don't need the following 2 scripts after GateKeeper implementation
+
+.production_deploy_confirm_check_cmd: &production_deploy_confirm_check_cmd |
+  if [[ "${DEPLOY_CONFIRM:-}" != "${DEPLOY_CONFIRM_REQUIRED}" ]]; then
+    echo "Deploy blocked: DEPLOY_CONFIRM must equal '${DEPLOY_CONFIRM_REQUIRED}'"
+    exit 1
+  fi
+
+.rollback_confirm_check_cmd: &rollback_confirm_check_cmd |
+  if [[ "${ROLLBACK_CONFIRM:-}" != "${ROLLBACK_CONFIRM_REQUIRED}" ]]; then
+    echo "Rollback blocked: ROLLBACK_CONFIRM must equal '${ROLLBACK_CONFIRM_REQUIRED}'"
+    exit 1
+  fi
 
 ### --- Job templates --- ###
 
@@ -244,18 +238,6 @@ version:release:
     - if: !reference [.base_rules, condition, is_default_branch]
       when: manual
 
-### Jobs for non-release branches
-deploy:branch:
-  extends: .base_deploy_branch
-  rules:
-    ### This job is disallowed for release branches
-    - if: !reference [.base_rules, condition, is_release_branch]
-      when: never
-    - if: !reference [.base_rules, condition, is_triggered]
-      when: on_success
-    - if: !reference [.base_rules, condition, is_not_default_branch]
-      when: manual
-
 ### Jobs for release branches only - backup|deploy|rollback
 backup:prod:
   extends: .base_backup
@@ -269,11 +251,22 @@ deploy:prod:
     - if: !reference [.base_rules, condition, is_release_branch]
       when: manual
 
-# !!! Rule changed 
-# from [.base_rules, condition, is_default_branch]
-# to   [.base_rules, condition, is_release_branch]
+# !!! Rule changed from [.base_rules, condition, is_default_branch] to [.base_rules, condition, is_release_branch]
 rollback:prod:
   extends: .base_rollback_production
   rules:
     - if: !reference [.base_rules, condition, is_release_branch]
+      when: manual
+
+### Jobs for deploy non-release branches. 
+### Should be deleted in the future or modified for use TEST environment.
+deploy:branch:
+  extends: .base_deploy_branch
+  rules:
+    ### This job is disallowed for release branches
+    - if: !reference [.base_rules, condition, is_release_branch]
+      when: never
+    - if: !reference [.base_rules, condition, is_triggered]
+      when: on_success
+    - if: !reference [.base_rules, condition, is_not_default_branch]
       when: manual
