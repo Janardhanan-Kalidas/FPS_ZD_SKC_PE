@@ -180,14 +180,13 @@ default:
 
 .base_theme_version_release:
   stage: release
-  <<: *env_test_mac
+  <<: *env_prod_docker
   script:
     - npm run version:theme
     - echo "Version bumped. Commit and push manifest.json manually or extend this job with a deploy token."
 
 .base_backup:
   stage: backup
-  # <<: *env_prod_mac
   <<: *env_prod_docker
   script:
     - *production_backup
@@ -200,7 +199,6 @@ default:
 
 .base_deploy_branch:
   stage: deploy
-  # <<: *env_test_mac
   <<: *env_prod_docker
   script:
     - *required_vars_check_cmd
@@ -209,7 +207,6 @@ default:
 
 .base_deploy_production:
   stage: deploy
-  # <<: *env_prod_mac
   <<: *env_prod_docker
   needs: ["backup:prod"]
   resource_group: production
@@ -220,7 +217,6 @@ default:
 
 .base_rollback_production:
   stage: deploy
-  # <<: *env_prod_mac
   <<: *env_prod_docker
   needs: ["backup:prod"]
   resource_group: production
