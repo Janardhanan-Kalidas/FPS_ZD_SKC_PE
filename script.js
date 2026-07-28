@@ -915,6 +915,7 @@
     });
     var observeRoot = document.querySelector('main') || document.body;
     rootMo.observe(observeRoot, { childList: true, subtree: true });
+    setTimeout(function () { rootMo.disconnect(); }, 10000);
   });
 })();
 
@@ -930,11 +931,15 @@
     /* ---- 1) Hide system "issue type" dropdown ---- */
     function hideIssueTypeSelector() {
       var el = document.querySelector('.request_ticket_form_id');
-      if (el) el.style.display = 'none';
+      if (el) {
+        el.style.display = 'none';
+        hideObserver.disconnect();
+      }
     }
     hideIssueTypeSelector();
     var hideObserver = new MutationObserver(hideIssueTypeSelector);
     hideObserver.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { hideObserver.disconnect(); }, 10000);
 
     /* ---- 2) Multiselect search logic ---- */
     var targetId = 'request_custom_fields_37069904162321';
@@ -1020,11 +1025,13 @@
           if (menu) {
             initSearchForSpecificMenu(menu);
             waitForMenuAndInit(menu);
+            observer.disconnect();
           }
         });
       });
     });
     observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { observer.disconnect(); }, 10000);
 
     /* ---- 3) Remove "-" from any tagger dropdown ---- */
     function removeDashFromDropdown(fieldId, replacementText) {
@@ -1056,8 +1063,12 @@
         });
       }
       process();
-      var ob = new MutationObserver(process);
+      var ob = new MutationObserver(function () {
+        process();
+        ob.disconnect();
+      });
       ob.observe(document.body, { childList: true, subtree: true });
+      setTimeout(function () { ob.disconnect(); }, 10000);
     }
     // Call for your dropdown field
     removeDashFromDropdown('request_custom_fields_44160434738577', 'Select a Hilti SW Product');
@@ -1569,8 +1580,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!langLabel) return;
       var code = (locale || getCurrentLocale()).toLowerCase();
       var parts = code.split('-');
+      // Show only country code (e.g. "US" not "EN-US")
       langLabel.textContent = parts[1]
-        ? parts[0].toUpperCase() + '-' + parts[1].toUpperCase()
+        ? parts[1].toUpperCase()
         : parts[0].toUpperCase();
     }
 

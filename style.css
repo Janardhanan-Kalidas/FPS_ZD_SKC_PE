@@ -531,7 +531,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   -ms-overflow-style: scrollbar;
-  background-color: #fff_boxed;
+  background-color: {{settings.bg_color_boxed}};
   height: 100%;
 }
 
@@ -3238,12 +3238,12 @@ html[dir="rtl"] .notification-left-aligned {
 }
 
 .cta {
-  background-color: #fff_cta;
-  color: rgba(82, 79, 83, 1)_cta;
+  background-color: {{settings.bg_color_cta}};
+  color: {{settings.color_text_cta}};
 }
 
 .cta h3 {
-  color: $color_heading_cta;
+  color: {{settings.color_heading_cta}};
 }
 
 .hero {
@@ -3252,12 +3252,13 @@ html[dir="rtl"] .notification-left-aligned {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: $color_hero_text;
+  color: {{settings.color_hero_text}};
 }
 
 .hero h1,
-.hero h2 {
-  color: $color_hero_heading;
+.hero h2,
+.hero .font-size-4xl {
+  color: #fff !important;
 }
 
 @keyframes skeleton {
@@ -16359,10 +16360,20 @@ a:hover .icon-circle {
 .h-full.bg-white img,
 .h-full.bg-white .js-category-icon {
   height: 80px !important;
-  width: 80px !important;   /* ✅ typo fixed */
+  width: 80px !important;
   margin: 0px auto;
   display: block;
   object-fit: contain;
+}
+
+/* Getting Started with PE icon — SVG has large internal padding (1400×1400 viewBox).
+   Keep box at 80×80 like others, use transform:scale to enlarge visually without
+   affecting layout flow, so category name text stays vertically aligned with siblings. */
+.h-full.bg-white img[alt="Category icon 43357295486993"],
+.h-full.bg-white .js-category-icon[alt="Category icon 43357295486993"] {
+  height: 64px !important;
+  width: 64px !important;
+  transform: scale(1.25);
 }
 
 /* Add text color & Font Size to White (#fff) for the Popular search keyword - Jana */
@@ -17941,7 +17952,7 @@ header.d-flex h1 {
 .hilti-lang-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   background: none;
   border: none;
@@ -17959,13 +17970,12 @@ header.d-flex h1 {
   flex: 0 0 auto;
 }
 .hilti-lang-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 0.875rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
   color: inherit;
-  text-transform: none;
-  min-width: 4ch;
-  text-align: right;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 /* --- Overlay backdrop --- */

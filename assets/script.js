@@ -1569,8 +1569,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!langLabel) return;
       var code = (locale || getCurrentLocale()).toLowerCase();
       var parts = code.split('-');
+      // Show only country code (e.g. "US" not "EN-US")
       langLabel.textContent = parts[1]
-        ? parts[0].toUpperCase() + '-' + parts[1].toUpperCase()
+        ? parts[1].toUpperCase()
         : parts[0].toUpperCase();
     }
 
