@@ -16371,8 +16371,8 @@ a:hover .icon-circle {
    affecting layout flow, so category name text stays vertically aligned with siblings. */
 .h-full.bg-white img[alt="Category icon 43357295486993"],
 .h-full.bg-white .js-category-icon[alt="Category icon 43357295486993"] {
-  height: 64px !important;
-  width: 64px !important;
+  height: 56px !important;
+  width: 56px !important;
   transform: scale(1.25);
 }
 
@@ -20491,8 +20491,8 @@ body.downvote-feedback-open {
 /* --- Homepage Hero Section --- */
 
 .hero {
-  background-size: 100% 100%;
-  background-position: center;
+  background-size: cover;
+  background-position: center center;
   background-repeat: no-repeat;
   min-height: unset;
 }
