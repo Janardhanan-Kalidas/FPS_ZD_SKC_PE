@@ -1565,14 +1565,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return ((window.location.pathname.match(/\/hc\/([a-z]{2}(?:-[a-z0-9]+)?)(?:\/|$)/i) || [])[1] || 'en-us').toLowerCase();
     }
 
-    function updateHeaderLocaleLabel(locale) {
+    function updateHeaderLocaleLabel(locale, countryCode) {
       if (!langLabel) return;
-      var code = (locale || getCurrentLocale()).toLowerCase();
-      var parts = code.split('-');
-      // Show only country code (e.g. "US" not "EN-US")
-      langLabel.textContent = parts[1]
-        ? parts[1].toUpperCase()
-        : parts[0].toUpperCase();
+      // Prefer explicit country code from COUNTRY_LANGUAGE_MAP key
+      // so India shows "IN" even though its locale is en-gb
+      if (countryCode) {
+        langLabel.textContent = countryCode.toUpperCase();
+        return;
+      }
+      // Fallback: resolve country from stored selection or locale→country lookup
+      var stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        langLabel.textContent = stored.toUpperCase();
+        return;
+      }
+      var resolved = resolveCountryFromLocale(locale || getCurrentLocale());
+      langLabel.textContent = resolved.toUpperCase();
     }
 
     // Extract article ID from URL
@@ -1899,7 +1907,7 @@ document.addEventListener('DOMContentLoaded', function () {
           requestAnimationFrame(function () { bar.classList.add('is-animating'); });
         });
 
-        updateHeaderLocaleLabel(locale);
+        updateHeaderLocaleLabel(locale, countrySelect.value);
         window.location.href = buildLocaleUrl(locale);
         return;
       }
@@ -1923,7 +1931,7 @@ document.addEventListener('DOMContentLoaded', function () {
               requestAnimationFrame(function () { bar.classList.add('is-animating'); });
             });
 
-            updateHeaderLocaleLabel(locale);
+            updateHeaderLocaleLabel(locale, countrySelect.value);
             window.location.href = url;
           } else {
             // Article not available in the selected locale
@@ -3357,6 +3365,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function maybeReloadForFingerprintChange() {
     if (checkInFlight) return;
+    if (isPreviewOrAdminContext()) return;
     checkInFlight = true;
 
     var currentFingerprint = getCurrentFingerprint();
@@ -3384,8 +3393,32 @@ document.addEventListener('DOMContentLoaded', function () {
     checkTimer = window.setTimeout(maybeReloadForFingerprintChange, delayMs);
   }
 
+  /**
+   * Detects whether the page is running inside Zendesk's theme preview
+   * or admin settings context. In these modes, the fingerprint probe
+   * returns inconsistent values causing infinite redirect loops.
+   */
+  function isPreviewOrAdminContext() {
+    try {
+      var href = window.location.href;
+      // Theme preview uses preview_theme_id param or /theming/ path
+      if (/[?&]preview_theme_id=/.test(href)) return true;
+      if (/\/theming\//.test(href)) return true;
+      // Admin guide settings paths
+      if (/\/admin\/guide\//.test(href)) return true;
+      if (/\/knowledge\/theme_editor/.test(href)) return true;
+      // Theme editor embeds the preview in an iframe
+      if (window.self !== window.top) return true;
+    } catch (e) {
+      // Cross-origin iframe access throws — treat as preview context
+      return true;
+    }
+    return false;
+  }
+
   function initSettingsRefreshWatcher() {
     if (!getCurrentFingerprint()) return;
+    if (isPreviewOrAdminContext()) return;
 
     window.addEventListener('focus', function () {
       scheduleCheck(CHECK_DEBOUNCE_MS);

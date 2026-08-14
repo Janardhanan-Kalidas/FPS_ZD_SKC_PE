@@ -3258,7 +3258,7 @@ html[dir="rtl"] .notification-left-aligned {
 .hero h1,
 .hero h2,
 .hero .font-size-4xl {
-  color: #fff !important;
+  color: #524F53 !important;
 }
 
 @keyframes skeleton {
@@ -16367,13 +16367,14 @@ a:hover .icon-circle {
 }
 
 /* Getting Started with PE icon — SVG has large internal padding (1400×1400 viewBox).
-   Keep box at 80×80 like others, use transform:scale to enlarge visually without
-   affecting layout flow, so category name text stays vertically aligned with siblings. */
+   Keep the icon visually at 56px but occupy the same 80px vertical space as other icons
+   so the category name text stays aligned across all tiles. */
 .h-full.bg-white img[alt="Category icon 43357295486993"],
 .h-full.bg-white .js-category-icon[alt="Category icon 43357295486993"] {
   height: 56px !important;
   width: 56px !important;
-  transform: scale(1.25);
+  padding: 12px 0;
+  box-sizing: content-box;
 }
 
 /* Add text color & Font Size to White (#fff) for the Popular search keyword - Jana */
@@ -20499,7 +20500,7 @@ body.downvote-feedback-open {
 
 .hero .hc-hero-content {
   position: absolute;
-  top: 24%;
+  top: 32%;
   left: 0;
   transform: translateY(-50%);
   display: flex;
@@ -20515,18 +20516,26 @@ body.downvote-feedback-open {
 }
 
 .hero .hc-hero-content > div:first-child {
-  width: 520px;
+  width: 620px;
   max-width: 100%;
   text-align: center;
 }
 
-.hero .hc-hero-content p,
 .hero .hc-hero-content h1 {
   white-space: nowrap;
 }
 
+.hero .hc-hero-content p {
+  white-space: normal;
+  text-align: center;
+  margin: 0.25rem 0 1rem;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  font-size: 1.5rem;
+}
+
 .hero .search {
-  max-width: 520px;
+  max-width: 620px;
   width: 100%;
 }
 

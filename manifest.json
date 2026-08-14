@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.19.40",
+  "version": "0.19.41",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -653,7 +653,7 @@
           "type": "text",
           "description": "hero_heading_description",
           "label": "hero_heading_label",
-          "value": "HOW CAN WE HELP YOU?"
+          "value": "Discover PROFIS Engineering Resources and much more..."
         },
         {
           "identifier": "color_hero_heading",

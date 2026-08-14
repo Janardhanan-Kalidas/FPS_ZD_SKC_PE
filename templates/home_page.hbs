@@ -194,15 +194,15 @@
           {{/if~}}
         </h1>
       {{/if~}}
-        {{~#if settings.hero_heading}}
-  <p class="font-size-4xl">
-    {{~#if settings.use_translations}}
-      {{dc 'fps_-_how_can_we_help_you'}}
-    {{else}}
-      {{settings.hero_heading}}
-    {{/if~}}
-  </p>
-{{/if~}}
+      {{~#if settings.hero_heading}}
+        <p class="font-size-4xl">
+          {{~#if settings.use_translations}}
+            {{dc 'fps-pe_-_hero_heading'}}
+          {{else}}
+            {{settings.hero_heading}}
+          {{/if~}}
+        </p>
+      {{/if~}}
     </div>
 
     {{! Hero element search bar - Jana}}
