@@ -20994,7 +20994,6 @@ body.downvote-feedback-open {
   font-size: 0.875rem;
   margin-top: 16px;
   padding: 12px;
-  border-radius: 2px;
   opacity: 0;
 }
 
@@ -21164,4 +21163,99 @@ body.downvote-feedback-open {
 
 .error-page-link:hover {
   background-color: #ab0115;
+}
+
+/* ============================================================================
+   MOBILE CLEANUP — Home Page
+   Fixes: header overflow, hero banner, category card spacing
+   ============================================================================ */
+
+/* --- 1. Header: Prevent tagline text overflow on mobile --- */
+@media (max-width: 767px) {
+  .navbar-brand {
+    max-width: calc(100% - 60px); /* leave room for hamburger toggle */
+    overflow: hidden;
+  }
+
+  .navbar-brand .navbar-tagline,
+  .navbar-brand .white-space-no-wrap {
+    white-space: normal !important;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    margin-left: 8px !important;
+  }
+
+  .navbar-brand #logo {
+    max-width: 80px;
+    flex-shrink: 0;
+  }
+}
+
+/* --- 2. Hero Banner: Better proportions on mobile --- */
+@media (max-width: 767px) {
+  .hero {
+    min-height: 160px;
+    background-position: center right;
+  }
+
+  .hero .hc-hero-content {
+    position: relative;
+    top: auto;
+    transform: none;
+    padding: 1rem;
+    align-items: center;
+  }
+
+  .hero .hc-hero-content > div:first-child {
+    width: 100%;
+  }
+
+  .hero .hc-hero-content h1 {
+    white-space: normal !important;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .hero .hc-hero-content p {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .hero .search {
+    max-width: 100%;
+  }
+}
+
+/* --- 3. Category Cards: Tighter spacing on mobile --- */
+@media (max-width: 767px) {
+  .content-blocks .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .content-blocks .list-unstyled {
+    gap: 0.75rem;
+  }
+
+  .content-blocks .list-unstyled > li > .card {
+    padding: 1rem 0.75rem;
+  }
+
+  .content-blocks .list-unstyled > li > .card img,
+  .content-blocks .list-unstyled > li > .card svg {
+    max-height: 48px;
+    width: auto;
+  }
+
+  .content-blocks .list-unstyled > li > .card h3 {
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Browse By Categories heading */
+  .content-blocks h3.inline-flex {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
 }

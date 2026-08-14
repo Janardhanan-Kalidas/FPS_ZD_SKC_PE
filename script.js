@@ -1584,12 +1584,7 @@ document.addEventListener('DOMContentLoaded', function () {
         langLabel.textContent = countryCode.toUpperCase();
         return;
       }
-      // Fallback: resolve country from stored selection or locale→country lookup
-      var stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        langLabel.textContent = stored.toUpperCase();
-        return;
-      }
+      // Resolve country from the actual page locale
       var resolved = resolveCountryFromLocale(locale || getCurrentLocale());
       langLabel.textContent = resolved.toUpperCase();
     }
@@ -1766,7 +1761,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setSaveState() {
       if (!saveBtn || !countrySelect || !languageSelect) return;
-      saveBtn.disabled = !(countrySelect.value && languageSelect.value);
+      var errorEl = document.getElementById('hiltiLangError');
+      var hasError = errorEl && errorEl.classList.contains('is-visible');
+      saveBtn.disabled = hasError || !(countrySelect.value && languageSelect.value);
     }
 
     function clearSelect(selectEl, placeholder) {
@@ -1892,9 +1889,6 @@ document.addEventListener('DOMContentLoaded', function () {
       countrySelect.addEventListener('change', function () {
         hideInlineError();
         var selectedCountry = countrySelect.value;
-        if (selectedCountry) {
-          localStorage.setItem(STORAGE_KEY, selectedCountry);
-        }
         populateLanguages(selectedCountry);
       });
     }
@@ -1912,6 +1906,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!isArticlePage()) {
         // Non-article page: close modal and navigate via locale URL replacement
         closeModal();
+
+        localStorage.setItem(STORAGE_KEY, countrySelect.value);
 
         var bar = document.createElement('div');
         bar.className = 'hilti-page-loading-bar';
@@ -1937,6 +1933,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // Article available — close modal and navigate
             closeModal();
 
+            localStorage.setItem(STORAGE_KEY, countrySelect.value);
+
             var bar = document.createElement('div');
             bar.className = 'hilti-page-loading-bar';
             document.body.appendChild(bar);
@@ -1956,7 +1954,7 @@ document.addEventListener('DOMContentLoaded', function () {
           showInlineError();
         })
         .finally(function () {
-          saveBtn.disabled = false;
+          setSaveState();
         });
     }
 
