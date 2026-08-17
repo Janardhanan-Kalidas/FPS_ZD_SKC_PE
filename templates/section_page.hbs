@@ -1,90 +1,4 @@
-<!---
-{{! Hero element }}
-<div class="hero relative overflow-hidden{{#is settings.hero_image_style 'standard'}} bg-home bg-cover bg-center{{/is}}">
-
-    {{! Hero element content }}
-  <div class="relative container z-30 py-6 lg:p{{#if settings.fixed_header}}b{{else}}y{{/if}}-7"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
--->
-    
-<!-- HIDE THE TOP - HOW CAN WE HELP YOU?
-  {{! Hero element content }}
-  <div class="relative container z-30 py-6 lg:p{{#if settings.fixed_header}}b{{else}}y{{/if}}-7"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
-
-    {{! Hero element title }}
-    <div class="my-5{{#unless settings.hero_heading}} hidden{{/unless}}">
-      {{~#if settings.hero_heading}}
-        <h1 class="font-size-4xl lg:font-size-5xl">
-          {{~#if settings.use_translations}}
-            {{dc settings.hero_heading}}
-          {{else}}
-            {{settings.hero_heading}}
-          {{/if~}}
-        </h1>
-      {{/if~}}
-    </div>
-    
-    -->
-<!--
-    {{! Hero element search bar }}
-    {{~#is settings.header_search_style 'none'}}
-      <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4">
-        <h2 class="sr-only">{{ t 'search' }}</h2>
-        {{~#if settings.search_placeholder}}
-          {{#if settings.use_translations}}
-            {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false placeholder=(dc settings.search_placeholder)}}
-          {{else}}
-            {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false placeholder=settings.search_placeholder}}
-          {{/if}}
-        {{else}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false}}
-        {{/if~}}
-        <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
-          <use xlink:href="#icon-search" />
-        </svg>
-      </div>
-    {{/is}}
-
-  </div>
-
-  {{! Hero background image (overlay) }}
-  {{#isnt settings.hero_image_style 'standard'}}
-    {{#isnt settings.hero_image_style 'parallax'}}
-      <div class="absolute z-20 top-0 left-0 h-full w-full bg-home{{#is settings.hero_image_style 'overlay'}} bg-cover bg-center{{/is}}{{#is settings.hero_image_style 'overlay-pattern'}} bg-contain bg-repeat{{/is}}"></div>
-    {{/isnt}}
-  {{/isnt}}
-
-  {{! Hero background color }}
-  <div class="absolute z-10 top-0 left-0 h-full w-full bg-hero"></div>
-
-  {{! Hero background image (parallax) }}
-  {{#is settings.hero_image_style 'parallax'}}
-    <div class="absolute z-0 top-0 left-0 w-full h-full">
-      <div class="relative w-full h-full overflow-hidden">
-        <div class="absolute top-0 left-0 w-full bg-home bg-cover bg-center" x-data="Widgets.parallaxImage" style="height: 150%"></div>
-      </div>
-    </div>
-  {{/is}}
-
-  {{! SVG dividers }}
-  {{~#isnt settings.hero_element_shape 'none'}}
-    <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"
-      {{~#is settings.hero_element_shape 'book'}}class="svg-shape -mt-4 rotate-180" viewBox="0 0 1200 120"{{/is~}}
-      {{~#is settings.hero_element_shape 'curve'}}class="svg-shape -mt-6" viewBox="0 0 100 100"{{/is~}}
-      {{~#is settings.hero_element_shape 'curves'}}class="svg-shape -mt-6 rotate-180" viewBox="0 0 240 24"{{/is~}}
-      {{~#is settings.hero_element_shape 'diagonal'}}class="svg-shape -mt-4 rotate-180" viewBox="0 0 1000 100"{{/is~}}
-      {{~#is settings.hero_element_shape 'hills'}}class="svg-shape -mt-4" viewBox="0 0 240 24"{{/is~}}
-      {{~#is settings.hero_element_shape 'mountains'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}
-      {{~#is settings.hero_element_shape 'rays'}}class="svg-shape rotate-180" viewBox="0 0 2600 130.1"{{/is~}}
-      {{~#is settings.hero_element_shape 'triangle'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}
-      {{~#is settings.hero_element_shape 'wave'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}
-      {{~#is settings.hero_element_shape 'waves'}}class="svg-shape rotate-180" viewBox="0 0 283.5 27.8"{{/is~}}
-      {{~#is settings.hero_element_shape 'zigzag'}}class="svg-shape rotate-180" viewBox="0 0 1000 100"{{/is~}}>
-      <use xlink:href="#shape-{{settings.hero_element_shape}}" />
-    </svg>
-  {{/isnt~}}
-
-</div> {{! /.hero }}
--->
+{{! Hero removed intentionally on section page }}
 {{! ---------------------------------------------------------
    UNIVERSAL BREADCRUMBS – FINAL VERSION (CLICKABLE HOME)
    Updated by: Kalidas, Janardhanan
@@ -116,24 +30,6 @@
 </div>
 
 <div class="container" id="page-container">
- <!-- 
-  {{! Hero element search bar }}
-    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base max-w-md my-4{{#is settings.hero_content_alignment 'center'}} mx-auto{{/is}}">
-      <h2 class="sr-only">{{ t 'search' }}</h2>
-      {{~#if settings.search_placeholder}}
-        {{#if settings.use_translations}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=(dc 'search')}}
-        {{else}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button placeholder=settings.search_placeholder}}
-        {{/if}}
-      {{else}}
-        {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=settings.show_search_button}}
-      {{/if~}}
-      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
-        <use xlink:href="#icon-search" />
-      </svg>
-    </div> 
-  -->
   <div class="row row-lg">
 
     <div class="col">

@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.16.4",
+  "version": "0.19.43",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -33,125 +33,6 @@
           "description": "tagline_description",
           "label": "tagline_label",
           "value": "PROFIS Engineering Software Knowledge Center"
-        }
-      ]
-    },
-    {
-      "label": "images_group_label",
-      "variables": [
-        {
-          "identifier": "homepage_background_image",
-          "type": "file",
-          "description": "homepage_background_image_description",
-          "label": "homepage_background_image_label"
-        },
-        {
-          "identifier": "community_background_image",
-          "type": "file",
-          "description": "community_background_image_description",
-          "label": "community_background_image_label"
-        },
-        {
-          "identifier": "content_block_1_image",
-          "type": "file",
-          "description": "content_block_1_image_description",
-          "label": "content_block_1_image_label"
-        },
-        {
-          "identifier": "content_block_2_image",
-          "type": "file",
-          "description": "content_block_2_image_description",
-          "label": "content_block_2_image_label"
-        },
-        {
-          "identifier": "content_block_3_image",
-          "type": "file",
-          "description": "content_block_3_image_description",
-          "label": "content_block_3_image_label"
-        },
-        {
-          "identifier": "content_block_4_image",
-          "type": "file",
-          "description": "content_block_4_image_description",
-          "label": "content_block_4_image_label"
-        },
-        {
-          "identifier": "content_block_5_image",
-          "type": "file",
-          "description": "content_block_5_image_description",
-          "label": "content_block_5_image_label"
-        },
-        {
-          "identifier": "content_block_6_image",
-          "type": "file",
-          "description": "content_block_6_image_description",
-          "label": "content_block_6_image_label"
-        },
-        {
-          "identifier": "content_block_7_image",
-          "type": "file",
-          "description": "content_block_7_image_description",
-          "label": "content_block_7_image_label"
-        },
-        {
-          "identifier": "content_block_8_image",
-          "type": "file",
-          "description": "content_block_8_image_description",
-          "label": "content_block_8_image_label"
-        },
-        {
-          "identifier": "custom_block_1_image",
-          "type": "file",
-          "description": "custom_block_1_image_description",
-          "label": "custom_block_1_image_label"
-        },
-        {
-          "identifier": "custom_block_2_image",
-          "type": "file",
-          "description": "custom_block_2_image_description",
-          "label": "custom_block_2_image_label"
-        },
-        {
-          "identifier": "custom_block_3_image",
-          "type": "file",
-          "description": "custom_block_3_image_description",
-          "label": "custom_block_3_image_label"
-        },
-        {
-          "identifier": "custom_block_4_image",
-          "type": "file",
-          "description": "custom_block_4_image_description",
-          "label": "custom_block_4_image_label"
-        },
-        {
-          "identifier": "contact_block_1_image",
-          "type": "file",
-          "description": "contact_block_1_image_description",
-          "label": "contact_block_1_image_label"
-        },
-        {
-          "identifier": "contact_block_2_image",
-          "type": "file",
-          "description": "contact_block_2_image_description",
-          "label": "contact_block_2_image_label"
-        },
-        {
-          "identifier": "contact_block_3_image",
-          "type": "file",
-          "description": "contact_block_3_image_description",
-          "label": "contact_block_3_image_label"
-        },
-        {
-          "identifier": "contact_block_4_image",
-          "type": "file",
-          "description": "contact_block_4_image_description",
-          "label": "contact_block_4_image_label"
-        },
-        {
-          "identifier": "cta_block_image",
-          "type": "file",
-          "description": "cta_block_image_description",
-          "label": "cta_block_image_label"
         }
       ]
     },
@@ -527,6 +408,244 @@
       ]
     },
     {
+      "label": "banner_group_label",
+      "variables": [
+        {
+          "identifier": "release_banner_enabled",
+          "type": "checkbox",
+          "description": "release_banner_enabled_description",
+          "label": "release_banner_enabled_label",
+          "value": false
+        },
+        {
+          "identifier": "release_banner_icon",
+          "type": "list",
+          "description": "release_banner_icon_description",
+          "label": "release_banner_icon_label",
+          "value": "none",
+          "options": [
+            {
+              "label": "None",
+              "value": "none"
+            },
+            {
+              "label": "Alert Error",
+              "value": "alert_error"
+            },
+            {
+              "label": "Alert Info",
+              "value": "alert_info"
+            },
+            {
+              "label": "Alert Positive",
+              "value": "alert_positive"
+            },
+            {
+              "label": "Alert Warning",
+              "value": "alert_warning"
+            },
+            {
+              "label": "Notification",
+              "value": "notification"
+            },
+            {
+              "label": "Announcement",
+              "value": "announcement"
+            }
+          ]
+        },
+        {
+          "identifier": "release_banner_content",
+          "type": "text",
+          "description": "release_banner_content_description",
+          "label": "release_banner_content_label",
+          "value": "Hooray! PE 1.32.4 released"
+        },
+        {
+          "identifier": "release_banner_link_url",
+          "type": "text",
+          "description": "release_banner_link_url_description",
+          "label": "release_banner_link_url_label",
+          "value": ""
+        },
+        {
+          "identifier": "release_banner_version",
+          "type": "text",
+          "description": "release_banner_version_description",
+          "label": "release_banner_version_label",
+          "value": "1"
+        },
+        {
+          "identifier": "release_banner_bg_color",
+          "type": "list",
+          "description": "release_banner_bg_color_description",
+          "label": "release_banner_bg_color_label",
+          "value": "green",
+          "options": [
+            {
+              "label": "Red",
+              "value": "red"
+            },
+            {
+              "label": "Dark Gray",
+              "value": "dark_gray"
+            },
+            {
+              "label": "Blue",
+              "value": "blue"
+            },
+            {
+              "label": "Green",
+              "value": "green"
+            },
+            {
+              "label": "Orange",
+              "value": "orange"
+            },
+            {
+              "label": "Black",
+              "value": "black"
+            },
+            {
+              "label": "White",
+              "value": "white"
+            },
+            {
+              "label": "Custom",
+              "value": "custom"
+            }
+          ]
+        },
+        {
+          "identifier": "release_banner_custom_bg_color",
+          "type": "color",
+          "description": "release_banner_custom_bg_color_description",
+          "label": "release_banner_custom_bg_color_label",
+          "value": "rgba(171, 1, 21, 1)"
+        },
+        {
+          "identifier": "release_banner_text_color",
+          "type": "color",
+          "description": "release_banner_text_color_description",
+          "label": "release_banner_text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_enabled",
+          "type": "checkbox",
+          "description": "notification_banner_enabled_description",
+          "label": "notification_banner_enabled_label",
+          "value": false
+        },
+        {
+          "identifier": "notification_banner_icon",
+          "type": "list",
+          "description": "notification_banner_icon_description",
+          "label": "notification_banner_icon_label",
+          "value": "none",
+          "options": [
+            {
+              "label": "None",
+              "value": "none"
+            },
+            {
+              "label": "Alert Error",
+              "value": "alert_error"
+            },
+            {
+              "label": "Alert Info",
+              "value": "alert_info"
+            },
+            {
+              "label": "Alert Positive",
+              "value": "alert_positive"
+            },
+            {
+              "label": "Alert Warning",
+              "value": "alert_warning"
+            },
+            {
+              "label": "Notification",
+              "value": "notification"
+            },
+            {
+              "label": "Announcement",
+              "value": "announcement"
+            }
+          ]
+        },
+        {
+          "identifier": "notification_banner_content",
+          "type": "text",
+          "description": "notification_banner_content_description",
+          "label": "notification_banner_content_label",
+          "value": ""
+        },
+        {
+          "identifier": "notif_banner_bg_color",
+          "type": "list",
+          "description": "notif_banner_bg_color_description",
+          "label": "notif_banner_bg_color_label",
+          "value": "dark_gray",
+          "options": [
+            {
+              "label": "Red",
+              "value": "red"
+            },
+            {
+              "label": "Dark Gray",
+              "value": "dark_gray"
+            },
+            {
+              "label": "Blue",
+              "value": "blue"
+            },
+            {
+              "label": "Green",
+              "value": "green"
+            },
+            {
+              "label": "Orange",
+              "value": "orange"
+            },
+            {
+              "label": "Black",
+              "value": "black"
+            },
+            {
+              "label": "White",
+              "value": "white"
+            },
+            {
+              "label": "Custom",
+              "value": "custom"
+            }
+          ]
+        },
+        {
+          "identifier": "notif_banner_custom_bg_color",
+          "type": "color",
+          "description": "notif_banner_custom_bg_color_description",
+          "label": "notif_banner_custom_bg_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_text_color",
+          "type": "color",
+          "description": "notification_banner_text_color_description",
+          "label": "notification_banner_text_color_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "notification_banner_version",
+          "type": "text",
+          "description": "notification_banner_version_description",
+          "label": "notification_banner_version_label",
+          "value": "1"
+        }
+      ]
+    },
+    {
       "label": "home_page_group_label",
       "variables": [
         {
@@ -534,7 +653,7 @@
           "type": "text",
           "description": "hero_heading_description",
           "label": "hero_heading_label",
-          "value": "HOW CAN WE HELP YOU?"
+          "value": "Discover PROFIS Engineering Resources and much more..."
         },
         {
           "identifier": "color_hero_heading",
@@ -556,66 +675,6 @@
           "description": "color_hero_text_description",
           "label": "color_hero_text_label",
           "value": "rgba(255, 255, 255, 1)"
-        },
-        {
-          "identifier": "hero_image_style",
-          "type": "list",
-          "description": "hero_image_style_description",
-          "label": "hero_image_style_label",
-          "value": "overlay",
-          "options": [
-            {
-              "label": "Behind background",
-              "value": "standard"
-            },
-            {
-              "label": "Overlay",
-              "value": "overlay"
-            },
-            {
-              "label": "Overlay (pattern)",
-              "value": "overlay-pattern"
-            },
-            {
-              "label": "Parallax effect",
-              "value": "parallax"
-            }
-          ]
-        },
-        {
-          "identifier": "bg_color_hero",
-          "type": "color",
-          "description": "bg_color_hero_description",
-          "label": "bg_color_hero_label",
-          "value": "rgba(255, 255, 255, 1)"
-        },
-        {
-          "identifier": "bg_color_secondary_hero",
-          "type": "color",
-          "description": "bg_color_secondary_hero_description",
-          "label": "bg_color_secondary_hero_label",
-          "value": "rgba(255, 255, 255, 1)"
-        },
-        {
-          "identifier": "bg_gradient_hero",
-          "type": "list",
-          "description": "bg_gradient_hero_description",
-          "label": "bg_gradient_hero_label",
-          "value": "radial",
-          "options": [
-            {
-              "label": "Conic",
-              "value": "conic"
-            },
-            {
-              "label": "Linear",
-              "value": "linear"
-            },
-            {
-              "label": "Radial",
-              "value": "radial"
-            }
-          ]
         },
         {
           "identifier": "hero_content_alignment",
@@ -1751,7 +1810,7 @@
           "type": "checkbox",
           "description": "show_article_author_description",
           "label": "show_article_author_label",
-          "value": true
+          "value": false
         },
         {
           "identifier": "show_follow_article",
@@ -1844,7 +1903,7 @@
           "type": "checkbox",
           "description": "show_article_voting_description",
           "label": "show_article_voting_label",
-          "value": true
+          "value": false
         },
         {
           "identifier": "show_article_sharing",
@@ -1994,31 +2053,6 @@
     {
       "label": "community_group_label",
       "variables": [
-        {
-          "identifier": "community_image_style",
-          "type": "list",
-          "description": "community_image_style_description",
-          "label": "community_image_style_label",
-          "value": "standard",
-          "options": [
-            {
-              "label": "Behind background",
-              "value": "standard"
-            },
-            {
-              "label": "Overlay",
-              "value": "overlay"
-            },
-            {
-              "label": "Overlay (pattern)",
-              "value": "overlay-pattern"
-            },
-            {
-              "label": "Parallax effect",
-              "value": "parallax"
-            }
-          ]
-        },
         {
           "identifier": "show_recent_activity_community",
           "type": "checkbox",
@@ -2211,6 +2245,46 @@
           "description": "use_translations_description",
           "label": "use_translations_label",
           "value": false
+        }
+      ]
+    },
+    {
+      "label": "profile_page_group_label",
+      "variables": [
+        {
+          "identifier": "color_heading",
+          "type": "color",
+          "description": "color_heading_description",
+          "label": "color_heading_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "color_text",
+          "type": "color",
+          "description": "color_text_description",
+          "label": "color_text_label",
+          "value": "rgba(82, 79, 83, 1)"
+        },
+        {
+          "identifier": "color_primary",
+          "type": "color",
+          "description": "color_primary_description",
+          "label": "color_primary_label",
+          "value": "rgba(210, 5, 30, 1)"
+        },
+        {
+          "identifier": "color_gray_600",
+          "type": "color",
+          "description": "color_gray_600_description",
+          "label": "color_gray_600_label",
+          "value": "rgba(107, 114, 128, 1)"
+        },
+        {
+          "identifier": "color_border",
+          "type": "color",
+          "description": "color_border_description",
+          "label": "color_border_label",
+          "value": "rgba(229, 231, 235, 1)"
         }
       ]
     }

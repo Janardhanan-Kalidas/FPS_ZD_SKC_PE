@@ -84,15 +84,7 @@
 </div>
 
     
-      {{! Back to Top link }}
-      {{~#isnt settings.back_to_top_link_style 'none'}}
-        <div
-          class="{{#is settings.back_to_top_link_style 'footer'}}absolute top-0 right-0{{else}}fixed bottom-0 left-0{{/is}}"
-          data-element="back-to-top"
-          data-template="back-to-top-link"
-          data-threshold="{{#is settings.back_to_top_link_style 'footer'}}0{{else}}250px{{/is}}">
-        </div>
-      {{/isnt~}}
+      {{! Back to Top link — replaced by new floating button (loaded below) }}
 	
     </div>
  </div>
@@ -122,6 +114,7 @@
 <script type="text/javascript" src="{{asset 'extension-assets.min.js'}}" defer></script>
 <script type="text/javascript" src="{{asset 'extensions.min.js'}}" defer></script>
 <script type="text/javascript" src="{{asset 'widgets.min.js'}}" defer></script>
+<script type="text/javascript" src="{{asset 'script.js'}}" defer></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/combine/npm/alpinejs@3.13.0/dist/cdn.min.js
   {{~#if settings.enable_lightboxes}},npm/jquery@3.5.1/dist/jquery.min.js,gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js
   {{~else}}{{~#if settings.promoted_video_ids}},npm/jquery@3.5.1/dist/jquery.min.js,gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js{{~/if}}{{~/if}}
@@ -133,7 +126,6 @@
 {{~#if settings.enable_lightboxes}}<script type="text/javascript" src="{{asset 'extension-lightboxes.min.js'}}" defer></script>{{/if~}}
 {{~#if settings.enable_video_player}}<script type="text/javascript" src="{{asset 'extension-video.min.js'}}" defer></script>{{/if~}}
 {{~#isnt settings.article_navigation_style 'none'}}<script type="text/javascript" src="{{asset 'extension-article-navigation.min.js'}}" defer></script>{{/isnt~}}
-{{~#isnt settings.back_to_top_link_style 'none'}}<script type="text/javascript" src="{{asset 'extension-back-to-top.min.js'}}" defer></script>{{/isnt~}}
 
 {{!---------------
    Micro-templates
@@ -419,7 +411,7 @@
 {{~#isnt settings.cta_location 'none'}}
   {{~#is settings.cta_style 'banner'}}
     <script type="text/template" id="tmpl-call-to-action">
-      <div class="cta relative mt-6 -mb-6{{#is '#fff' settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')">
+      <div class="cta relative mt-6 -mb-6{{#is '#fff' settings.bg_color_cta}} border-top{{/is}} bg-center bg-cover" style="background-image: url('{{asset 'cta_block_image.jpg'}}')">>
         <div class="container relative z-10 py-6">
           <div class="max-w-lg mx-auto text-center">
             {{#if settings.cta_element_heading}}
@@ -505,7 +497,7 @@
       <div class="container">
         <div class="card cta overflow-hidden my-6{{#isnt '#fff' settings.bg_color_cta}} border-0{{/isnt}}">
           <div class="row">
-            <div class="p-9 sm:col-6 relative bg-center bg-cover" style="background-image: url('{{settings.cta_block_image}}')"></div>
+            <div class="p-9 sm:col-6 relative bg-center bg-cover" style="background-image: url('{{asset 'cta_block_image.jpg'}}')"></div>
             <div class="p-6 sm:col-6 sm:px-6 sm:py-8">
               {{#if settings.cta_element_heading}}
                 <h3 class="h2 md:font-size-3xl">
@@ -585,47 +577,116 @@
 
 
 
-{{! Back to Top links - Jana}}
-{{~#isnt settings.back_to_top_link_style 'none'}}
-  {{~#is settings.back_to_top_link_style 'standard'}}
-    <script type="text/template" id="tmpl-back-to-top-link">
-      <button class="flex button button-outline button-sm bg-white p-3 m-4">
-        <span class="sr-only">{{t 'return_to_top'}}</span>
-        <svg class="fill-current" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
-          <polygon points="12.4,40.1 25.8,53.6 40.5,38.8 40.5,97.5 59.5,97.5 59.5,38.8 74.2,53.6 87.6,40.1 50,2.5" />
-        </svg>
-      </button>
-    </script>
-  {{/is~}}
-  {{~#is settings.back_to_top_link_style 'footer'}}
-    {{!-- Back to Top – Option A: White circle + Hilti Red arrow --}}
-<script type="text/template" id="tmpl-back-to-top-link">
-  <div class="relative circle -mt-4 mr-4 h-7 w-7 cursor-pointer back-to-top-circle back-to-top-offset back-to-top-large">
-    <button class="not-a-button">
-      <span class="sr-only">{{t 'return_to_top'}}</span>
-      <svg class="svg-icon fill-current absolute-center pointer-events-none back-to-top-arrow" viewBox="0 0 48 48" aria-hidden="true">
-        <path
-          d="M24,0.229749535 C23.3,0.22 22.62,0.51 22.13,1 L0.68,22.45 L4.43,26.2 
-             L21.35,9.28 L21.35,41.35 C21.35,42.64 21.34,43.71 21.34,44.38 
-             L21.34,45.09 C21.35,46.78 22.7,47.79 24,47.79 
-             C24.03,47.79 26.52,47.75 26.65,45.07 L26.65,44.98 
-             C26.65,44.94 26.66,44.9 26.66,44.86 
-             L26.66,9.28 L43.57,26.2 L47.32,22.45 L25.88,1 
-             C25.38,0.5 24.7,0.229749535 24,0.229749535 Z"
-          fill-rule="nonzero"
-        />
-      </svg>
-    </button>
-  </div>
+{{! Back to Top — Floating draggable button (site-wide) }}
+<script>
+(function() {
+  var btn = document.createElement('div');
+  btn.id = 'article-back-to-top';
+  btn.className = 'article-back-to-top';
+  btn.setAttribute('role', 'button');
+  btn.setAttribute('tabindex', '0');
+  btn.setAttribute('aria-label', 'Back to top');
+  btn.setAttribute('title', 'Drag to move, click to scroll to top');
+  btn.setAttribute('hidden', '');
+  btn.style.touchAction = 'none';
+  btn.innerHTML =
+    '<svg class="svg-icon fill-current back-to-top-arrow" viewBox="0 0 48 48" aria-hidden="true" style="pointer-events:none">' +
+      '<path d="M24,0.229749535 C23.3,0.22 22.62,0.51 22.13,1 L0.68,22.45 L4.43,26.2 L21.35,9.28 L21.35,41.35 C21.35,42.64 21.34,43.71 21.34,44.38 L21.34,45.09 C21.35,46.78 22.7,47.79 24,47.79 C24.03,47.79 26.52,47.75 26.65,45.07 L26.65,44.98 C26.65,44.94 26.66,44.9 26.66,44.86 L26.66,9.28 L43.57,26.2 L47.32,22.45 L25.88,1 C25.38,0.5 24.7,0.229749535 24,0.229749535 Z" fill-rule="nonzero"/>' +
+    '</svg>';
+  document.body.appendChild(btn);
+
+  var userDragged = false; // true once user has moved the button manually
+  var isDragging = false;
+  var hasMoved = false;
+  var startX = 0, startY = 0, btnX = 0, btnY = 0;
+
+  // Visibility + auto-position above footer (only when not manually dragged)
+  function updatePosition() {
+    if (window.scrollY > window.innerHeight) {
+      btn.removeAttribute('hidden');
+    } else {
+      btn.setAttribute('hidden', '');
+    }
+    if (!userDragged) {
+      var footer = document.getElementById('footer');
+      if (footer) {
+        var footerRect = footer.getBoundingClientRect();
+        if (footerRect.top < window.innerHeight) {
+          btn.style.bottom = (window.innerHeight - footerRect.top + 20) + 'px';
+        } else {
+          btn.style.bottom = '2rem';
+        }
+      }
+    }
+  }
+
+  var ticking = false;
+  window.addEventListener('scroll', function() {
+    if (!ticking) { ticking = true; requestAnimationFrame(function() { updatePosition(); ticking = false; }); }
+  });
+
+  // Drag logic using pointer events directly on the btn
+  btn.addEventListener('pointerdown', function(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    hasMoved = false;
+    isDragging = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    var rect = btn.getBoundingClientRect();
+    btnX = rect.left;
+    btnY = rect.top;
+    btn.setPointerCapture(e.pointerId);
+    btn.style.transition = 'none';
+  });
+
+  btn.addEventListener('pointermove', function(e) {
+    if (!btn.hasPointerCapture(e.pointerId)) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    if (!hasMoved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+    hasMoved = true;
+    isDragging = true;
+    var newX = Math.max(0, Math.min(btnX + dx, window.innerWidth - btn.offsetWidth));
+    var newY = Math.max(0, Math.min(btnY + dy, window.innerHeight - btn.offsetHeight));
+    btn.style.position = 'fixed';
+    btn.style.left = newX + 'px';
+    btn.style.top = newY + 'px';
+    btn.style.right = 'auto';
+    btn.style.bottom = 'auto';
+  });
+
+  btn.addEventListener('pointerup', function(e) {
+    btn.releasePointerCapture(e.pointerId);
+    btn.style.transition = '';
+    if (hasMoved) {
+      userDragged = true;
+      setTimeout(function() { isDragging = false; }, 100);
+    }
+  });
+
+  // Click scrolls to top (only if not dragged)
+  btn.addEventListener('click', function(e) {
+    if (isDragging) { e.preventDefault(); return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Keyboard support
+  btn.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  updatePosition();
+})();
 </script>
-  {{/is~}}
-{{/isnt~}}
 
 {{! SVG icons and shape dividers }}
 <svg xmlns="http://www.w3.org/2000/svg" class="hidden">
-  <symbol id="icon-search">
-    <circle cx="4.5" cy="4.5" r="4" fill="none" stroke="currentColor"/>
-    <path stroke="currentColor" stroke-linecap="round" d="M11 11L7.5 7.5"/>
+  <symbol id="icon-search" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M10.9185 4.91858C14.0251 4.91858 16.5435 7.43698 16.5435 10.5436C16.5435 11.9504 16.027 13.2365 15.1734 14.2228L18.7064 17.7557L17.3805 19.0815L13.721 15.4218C12.8959 15.8968 11.9389 16.1686 10.9185 16.1686C7.81186 16.1686 5.29346 13.6502 5.29346 10.5436C5.29346 7.43698 7.81186 4.91858 10.9185 4.91858ZM10.9185 6.79358C8.84739 6.79358 7.16846 8.47251 7.16846 10.5436C7.16846 12.6146 8.84739 14.2936 10.9185 14.2936C12.9895 14.2936 14.6685 12.6146 14.6685 10.5436C14.6685 8.47251 12.9895 6.79358 10.9185 6.79358Z" fill="#CFCCC5"/>
   </symbol>
   <symbol id="icon-lock">
     <rect width="12" height="9" x="2" y="7" fill="currentColor" rx="1" ry="1"/>
@@ -823,7 +884,7 @@
     }].slice(0, {{settings.number_custom_blocks}}),
     heading: {{#if settings.custom_blocks_heading}}{{#if settings.use_translations}}{{json_stringify (dc settings.custom_blocks_heading)}}{{else}}{{json_stringify settings.custom_blocks_heading}}{{/if}}{{else}}""{{/if}},
     images: [
-      "{{settings.custom_block_1_image}}", "{{settings.custom_block_2_image}}", "{{settings.custom_block_3_image}}", "{{settings.custom_block_4_image}}"
+      "{{asset 'custom_block_1_image.svg'}}", "{{asset 'custom_block_2_image.svg'}}", "{{asset 'custom_block_3_image.svg'}}", "{{asset 'custom_block_4_image.svg'}}"
     ],
     imageHeight: "{{settings.custom_block_image_height}}",
     numberColumns: {{settings.number_custom_block_columns}},
@@ -860,7 +921,7 @@
     }].slice(0, {{settings.number_contact_blocks}}),
     heading: {{#if settings.contact_blocks_heading}}{{#if settings.use_translations}}{{json_stringify (dc settings.contact_blocks_heading)}}{{else}}{{json_stringify settings.contact_blocks_heading}}{{/if}}{{else}}""{{/if}},
     images: [
-      "{{settings.contact_block_1_image}}", "{{settings.contact_block_2_image}}", "{{settings.contact_block_3_image}}", "{{settings.contact_block_4_image}}"
+      "{{asset 'contact_block_1_image.svg'}}", "{{asset 'contact_block_2_image.svg'}}", "{{asset 'contact_block_3_image.svg'}}", "{{asset 'contact_block_4_image.svg'}}"
     ],
     imageHeight: "{{settings.contact_block_image_height}}",
     numberColumns: {{settings.number_contact_block_columns}},

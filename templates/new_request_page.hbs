@@ -4,7 +4,7 @@
    ====================================================== }}
 
 <div class="bg-gray-100 pt-4 mb-4">
-  <div class="container">
+  <div class="container hc-container">
     <div class="row align-items-center">
       <div class="col font-size-md">
         
@@ -17,10 +17,10 @@
 
       {{~#is settings.header_search_style 'none'}}
         <div class="md:col-4">
-          <div class="search mb-4">
+          <div class="search mb-4" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
             <h2 class="sr-only">{{t 'search'}}</h2>
-            {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_kb_search submit=false placeholder=(dc settings.search_placeholder)}}
-            <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
+            {{search class='form-field mb-0' scoped=settings.scoped_kb_search submit=false placeholder=(dc settings.search_placeholder)}}
+            <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <use xlink:href="#icon-search" />
             </svg>
           </div>
@@ -30,7 +30,7 @@
   </div>
 </div>
 
-<div class="container" id="page-container">
+<div class="container hc-container" id="page-container">
   <div class="row">
     <div class="lg:col-9">
       <div class="form">

@@ -1,942 +1,1093 @@
-# Zendesk Theme Project - Complete Documentation
+# Hilti PE Knowledge Center — Zendesk Theme Documentation
 
-Welcome! This comprehensive guide contains all documentation for the Zendesk theme development project. Follow the sections below in order for complete onboarding and reference.
+> **Single source of truth** for the `fps_zd_skc_pe` repository.
+> Structured with Confluence page markers (`<!-- CONFLUENCE PAGE: ... -->`) — each major section can be copy-pasted as a standalone Confluence page.
+> The Table of Contents serves as the **parent page** linking to all child pages.
 
 ---
+
+<!-- CONFLUENCE PAGE: Table of Contents (Parent Page) -->
 
 ## Table of Contents
 
-1. [Development Setup Guide](#development-setup-guide)
-2. [Local Theme Preview](#local-theme-preview)
-3. [Theme Versioning](#theme-versioning)
-4. [Deployment Setup (Theme Repo Scope)](#deployment-setup-theme-repo-scope)
+| # | Page | Purpose |
+|---|------|---------|
+| 1 | [Project Overview](#1-project-overview) | What this repo is, what it owns, what it does not own |
+| 2 | [Architecture](#2-architecture) | Runtime model, CI/CD model, tech stack |
+| 3 | [Quick Start](#3-quick-start-for-new-team-members) | Day-one checklist |
+| 4 | [Development Environment Setup](#4-development-environment-setup) | Tools, installation, authentication |
+| 5 | [Local Preview Workflow](#5-local-preview-workflow) | How to preview changes before pushing |
+| 6 | [Repository Structure](#6-repository-structure) | Every folder and file explained |
+| 7 | [Template Reference](#7-template-reference) | What each Handlebars template renders |
+| 8 | [Script.js Feature Map](#8-scriptjs-feature-map) | All JS features and how they work |
+| 9 | [Style.css Architecture](#9-stylecss-architecture) | CSS organization and naming |
+| 10 | [Admin Settings Reference](#10-admin-settings-reference) | All manifest.json settings |
+| 11 | [Feature: Page Loading Bar](#11-feature-page-loading-progress-bar) | Red top-bar on load |
+| 12 | [Feature: Announcement Banners](#12-feature-announcement-banners) | Dismissible banners |
+| 13 | [Feature: Language Selector](#13-feature-language-selector) | Country/language modal |
+| 14 | [Feature: Custom Autocomplete](#14-feature-custom-autocomplete-search) | Search enhancement |
+| 15 | [Feature: Back-to-Top Button](#15-feature-back-to-top-button) | Draggable scroll button |
+| 16 | [Feature: Auto-Fingerprint Refresh](#16-feature-auto-fingerprint-refresh) | Settings auto-reload |
+| 17 | [Feature: Browser Language Redirect](#17-feature-browser-language-auto-redirect) | Locale detection |
+| 18 | [Feature: View More/Less Toggle](#18-feature-view-moreless-toggle) | Expandable lists |
+| 19 | [Feature: Category Icon Mapping](#19-feature-category-icon-mapping) | Dynamic icons |
+| 20 | [Feature: Search Results Page](#20-feature-search-results-page) | Redesigned search |
+| 21 | [Branching and Workflow](#21-branching-commits-and-workflow) | Daily dev process |
+| 22 | [Versioning and Release](#22-versioning-and-release) | Semver automation |
+| 23 | [Deployment Runbook](#23-deployment-runbook) | Deploy and rollback |
+| 24 | [Testing](#24-testing) | Property-based tests |
+| 25 | [Troubleshooting](#25-troubleshooting) | Common issues |
+| 26 | [Governance](#26-governance-and-handover-boundaries) | Repo boundaries |
 
 ---
 
-## Deployment Setup (Theme Repo Scope)
+<!-- CONFLUENCE PAGE: 1. Project Overview -->
 
-This repository is intentionally scoped to Zendesk theme lifecycle only.
+## 1. Project Overview
 
-What this repository owns:
+### What is this project?
 
-- Theme versioning and packaging
-- Theme backup, deploy, and rollback execution
-- Branch and production deployment safeguards
+This repository contains the **Zendesk Help Center custom theme** for the **Hilti PROFIS Engineering Software Knowledge Center** (PE SKC). It powers the customer-facing help site at `help.profisengineering.hilti.com`.
 
-What this repository does not own:
+### What the theme controls
 
-- External automated validation orchestration
-- Jira integration and release ticket updates
-- Confluence publishing and release report generation
+- Visual appearance of all Help Center pages (home, categories, sections, articles, search, community, requests)
+- Client-side behavior (search autocomplete, language switching, banners, navigation)
+- Admin-configurable settings (colors, layout, toggles) via Zendesk Theme Editor
+- CI/CD pipeline for shipping theme changes to production
 
-### Pipeline stages
+### What is NOT in this repository
 
-The CI/CD stages in this repository run in this order:
+| Out of scope | Where it lives |
+|---|---|
+| Help Center article content | Zendesk Guide CMS |
+| Cross-repo release orchestration | External pipelines |
+| Jira ticket automation | External tooling |
+| Confluence release reports | External pipelines |
+| User authentication/SSO | Zendesk/Identity provider |
 
-1. `release`
-2. `backup`
-3. `deploy`
+### Key facts
 
-### Branch strategy
+| Property | Value |
+|---|---|
+| Theme name | Hilti [SKC] - PE Theme 2026 |
+| Current version | `manifest.json` line 4 |
+| Zendesk API version | 3 |
+| Default locale | `en-us` |
+| GitLab project | `bu-f-ps/sw-support-group/fps_zd_skc_pe` |
+| Author/Maintainer | Zenplates / Kalidas Janardhanan |
 
-There are two deployment paths:
+---
 
-1. **Main branch path (production)**
-   - Optional version release
-   - Production backup
-   - Manual production deploy (confirmation required)
-   - Manual production rollback (if required)
+<!-- CONFLUENCE PAGE: 2. Architecture -->
 
-2. **Current/any non-main branch path (preview)**
-   - Manual branch deploy (confirmation required)
+## 2. Architecture
 
-### End-to-end workflow
+### Runtime model
 
-```mermaid
-flowchart TD
-    A[Pipeline Start] --> B{Default branch?}
+Zendesk renders pages **server-side** using Handlebars templates. There is no local web server.
 
-    B -->|Yes| C[theme_backup_production]
-    C --> D[theme_deploy_production\nmanual + DEPLOY_CONFIRM]
-    D --> E[Optional: theme_rollback_production\nmanual + ROLLBACK_CONFIRM]
+- `manifest.json` + `templates/*.hbs` + `translations/*.json` → Zendesk Rendering Engine → HTML
+- `style.css` → `<link rel="stylesheet">`
+- `script.js` → `<script src="...">`
+- `assets/*` → CDN URLs via `{{asset 'filename'}}`
 
-    B -->|No| F[theme_deploy_branch\nmanual + DEPLOY_CONFIRM_BRANCH]
+### Tech stack
+
+| Layer | Technology |
+|---|---|
+| Templating | Handlebars (Zendesk Guide flavor) |
+| Styling | Plain CSS (~21,000 lines, no preprocessor) |
+| JavaScript | Vanilla ES5 IIFEs, no bundler |
+| Fonts | Hilti brand (self-hosted .woff via assets) |
+| External deps | jQuery 3.6.0, Font Awesome 6.4.0, Alpine.js |
+| Testing | Node.js test runner + fast-check + jsdom |
+| CI/CD | GitLab CI + zcli (Zendesk CLI) |
+
+### CI/CD pipeline
+
+```
+Stages: release → backup → deploy
+
+Default branch:  theme_version_release → theme_backup_production → theme_deploy_production
+                                                                  → theme_rollback_production
+Feature branches: theme_deploy_branch (preview)
 ```
 
-### Required deployment variables
+All production jobs require manual trigger + confirmation variables.
 
-Required in CI for deploy and rollback jobs:
+---
 
-- `ZD_SUBDOMAIN`
-- `ZD_EMAIL`
-- `ZD_API_TOKEN`
+<!-- CONFLUENCE PAGE: 3. Quick Start for New Team Members -->
 
-Production deploy confirmation:
+## 3. Quick Start for New Team Members
 
-- `DEPLOY_CONFIRM=DEPLOY_TO_PROD`
+| Step | Action | Verification |
+|---|---|---|
+| 1 | Get GitLab repository access | Can clone the repo |
+| 2 | Get Zendesk Help Center admin access | Can see Theme Editor at `/hc/admin` |
+| 3 | Install Git, Node.js (LTS), npm | `git --version`, `node --version` |
+| 4 | Install Zendesk CLI | `zcli --version` |
+| 5 | Clone repo and `npm ci` | Dependencies installed |
+| 6 | Authenticate zcli | `zcli themes:list` shows themes |
+| 7 | Run `zcli themes:preview` | Preview URL loads in browser |
+| 8 | Create a branch, tweak CSS | Preview reflects change |
+| 9 | Open merge request | Pipeline runs |
 
-Branch deploy confirmation:
+**Estimated time:** 30–60 minutes.
 
-- `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
+---
 
-Production rollback confirmation:
+<!-- CONFLUENCE PAGE: 4. Development Environment Setup -->
 
-- `ROLLBACK_CONFIRM=ROLLBACK_TO_PROD`
+## 4. Development Environment Setup
 
-### Quick Runbook
+### Prerequisites
 
-Use this runbook for standard deployment operations in GitLab.
+| Tool | Version | Purpose |
+|---|---|---|
+| Git | Latest | Version control |
+| Node.js | LTS (20+) | Tooling runtime |
+| npm | Bundled | Dependency management |
+| zcli | 1.0.0-beta.56 | Theme preview/deploy |
+| VS Code | Recommended | IDE |
 
-#### VS Code task: interactive branch deployment via GitLab
+### Installation steps
 
-Use VS Code task `Zendesk: Trigger GitLab Branch Deploy (Interactive)` to launch a GitLab pipeline from your terminal workflow.
+```bash
+# 1. Clone
+git clone git@ssh-git.hilti.com:7999/bu-f-ps/sw-support-group/fps_zd_skc_pe.git
+cd fps_zd_skc_pe
 
-Interactive flow:
+# 2. Node.js (macOS)
+brew install node
 
-1. Select branch from remote branch list.
-2. Select deployment type: `new` or `update`.
-3. If `new`, auto-generate theme name (max 50 chars) and allow optional edit.
-4. If `update`, provide existing `themeId`.
-5. Trigger GitLab pipeline with selected inputs.
+# 3. Zendesk CLI
+npm install -g @zendesk/zcli
 
-Required local variable for the trigger task:
+# 4. Authenticate
+zcli login -i
+# Subdomain: hiltiprofisengineering
+# Email: your.email@hilti.com
+# API Token: (from Zendesk Admin → API → Tokens)
 
-- `GITLAB_TRIGGER_TOKEN`
-
-Optional local variables for the trigger task:
-
-- `GITLAB_PROJECT_PATH` (defaults from `origin` remote)
-- `GITLAB_API_URL` (default: `https://git.hilti.com/api/v4`)
-
-Pipeline variables sent automatically by the task:
-
-- `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
-- `DEPLOY_MODE` (`new` or `update`)
-- `ZD_THEME_NAME` (for `new` mode)
-- `ZD_THEME_ID` (for `update` mode)
-
-#### 1) Main branch production deployment
-
-Pre-checks:
-
-- Confirm branch is the default branch.
-- Ensure backup job has completed successfully.
-
-Set CI/CD variables for the manual deploy job:
-
-```text
-ZD_SUBDOMAIN=<your_subdomain>
-ZD_EMAIL=<service_account_email>
-ZD_API_TOKEN=<api_token>
-DEPLOY_CONFIRM=DEPLOY_TO_PROD
+# 5. Project dependencies
+npm ci
 ```
 
-Run order:
+No build step needed — theme uses plain CSS and vanilla JS.
 
-1. `theme_backup_production`
-2. `theme_deploy_production` (manual)
+---
 
-Success criteria:
+<!-- CONFLUENCE PAGE: 5. Local Preview Workflow -->
 
-- Deploy job succeeds.
+## 5. Local Preview Workflow
 
-#### 2) Current/any non-main branch deployment (preview)
+### How it works
 
-Pre-checks:
+zcli uploads your local files to Zendesk's servers → provides preview URL → renders remotely with real Help Center data.
 
-- Confirm branch is not the default branch.
-
-Set CI/CD variables for the manual deploy job:
-
-```text
-ZD_SUBDOMAIN=<your_subdomain>
-ZD_EMAIL=<service_account_email>
-ZD_API_TOKEN=<api_token>
-DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH
+```bash
+zcli themes:preview
+# → Uploading theme... Ok
+# → Preview: http://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start
 ```
 
-Run order:
+Changes auto-upload on file save. Stop with `Ctrl+C`.
 
-1. `theme_deploy_branch` (manual)
+### Key points
 
-Success criteria:
+- Preview is **remote** (not a local server) — needs internet
+- Git push ≠ deploy — pushing doesn't deploy to Zendesk
+- One preview session at a time per account
+- If custom domain doesn't load, use `.zendesk.com` URL
 
-- Deploy job succeeds.
+---
 
-#### 3) Production rollback checklist
+<!-- CONFLUENCE PAGE: 6. Repository Structure -->
 
-When to use:
+## 6. Repository Structure
 
-- Main deployment failed or introduced production instability.
-
-Set CI/CD variables for rollback job:
-
-```text
-ZD_SUBDOMAIN=<your_subdomain>
-ZD_EMAIL=<service_account_email>
-ZD_API_TOKEN=<api_token>
-ROLLBACK_CONFIRM=ROLLBACK_TO_PROD
+```
+fps_zd_skc_pe/
+├── manifest.json              # Theme settings schema and defaults
+├── script.js                  # Main client-side JavaScript
+├── style.css                  # All styles (~21,000 lines)
+├── package.json               # npm scripts (version/deploy/test)
+├── .gitlab-ci.yml             # CI/CD pipeline
+├── templates/                 # Handlebars page templates (20 files)
+│   ├── document_head.hbs      #   <head>: meta, fonts, loading bar, consent, icons
+│   ├── header.hbs             #   Nav, logo, search, language modal
+│   ├── footer.hbs             #   Footer, social links, back-to-top
+│   ├── home_page.hbs          #   Banners, hero, categories, blocks
+│   ├── article_page.hbs       #   3-col layout, ToC, voting, sharing
+│   ├── category_page.hbs      #   Category with sections
+│   ├── section_page.hbs       #   Section with articles
+│   ├── search_results.hbs     #   Search with filters + autocomplete
+│   └── ...                    #   error, request, community pages
+├── assets/                    # Static files (115 items, code-managed)
+│   ├── *.svg (62)             #   Icons
+│   ├── *.js (34)              #   Extension scripts (minified)
+│   ├── *.woff (4)             #   Hilti brand fonts
+│   ├── *.jpg (6)              #   Hero/background images
+│   ├── fingerprint.js         #   Hash functions (used by tests)
+│   └── script.js              #   COPY of root script.js
+├── settings/                  # Admin-uploadable (favicon.png, logo.svg)
+├── translations/              # Locale JSON files
+├── tests/                     # Property-based tests (fast-check + jsdom)
+└── tooling/
+    ├── scripts/               # version, deploy, backup, rollback scripts
+    └── config/                # brand-theme-map.json
 ```
 
-Run order:
+### Critical rule: script.js duplication
 
-1. Verify latest backup artifact exists.
-2. Trigger `theme_rollback_production` (manual).
-3. Share rollback outcome in release channel/ticket.
+`script.js` (root) and `assets/script.js` **must stay in sync**. Zendesk loads from `assets/`. Always copy after editing.
 
-### DevOps Standardization Handover
+### What to change where
 
-To keep this repository theme-only and aligned with Hilti governance practices, DevOps should own validation/reporting integration in the external validation repository.
+| Goal | File(s) |
+|---|---|
+| Page layout/structure | `templates/*.hbs` |
+| Client-side behavior | `script.js` + `assets/script.js` |
+| Colors, spacing, fonts | `style.css` |
+| Admin settings | `manifest.json` |
+| New image/icon | `assets/` + `{{asset 'filename'}}` in template |
+| Deployment | `.gitlab-ci.yml` or `tooling/scripts/` |
+| Translations | `translations/*.json` |
 
-Recommended standardization actions:
+---
 
-1. Keep production approval workflow outside this repo with release and quality approvers.
-2. Keep Jira and Confluence reporting automation in the external validation pipeline only.
-3. Enforce protected production environments and controlled approver groups in GitLab.
-4. Preserve audit evidence in release tooling: commit SHA, approver trail, deployment logs, and rollback evidence.
-5. Maintain environment separation (Dev/QA/Pre-Prod/Prod) and avoid adding test/report orchestration back into this theme repo.
+<!-- CONFLUENCE PAGE: 7. Template Reference -->
 
-Reference governance pages (Hilti internal):
+## 7. Template Reference
+
+### Template-to-page mapping
+
+| Template | URL pattern | Renders |
+|---|---|---|
+| `document_head.hbs` | All pages (`<head>`) | Meta, fonts, loading bar, consent, icon map, fingerprint |
+| `header.hbs` | All pages (body top) | Nav, logo, tagline, search, language modal, user menu |
+| `footer.hbs` | All pages (body bottom) | Footer, social, copyright, extension scripts, back-to-top |
+| `home_page.hbs` | `/hc/{locale}` | Banners, hero + search, category blocks, custom blocks |
+| `article_page.hbs` | `/hc/{locale}/articles/{id}` | Breadcrumbs, sidebar, article body, ToC, voting |
+| `category_page.hbs` | `/hc/{locale}/categories/{id}` | Sections grid, sidebar |
+| `section_page.hbs` | `/hc/{locale}/sections/{id}` | Article list, sidebar |
+| `search_results.hbs` | `/hc/{locale}/search?query=...` | Search bar, filters, result cards |
+| `new_request_page.hbs` | `/hc/{locale}/requests/new` | Support ticket form |
+| `request_page.hbs` | `/hc/{locale}/requests/{id}` | Ticket detail |
+| `requests_page.hbs` | `/hc/{locale}/requests` | Ticket list |
+| `error_page.hbs` | Invalid URLs | Error message |
+| Community templates (5) | `/hc/{locale}/community/...` | Topics, posts, new post |
+
+### Render order
+
+```
+1. document_head.hbs → <head>
+2. header.hbs        → top of <body>
+3. [page template]   → main content
+4. footer.hbs        → bottom of <body>
+```
+
+### Key Handlebars helpers
+
+| Helper | Example |
+|---|---|
+| `{{settings.identifier}}` | `{{settings.hero_heading}}` |
+| `{{asset 'file'}}` | `{{asset 'logo.svg'}}` → CDN URL |
+| `{{t 'key'}}` | Translation string |
+| `{{dc 'key'}}` | Dynamic Content (admin translations) |
+| `{{#if ...}}` / `{{#is ... 'val'}}` / `{{#isnt ... 'val'}}` | Conditionals |
+| `{{breadcrumbs}}`, `{{search}}`, `{{subscribe}}` | Built-in widgets |
+| `{{help_center.url}}`, `{{help_center.locale}}` | Context vars |
+
+---
+
+<!-- CONFLUENCE PAGE: 8. Script.js Feature Map -->
+
+## 8. Script.js Feature Map
+
+`script.js` (~2400 lines) is organized as independent IIFEs. Each feature block can be read in isolation.
+
+### Feature index
+
+| # | Feature | Purpose | Trigger |
+|---|---------|---------|---------|
+| 1 | Custom Autocomplete | Search suggestions from API | `[data-custom-autocomplete]` |
+| 2 | Small Helpers | Focus restore, template rendering, share popups | DOMContentLoaded |
+| 3 | Category Icon Mapping | Replace default icons with SVG map | DOMContentLoaded |
+| 4 | View More/Less | Collapse long lists (>8 items) | DOMContentLoaded + MutationObserver |
+| 5 | New Request Page UX | Multi-select search, field grouping | DOMContentLoaded |
+| 6 | Active Page Highlighting | Bold active category in sidebar | DOMContentLoaded |
+| 7 | Article Sidebar Logic | Show only parent category sections | DOMContentLoaded |
+| 8 | Global Empty State | Replace "empty" text with styled block | DOMContentLoaded |
+| 9 | Category Sidebar Expand | First 5 items + expand toggle | DOMContentLoaded |
+| 10 | Announcement Banners | Dismiss with fingerprint + sessionStorage | DOMContentLoaded |
+| 11 | Language Switcher Modal | Country/language picker + API check | Click on trigger |
+| 12 | Settings Fingerprint Refresh | Auto-reload on settings change | 60s interval |
+| 13 | Search Results Enhancements | Filters, sorting, keyword highlight | DOMContentLoaded (search page) |
+
+### Conventions
+
+- **ES5 syntax** — `var`, `function`, no arrow functions
+- **IIFEs with `;`** — `;(function() { 'use strict'; ... })();`
+- **No bundler/modules** — served as-is by Zendesk
+- **Defensive DOM queries** — always check `if (!el) return`
+- **After editing:** copy `script.js` → `assets/script.js`
+
+---
+
+<!-- CONFLUENCE PAGE: 9. Style.css Architecture -->
+
+## 9. Style.css Architecture
+
+Single file (~21,000 lines), no preprocessor, uses CSS custom properties.
+
+### Design tokens
+
+```css
+:root {
+  --color-primary: rgba(210, 5, 30, 1);      /* Hilti Red */
+  --color-tertiary: rgba(171, 1, 21, 1);     /* Hilti Dark Red */
+  --color-gray-100: rgba(248, 248, 247, 1);  /* Light BG */
+  --color-gray-200: rgba(239, 235, 229, 1);  /* Borders */
+  --font-heading: 'Hilti Small Bold', ...;
+  --font-text: 'Hilti Small Roman', ...;
+  --breakpoint-sm/md/lg/xl: 576/768/992/1200px;
+}
+```
+
+### Major sections
+
+| Section | Class prefix | Purpose |
+|---|---|---|
+| Reset | HTML elements | Browser normalization |
+| Search | `.hc-autocomplete-*` | Custom autocomplete panel |
+| Buttons | `.btn-*` | Primary/secondary/outline |
+| Grid | `.container`, `.row`, `.col-*` | Layout |
+| Banners | `.announcement-banner*` | Dismissible banners |
+| Language Modal | `.hilti-lang-*` | Modal overlay + form |
+| Article Page | `.article-*` | 3-col layout, ToC |
+| Search Results | `.hc-search-*` | Filters, result cards |
+| Footer | `.kc-footer`, `.footer-*` | Custom footer |
+| Back-to-Top | `.article-back-to-top` | Floating button |
+| Loading Bar | `.hilti-page-loading-bar` | Page load indicator |
+| Responsive | `@media (max-width: ...)` | Mobile/tablet |
+
+### Naming conventions
+
+- BEM-like: `.announcement-banner__dismiss`
+- Hilti-namespaced: `.hilti-lang-*`, `.hilti-page-loading-bar`
+- Utilities: `.flex`, `.mt-6`, `.hidden`
+
+---
+
+<!-- CONFLUENCE PAGE: 10. Admin Settings Reference -->
+
+## 10. Admin Settings Reference
+
+Settings are defined in `manifest.json` → appear in Zendesk Admin → Theme Settings. Templates consume them as `{{settings.identifier}}`.
+
+### Settings groups
+
+| Group | Key settings | Consumed in |
+|---|---|---|
+| Brand | `favicon`, `logo`, `logo_height`, `tagline` | `header.hbs` |
+| Search | `header_search_style`, `instant_search`, `scoped_kb_search`, `search_placeholder` | `header.hbs`, `search_results.hbs` |
+| Header | `header_layout`, `fixed_header`, `sticky_header`, `nav_style`, `nav_breakpoint`, links 1-3 | `header.hbs` |
+| Visibility | `show_submit_a_request_link`, `hide_sign_in_link`, `hide_article_downvote_cta` | `header.hbs`, `article_page.hbs` |
+| General | `notification_location`, `back_to_top_link_style`, `boxed_layout` | Various |
+| Banners | `release_banner_*` (enabled/icon/content/version/colors), `notification_banner_*` | `home_page.hbs` |
+| Home Page | `hero_heading`, `popular_keywords`, `promoted_video_ids` | `home_page.hbs` |
+| Custom Blocks | `custom_block_style`, blocks 1-4 (title/description/URL) | `home_page.hbs` |
+| Article | `article_sidebar`, `show_article_voting/sharing/comments`, lightboxes, video player | `article_page.hbs` |
+| Footer | `footer_shape`, social links, footer links | `footer.hbs` |
+| Translations | `use_translations` (enables `{{dc ...}}`) | All templates |
+
+### Adding a new setting
+
+1. Add variable to appropriate group in `manifest.json`
+2. Use in template: `{{settings.your_setting}}` or `{{#if settings.your_setting}}`
+3. Preview to verify it appears in Theme Editor
+
+---
+
+<!-- CONFLUENCE PAGE: 11. Feature: Page Loading Progress Bar -->
+
+## 11. Feature: Page Loading Progress Bar
+
+### What it does
+
+A 3px red bar at the viewport top animates during page load and on internal link clicks.
+
+### How it works
+
+1. `document_head.hbs` injects inline `<style>` + `<script>` early in `<head>`
+2. Bar element created → class `is-animating` added → width animates to 85%
+3. On `window.load` → class `is-complete` → fills to 100%, fades out, removed after 700ms
+4. On internal link click → new bar instance created and animates before navigation
+
+### Excluded links
+
+- Hash links (`#anchor`)
+- `javascript:` links
+- `target="_blank"` links
+- Modifier-key clicks (Ctrl/Cmd/Shift)
+
+### CSS classes
+
+| Class | Effect |
+|---|---|
+| `.hilti-page-loading-bar` | Fixed, top:0, 3px height, red, z-index:9999999 |
+| `.is-animating` | width: 85% (1.2s cubic-bezier) |
+| `.is-complete` | width: 100%, opacity: 0, fades out |
+
+### Files
+
+- `templates/document_head.hbs` (inline style + script)
+- `style.css` (fallback rules)
+
+---
+
+<!-- CONFLUENCE PAGE: 12. Feature: Announcement Banners -->
+
+## 12. Feature: Announcement Banners
+
+### What it does
+
+Two independently configurable, dismissible banners on the home page:
+- **Release Banner** — product release announcements
+- **Notification Banner** — general alerts
+
+### Admin settings (Banners group)
+
+| Setting | Type | Purpose |
+|---|---|---|
+| `release_banner_enabled` | checkbox | Show/hide |
+| `release_banner_icon` | list | Icon type (alert_error/info/positive/warning/notification/announcement) |
+| `release_banner_content` | text | Message (supports HTML) |
+| `release_banner_link_url` | text | "Learn more" link |
+| `release_banner_version` | text | **Change to reset dismiss for all users** |
+| `release_banner_bg_color` | list | Color preset (red/dark_gray/blue/green/orange/black/white/custom) |
+| `release_banner_custom_bg_color` | color | Custom color |
+| `release_banner_text_color` | color | Text color |
+
+Notification banner has identical settings with `notification_banner_*` prefix.
+
+### Dismiss mechanism
+
+- Storage: `sessionStorage` key `banner_dismissed_{id}_{fingerprint}_{version}`
+- Fingerprint: FNV hash of normalized banner content text
+- Dismiss resets each browser session
+- Changing `version` in admin invalidates all previous dismissals
+
+### Flash prevention
+
+`document_head.hbs` checks `sessionStorage` BEFORE banner HTML renders. If dismissed, CSS rule injected immediately → no flash of dismissed content.
+
+### Files
+
+| File | Content |
+|---|---|
+| `templates/home_page.hbs` | Banner HTML + color logic |
+| `templates/document_head.hbs` | Early dismiss script |
+| `script.js` | Dismiss handler, focus management |
+| `style.css` | `.announcement-banner*` |
+| `assets/fingerprint.js` | Hash functions |
+| `tests/banner-framework-frontend.test.mjs` | Property-based tests |
+
+---
+
+<!-- CONFLUENCE PAGE: 13. Feature: Language Selector -->
+
+## 13. Feature: Language Selector
+
+### What it does
+
+Modal dialog for choosing country and language. Checks article availability before navigation on article pages.
+
+### User flow
+
+1. User clicks language trigger (header) → modal opens
+2. Select country → language dropdown populates
+3. Select language → Save enables
+
+**On non-article pages:** Save → immediate redirect to selected locale URL.
+
+**On article pages:** Save → API check (`/api/v2/help_center/articles/{id}/translations/{locale}`)
+- Available → redirect to translated article
+- Not available → inline error inside modal: *"This article is not available in the selected region."*
+
+### Inline error
+
+- Element: `#hiltiLangError` in `header.hbs` (`role="alert"`, `aria-live="assertive"`)
+- Shown via `showInlineError()` / hidden via `hideInlineError()`
+- Auto-clears on country or language change
+- Styling: `.hilti-lang-error` (red left border, light red bg, fade-in)
+
+### Persistence
+
+- Selected country: `localStorage` key `hilti.country.selection`
+- Modal pre-populates on return visits
+
+### Adding a country/language
+
+In `script.js`, find `COUNTRY_LANGUAGE_MAP` and add:
+```javascript
+"XX": { name: "Country Name", languages: [{ locale: "xx", label: "Language" }] }
+```
+
+### Files
+
+| File | Content |
+|---|---|
+| `templates/header.hbs` | Modal HTML, error element |
+| `script.js` | Language switcher IIFE (country map, API check, error helpers) |
+| `style.css` | `.hilti-lang-*` classes |
+
+---
+
+<!-- CONFLUENCE PAGE: 14. Feature: Custom Autocomplete Search -->
+
+## 14. Feature: Custom Autocomplete Search
+
+### What it does
+
+Replaces Zendesk native instant search with custom autocomplete showing article suggestions with breadcrumb context, keyboard nav, and term highlighting.
+
+### Where it's active
+
+Any search wrapper with `data-custom-autocomplete="articles"`:
+- `search_results.hbs` (main search bar)
+- `community_topic_page.hbs` (when header search disabled)
+
+### How it works
+
+1. User types ≥2 chars → debounced API call (300ms)
+2. `GET /api/v2/help_center/articles/search.json?query=...&locale=...`
+3. Results rendered in floating panel with breadcrumbs + `<mark>` highlights
+4. Keyboard: ↓/↑ navigate, Enter selects, Escape closes
+5. Click suggestion → navigate to article
+
+### Performance
+
+- **In-memory cache** — repeated queries skip API
+- **Breadcrumb map** — fetched once, reused
+- **Debounced input** — prevents API spam
+- **Fixed positioning** — panel stays in viewport
+
+### Fallback
+
+API failure → "Suggestions unavailable. Press Enter to search."
+
+### Files
+
+- `script.js` (Custom Autocomplete IIFE, first ~270 lines)
+- `style.css` (`.hc-autocomplete-*` classes)
+
+---
+
+<!-- CONFLUENCE PAGE: 15. Feature: Back-to-Top Button -->
+
+## 15. Feature: Back-to-Top Button
+
+### What it does
+
+Floating circular button (up arrow) appears after scrolling 1 viewport height. Click to scroll to top. **Draggable** — user can reposition it anywhere.
+
+### Behavior
+
+| Action | Result |
+|---|---|
+| Scroll past viewport height | Button appears |
+| Click button | Smooth-scroll to top |
+| Drag button | Repositions (stays in user-chosen spot) |
+| Near footer (not dragged) | Auto-positions above footer |
+| Keyboard Enter/Space | Scroll to top |
+
+### Drag detection
+
+- Uses `pointerdown`/`pointermove`/`pointerup` events
+- If pointer moves ≥5px → drag (doesn't trigger click)
+- After drag, `userDragged = true` → disables auto-positioning
+
+### Visual
+
+- Cursor: `grab` (idle) / `grabbing` (dragging)
+- Title tooltip: "Drag to move, click to scroll to top"
+- 50×50px, red border, white background
+
+### Files
+
+- `templates/footer.hbs` (inline script creates button)
+- `style.css` (`.article-back-to-top`)
+
+Note: Old article-page-only version (from `article_page.hbs`) removed in favor of this site-wide implementation.
+
+---
+
+<!-- CONFLUENCE PAGE: 16. Feature: Auto-Fingerprint Refresh -->
+
+## 16. Feature: Auto-Fingerprint Refresh
+
+### What it does
+
+When admin changes theme settings and saves, visitors with the page open get an automatic refresh within ~60 seconds.
+
+### How it works
+
+1. `document_head.hbs` renders `<meta name="theme-settings-fingerprint" content="...">` with key settings values
+2. `script.js` polls every ~60s: fetch page → extract fingerprint → compare
+3. If different → `window.location.replace()` (hard refresh)
+4. `sessionStorage` guard prevents infinite reload loops
+
+### Fingerprint content
+
+```
+hide_sign_in_link=0|1;show_submit_a_request_link=0|1;show_article_submit_cta=0|1
+```
+
+### Files
+
+- `templates/document_head.hbs` (meta tag)
+- `script.js` (polling logic)
+
+---
+
+<!-- CONFLUENCE PAGE: 17. Feature: Browser Language Auto-Redirect -->
+
+## 17. Feature: Browser Language Auto-Redirect
+
+### What it does
+
+On first visit, detects browser language and redirects to matching locale if different from current URL.
+
+### Guards (prevent loops)
+
+| Guard | Mechanism |
+|---|---|
+| `localStorage` | `hilti.browser.lang.applied` — set after first redirect |
+| URL param | `__lang_redirected=1` — fallback |
+| Private mode | If localStorage fails, redirect skipped |
+| Manual override | `hilti.country.selection` (from language modal) takes priority |
+
+### Files
+
+- `script.js` (within language switcher section)
+
+---
+
+<!-- CONFLUENCE PAGE: 18. Feature: View More/Less Toggle -->
+
+## 18. Feature: View More/Less Toggle
+
+### What it does
+
+Collapses long lists (>8 items) with "View more" / "View less" toggle button.
+
+### Activation
+
+- **Automatic:** Any `<ul>` in main content with >8 `<li>` children
+- **Explicit:** `<ul data-view-toggle>` attribute
+
+### Features
+
+- Smooth max-height animation (respects `prefers-reduced-motion`)
+- MutationObserver for lazy-loaded content
+- Auto-hides toggle if items drop below threshold
+- Scroll compensation for sticky header on collapse
+- `aria-expanded` for accessibility
+
+### Files
+
+- `script.js` (View More/Less IIFE)
+- `style.css` (`.view-toggle-btn`)
+
+---
+
+<!-- CONFLUENCE PAGE: 19. Feature: Category Icon Mapping -->
+
+## 19. Feature: Category Icon Mapping
+
+### What it does
+
+Each Help Center category displays a custom SVG icon (instead of Zendesk's default). Icons are mapped by category ID to asset URLs.
+
+### How it works
+
+1. `document_head.hbs` injects `window.CATEGORY_ICON_MAP` — an object mapping category IDs to `{{asset 'icon.svg'}}` URLs
+2. On DOMContentLoaded, `script.js` reads the map and replaces default category icons in the DOM
+3. Unknown categories get `window.DEFAULT_CATEGORY_ICON` (broken.svg)
+
+### Adding/changing a category icon
+
+1. Place SVG in `assets/` folder
+2. In `document_head.hbs`, add to `window.CATEGORY_ICON_MAP`:
+   ```javascript
+   'YOUR_CATEGORY_ID': "{{asset 'your-icon.svg'}}"
+   ```
+3. Preview to verify
+
+### Current mappings
+
+| Category | Icon file |
+|---|---|
+| FAQ | `faq.svg` |
+| What's New | `announcement.svg` |
+| Getting Started | `Launcher-App-PROFIS-Engineering-Suite.svg` |
+| PE Premium | `subscription.svg` |
+| Anchoring to Concrete | `Anchoring-to-Concrete.svg` |
+| Post-installed Rebar | `C2C_new.svg` |
+| And 9 more... | See `document_head.hbs` |
+
+### Files
+
+- `templates/document_head.hbs` (icon map definition)
+- `script.js` (icon injection logic)
+- `assets/*.svg` (icon files)
+
+---
+
+<!-- CONFLUENCE PAGE: 20. Feature: Search Results Page -->
+
+## 20. Feature: Search Results Page
+
+### What it does
+
+Redesigned search experience with filter sidebar, keyword highlighting, and clean result cards.
+
+### Features
+
+- **Filter sidebar:** Types (articles/posts), Categories, Sections — client-side built from result metadata
+- **Keyword highlighting:** `<mark>` tags on matched terms in results
+- **Sorting:** Relevance (default) and Recent options
+- **Result cards:** Title, snippet, breadcrumb path, metadata
+- **Custom autocomplete:** Same autocomplete panel as other search bars
+- **Empty state:** Styled message when no results found
+
+### Files
+
+- `templates/search_results.hbs` (page structure, sidebar, result layout)
+- `script.js` (Search Results Enhancements IIFE)
+- `style.css` (`.hc-search-*` classes)
+
+---
+
+<!-- CONFLUENCE PAGE: 21. Branching, Commits, and Workflow -->
+
+## 21. Branching, Commits, and Workflow
+
+### Branch naming
+
+```
+FPSKB-{ticket}-{short-description}
+# Example: FPSKB-273-langswitch
+```
+
+Always branch from the latest default branch:
+```bash
+git checkout main && git pull
+git checkout -b FPSKB-XXX-description
+```
+
+### Commit convention
+
+Conventional commits — version automation depends on these:
+
+```
+feat: add language selector modal       → minor bump
+fix: correct banner dismiss on Safari   → patch bump
+feat!: redesign search results page     → major bump
+chore: update documentation             → patch bump
+```
+
+### Daily workflow
+
+1. Pull latest main
+2. Create feature branch
+3. Implement change
+4. Preview with `zcli themes:preview`
+5. Commit with conventional message
+6. Push and open merge request
+7. Review CI pipeline results
+8. Merge after approval
+
+### Merge request guidelines
+
+- Title: concise, under 70 characters
+- Description: what changed, what was tested, screenshots if UI
+- Always squash-merge to keep history clean
+
+---
+
+<!-- CONFLUENCE PAGE: 22. Versioning and Release -->
+
+## 22. Versioning and Release
+
+### How versioning works
+
+`tooling/scripts/version-theme.mjs` analyzes commits since last tag and bumps `manifest.json` version.
+
+### Rules
+
+| Commit type | Bump |
+|---|---|
+| `feat:` | Minor (0.X.0) |
+| `fix:`, other | Patch (0.0.X) |
+| `feat!:` or `BREAKING CHANGE:` in body | Major (X.0.0) |
+
+Tags use prefix `theme-v` (e.g., `theme-v0.19.30`).
+
+### Commands
+
+```bash
+npm run version:theme:dry    # Preview what would happen
+npm run version:theme        # Auto-detect bump type from commits
+npm run version:theme:patch  # Force patch bump
+npm run version:theme:minor  # Force minor bump
+npm run version:theme:major  # Force major bump
+```
+
+### Manual release flow
+
+```bash
+npm run version:theme
+git add manifest.json
+git commit -m "chore: bump theme version"
+git push
+```
+
+### Kiro hook (automatic)
+
+When committing via Kiro, a pre-commit hook auto-bumps the patch version in `manifest.json`. Keywords in commit message:
+- `[major]` → major bump
+- `[minor]` → minor bump
+- `[patch]` or none → patch bump
+
+---
+
+<!-- CONFLUENCE PAGE: 23. Deployment Runbook -->
+
+## 23. Deployment Runbook
+
+### Pipeline overview
+
+```
+Stage: release → backup → deploy
+
+Jobs (default branch):
+  theme_version_release      (manual) → bumps version
+  theme_backup_production    (manual) → downloads live theme as ZIP
+  theme_deploy_production    (manual) → deploys to production
+  theme_rollback_production  (manual) → restores from backup
+
+Jobs (feature branch):
+  theme_deploy_branch        (manual or trigger) → preview deploy
+```
+
+### Required CI variables
+
+| Variable | Purpose |
+|---|---|
+| `ZD_SUBDOMAIN` | Zendesk subdomain (e.g., `hiltiprofisengineering`) |
+| `ZD_EMAIL` | Admin email for API auth |
+| `ZD_API_TOKEN` | API token for auth |
+| `DEPLOY_CONFIRM` | Must equal `DEPLOY_TO_PROD` for production deploy |
+| `DEPLOY_CONFIRM_BRANCH` | Must equal `DEPLOY_TO_BRANCH` for branch deploy |
+| `ROLLBACK_CONFIRM` | Must equal `ROLLBACK_TO_PROD` for rollback |
+
+### Branch deploy (preview)
+
+**Option A:** Manual GitLab job
+1. Go to pipeline → Run `theme_deploy_branch`
+2. Set `DEPLOY_CONFIRM_BRANCH=DEPLOY_TO_BRANCH`
+3. Optionally set `DEPLOY_MODE=new|update` and `ZD_THEME_ID`
+
+**Option B:** Interactive local trigger
+```bash
+npm run deploy:gitlab:interactive
+# Requires: GITLAB_TRIGGER_TOKEN env var
+```
+
+### Production deploy
+
+1. Merge feature branch to default branch
+2. Run `theme_backup_production` job (creates backup artifact, 14-day retention)
+3. Run `theme_deploy_production` with `DEPLOY_CONFIRM=DEPLOY_TO_PROD`
+4. Verify Help Center loads correctly
+
+### Production rollback
+
+1. Confirm backup artifact exists from same pipeline
+2. Run `theme_rollback_production` with `ROLLBACK_CONFIRM=ROLLBACK_TO_PROD`
+3. Verify Help Center reverted
+
+### Deploy safeguards
+
+- Production deploy **requires backup** in same pipeline (enforced by script)
+- Theme name limited to 50 characters
+- `resource_group: production` prevents concurrent deploys
+- Manifest.json name is preserved during `update` mode (no accidental rename)
+
+---
+
+<!-- CONFLUENCE PAGE: 24. Testing -->
+
+## 24. Testing
+
+### Framework
+
+- **Runner:** Node.js built-in test runner (`node --test tests/`)
+- **Property testing:** fast-check (generates random inputs to find edge cases)
+- **DOM simulation:** jsdom (simulates browser environment)
+
+### Running tests
+
+```bash
+npm test
+# Runs: node --test tests/
+```
+
+### Test files
+
+| File | What it tests |
+|---|---|
+| `banner-framework-frontend.test.mjs` | Banner dismiss completeness, activation methods, focus routing, storage key derivation, CSS compliance (z-index ≤90), touch targets (≥44px) |
+| `banner-dismiss-reset.test.mjs` | Version change invalidates dismiss, same-version persists, independent banners, focus management, fail-open on storage errors |
+| `preservation.test.mjs` | Regression tests ensuring existing behavior is preserved |
+| `article-dead-spaces.exploration.test.mjs` | Article layout bug exploration |
+| `article-dead-spaces.preservation.test.mjs` | Article layout preservation |
+| `bug-condition-exploration.test.mjs` | Bug condition exploration |
+
+### Helper modules
+
+- `_compute_fps.mjs` — Fingerprint computation helpers
+- `_debug_dismiss.mjs` — Dismiss debugging utilities
+- `_debug_focus.mjs` — Focus routing debugging
+
+### Writing new tests
+
+```javascript
+import { test, describe } from 'node:test';
+import assert from 'node:assert/strict';
+import fc from 'fast-check';
+
+describe('My Feature', () => {
+  test('property: X should always hold', () => {
+    fc.assert(fc.property(
+      fc.string(), // arbitrary input
+      (input) => {
+        // assertion that must hold for all inputs
+        assert.ok(myFunction(input).length >= 0);
+      }
+    ));
+  });
+});
+```
+
+---
+
+<!-- CONFLUENCE PAGE: 25. Troubleshooting -->
+
+## 25. Troubleshooting
+
+### Preview URL doesn't load
+
+**Likely cause:** DNS/network resolution for custom Help Center domain.
+
+```bash
+# Check DNS
+nslookup help.profisengineering.hilti.com
+nslookup hiltiprofisengineering.zendesk.com
+
+# If custom domain fails:
+# - Switch DNS to public resolver (8.8.8.8)
+# - Flush DNS: sudo dscacheutil -flushcache (macOS)
+# - Check VPN routing
+# - Use .zendesk.com URL directly
+```
+
+### zcli authentication issues
+
+```bash
+zcli logout
+zcli login -i
+zcli themes:list   # Should show themes
+```
+
+If token expired: generate new one in Zendesk Admin → API → Tokens.
+
+### CI deploy blocked
+
+Check these in order:
+1. Missing CI variables (`ZD_SUBDOMAIN`, `ZD_EMAIL`, `ZD_API_TOKEN`)
+2. Confirmation variable not set or misspelled
+3. No backup artifact (production deploy requires backup in same pipeline)
+4. Theme name exceeds 50 characters
+
+### Changes not appearing after deploy
+
+- Zendesk CDN may cache for up to 5 minutes
+- Hard-refresh browser (Cmd+Shift+R)
+- Check if the correct theme is published (Zendesk Admin → Guide → Customize)
+
+### script.js changes not working
+
+Remember: Zendesk loads from `assets/script.js`, not root `script.js`. Copy after editing:
+```bash
+cp script.js assets/script.js
+```
+
+### Banner keeps re-appearing after dismiss
+
+- Check if admin changed `release_banner_version` / `notification_banner_version`
+- sessionStorage clears on new browser session — this is intentional
+- Verify the banner content hasn't changed (different content = different fingerprint)
+
+---
+
+<!-- CONFLUENCE PAGE: 26. Governance and Handover Boundaries -->
+
+## 26. Governance and Handover Boundaries
+
+### What stays in this repo
+
+- Theme templates, styles, scripts, and translations
+- Theme admin settings (`manifest.json`)
+- Local preview and validation workflow
+- Version bumping logic
+- GitLab pipeline jobs for release/backup/deploy/rollback
+
+### What stays outside this repo
+
+- Production approval workflow (external governance)
+- Jira/Confluence release reporting
+- Cross-repo release orchestration
+- Enterprise approval processes
+- External quality reporting
+
+### Audit requirements
+
+- Preserve commit SHA traceability
+- Maintain merge request approval records
+- Keep deploy/rollback logs in pipeline artifacts
+- Use protected environments with controlled approver groups
+
+### Reference governance documents (internal)
 
 - BFS Release Management Approval Process
 - BFS Release Approver Management
 - EAS Hilti IT System Operations Standard
 - Digital Onboarding Technical Release Management
 
-## Development Setup Guide
+---
 
-## Complete Onboarding
+## Maintenance Notes
 
-Welcome! This guide walks you through **everything you need** to set up your development environment for the Zendesk theme project. Follow the steps **in order** from top to bottom.
-
-### Section Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Step 1: Clone the Repository](#step-1-clone-the-repository)
-3. [Step 2: Install Node.js](#step-2-install-nodejs)
-4. [Step 3: Install Zendesk CLI (ZCLI)](#step-3-install-zendesk-cli-zcli)
-5. [Step 4: Authenticate with Zendesk](#step-4-authenticate-with-zendesk)
-6. [Step 5: Install GitLab Runner](#step-5-install-gitlab-runner)
-7. [Step 6: Understand Project Structure](#step-6-understand-project-structure)
-8. [Step 7: Git Workflow & Conventional Commits](#step-7-git-workflow--conventional-commits)
-9. [Step 8: Local Theme Preview](#step-8-local-theme-preview)
-10. [Step 9: Version Management](#step-9-version-management)
-11. [Step 10: Common Workflows](#step-10-common-workflows)
-12. [Troubleshooting](#troubleshooting)
-
-### Prerequisites
-
-Before starting, ensure you have:
-
-- ✅ macOS, Linux, or Windows with terminal access
-- ✅ Git installed (`git --version` to verify)
-- ✅ Access to GitLab repository (fork or clone permission)
-- ✅ Zendesk Help Center account access
-
-### Workspace Hygiene (Important)
-
-Keep the repository source-only. Do not commit local runtime artifacts.
-
-Local-only files/folders to keep out of git:
-
-- `.env.local`
-- `node_modules/`
-- `.venv/`
-- `tooling/reports/`
-- `.DS_Store`
-
-If any of these appear locally, remove them before pushing changes.
-
-### Step 1: Clone the Repository
-
-```bash
-# Navigate to your projects folder
-cd ~/Desktop
-
-# Clone the repository
-git clone https://git.hilti.com/BU_FPS/sw-support-group/FPS_ZD_SKC_PE.git
-cd FPS_ZD_SKC_PE
-```
-
-Verify you're in the right folder:
-
-```bash
-pwd
-# Should output: /Users/[username]/Desktop/FPS_ZD_SKC_PE
-
-ls -la
-# Should show: manifest.json, script.js, style.css, templates/, assets/, etc.
-```
-
-### Step 2: Install Node.js
-
-Node.js is required for the version automation system.
-
-#### Check if Node.js is installed
-
-```bash
-node --version
-npm --version
-```
-
-If you see version numbers (v14+), **skip to Step 3**.
-
-#### Install Node.js via Homebrew (macOS)
-
-```bash
-brew install node
-```
-
-#### Verify installation
-
-```bash
-node --version
-npm --version
-```
-
-Expected output: `v25.x.x` or similar (v14+ is fine)
-
-### Step 3: Install Zendesk CLI (ZCLI)
-
-ZCLI is the official tool for previewing and managing Zendesk themes locally.
-
-#### Install via npm
-
-```bash
-npm install -g @zendesk/zcli
-```
-
-#### Check ZCLI version
-
-```bash
-```
-
-Expected output: `@zendesk/zcli/1.0.0-beta.56` or similar
-
-### Step 4: Authenticate with Zendesk
-
-One-time setup to connect ZCLI to your Zendesk account.
-
-#### Run interactive login
-
-```bash
-zcli login -i
-```
-
-This will:
-
-1. Open a browser window
-2. Ask you to sign in to your Zendesk account
-3. Authorize the CLI tool
-4. Store your auth token securely on your machine
-
-#### Verify authentication
-
-```bash
-zcli themes:list
-```
-
-Expected output: List of available themes (should NOT show an error)
-
-If you see authentication errors, try again:
-
-```bash
-zcli logout
-zcli login -i
-```
-
-### Step 5: Install GitLab Runner
-
-GitLab Runner executes your CI/CD pipelines locally. This step is optional but recommended for development.
-
-#### Install via Homebrew (macOS)
-
-```bash
-brew install gitlab-runner
-```
-
-#### Check GitLab Runner version
-
-```bash
-```
-
-#### Register the runner
-
-You'll need a registration token from GitLab. Go to:
-**GitLab Project → Settings → CI/CD → Runners → Create project runner**
-
-Follow the instructions to get the registration command, then run it in your terminal:
-
-```bash
-gitlab-runner register \
-  --url https://git.hilti.com \
-  --token glrt_XXXXXXXXXXXXX
-```
-
-When prompted:
-
-- **Runner name**: `macOS Zendesk Theme Runner`
-- **Executor**: `shell`
-- **Tags**: `macos, shell, node`
-
-#### Start the runner
-
-Run in a **dedicated terminal** (leave it running):
-
-```bash
-gitlab-runner run
-```
-
-You should see output like:
-
-```text
-Listening for connections...
-```
-
-**Leave this terminal open** while you work. It will execute CI jobs when you push to GitLab.
-
-### Step 6: Understand Project Structure
-
-```text
-FPS_ZD_SKC_PE/
-├── manifest.json          # Theme configuration & settings
-├── script.js              # Client-side JavaScript behavior
-├── style.css              # Theme styling (~17K lines)
-├── package.json           # Node.js project metadata
-├── .gitlab-ci.yml         # CI/CD pipeline configuration
-├── templates/             # Handlebars templates (HBS)
-│   ├── document_head.hbs  # HTML <head> injection
-│   ├── header.hbs         # Navigation header
-│   ├── article_page.hbs   # Single article display
-│   ├── footer.hbs         # Footer & theme data
-│   └── ...                # Other pages
-├── assets/                # Images, fonts, icons
-│   ├── Work-in-progress.svg
-│   ├── HiltiSmall*.woff   # Custom fonts
-│   └── ...                # Other assets
-├── translations/          # Language files (JSON)
-│   ├── en-us.json
-│   ├── de.json
-│   └── ...                # 60+ languages
-├── scripts/
-│   └── version-theme.mjs  # Semantic versioning automation
-├── .vscode/
-│   ├── tasks.json         # VS Code tasks (preview, login, etc.)
-│   └── launch.json        # VS Code Run & Debug configs
-└── README.md              # Project overview
-```
-
-**Key files you'll edit:**
-
-- `script.js` - JavaScript functionality
-- `style.css` - Styling & layouts
-- `templates/*.hbs` - Page templates
-- `manifest.json` - Version & theme settings (auto-updated on release)
-
-### Step 7: Git Workflow & Conventional Commits
-
-#### Create a feature branch
-
-Always create a branch for your work:
-
-```bash
-git checkout -b feature/short-description
-```
-
-Example:
-
-```bash
-git checkout -b feature/add-dark-mode
-```
-
-#### Make commits with Conventional Commits format
-
-Your commit messages MUST follow this format for automatic versioning to work:
-
-```text
-type(scope): description
-```
-
-**Allowed types:**
-
-| Type | Version Impact | When to use |
-| --- | --- | --- |
-| `fix:` | PATCH bump | Bug fixes, corrections |
-| `feat:` | MINOR bump | New features, additions |
-| `chore:` | No bump | Docs, config, dependencies |
-| `refactor:` | No bump | Code restructuring |
-| `style:` | No bump | Formatting only |
-
-**Examples:**
-
-```bash
-# Patch bump (bug fix)
-git commit -m "fix: correct empty state icon asset reference"
-
-# Minor bump (new feature)
-git commit -m "feat: add dark mode toggle to theme settings"
-
-# No version change (documentation)
-git commit -m "chore: update README with setup instructions"
-
-# Multiple lines (for breaking changes)
-git commit -m "feat: redesign search page layout
-
-This commit completely redesigns the search page:
-- New responsive grid layout
-- Updated filtering options
-- Improved performance
-
-BREAKING CHANGE: Old CSS class names removed
-Users must update custom CSS overrides.
-See MIGRATION.md for details."
-```
-
-#### View your commits
-
-Before pushing, verify your commit messages are correct:
-
-```bash
-git log --oneline -5
-```
-
-Expected output:
-
-```text
-abc1234 feat: add dark mode toggle
-def5678 fix: correct icon spacing
-ghi9012 fix: resolve breadcrumb styling
-```
-
-#### Push to GitLab
-
-```bash
-git push origin feature/short-description
-```
-
-### Step 8: Local Theme Preview
-
-Preview your changes locally before committing.
-
-#### Ensure ZCLI is authenticated
-
-```bash
-zcli login -i
-```
-
-#### Start preview from VS Code
-
-#### Option A: Using VS Code Tasks (Easiest)
-
-1. Press **⌘Shift+P** (macOS) or **Ctrl+Shift+P** (Linux/Windows)
-2. Type `Tasks: Run Task`
-3. Select `Zendesk: Preview Theme`
-
-#### Option B: Using terminal
-
-```bash
-zcli themes:preview
-```
-
-#### Open the preview URL
-
-You'll see output like:
-
-```text
-Uploading theme... Ok
-Ready https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start 🚀
-```
-
-Click the URL or open in browser:
-
-```text
-https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/start
-```
-
-You'll be taken through Zendesk authentication, then see your live preview.
-
-#### Make changes and see them live
-
-- Edit any file in VS Code
-- The preview auto-syncs your changes
-- Refresh the browser to see updates
-
-#### Stop preview
-
-Press **Ctrl+C** in the terminal, or visit:
-
-```text
-https://hiltiprofisengineering.zendesk.com/hc/admin/local_preview/stop
-```
-
-#### DNS Issues?
-
-If the preview page won't load, see the [Local Theme Preview - Troubleshooting](#troubleshooting-preview) section for DNS troubleshooting.
-
-### Step 9: Version Management
-
-The project uses **Semantic Versioning** with automatic version bumps based on your commit messages.
-
-#### Understanding Versions
-
-- **Development version**: `2.2.10` - your working version in manifest.json
-- **Release version**: `2.2.10` tagged as `theme-v2.2.10` - official release in git
-
-#### Check what version will be released
-
-Before merging to main, preview the next version:
-
-```bash
-npm run version:theme:dry
-```
-
-Example output:
-
-```text
-Current version: 2.2.10
-Commits since tag theme-v2.2.10: 3
-  - fix: correct icon reference
-  - feat: add dark mode toggle
-  - fix: spacing issue
-Detected bump type: MINOR (due to feat:)
-Next version: 2.3.0
-```
-
-#### Create a release (after merge to main)
-
-Once your PR is merged to `main` branch:
-
-#### Option A: Using GitLab CI (Recommended)
-
-1. Go to **CI/CD → Pipelines** on main branch
-2. Find the `theme_version_release` job
-3. Click **Run** to trigger the release
-4. This automatically:
-   - Calculates next version
-   - Updates manifest.json
-   - Creates git tag (e.g., `theme-v2.3.0`)
-
-#### Option B: Using CLI
-
-```bash
-npm run version:release
-```
-
-#### Force a specific version bump (if needed)
-
-```bash
-npm run version:patch   # Force PATCH bump (2.2.10 → 2.2.11)
-npm run version:minor   # Force MINOR bump (2.2.10 → 2.3.0)
-npm run version:major   # Force MAJOR bump (2.2.10 → 3.0.0)
-```
-
-For detailed versioning rules, see the [Theme Versioning](#theme-versioning) section.
-
-### Step 10: Common Workflows
-
-#### Workflow 1: Fix a Bug
-
-```bash
-# 1. Create a branch
-git checkout -b fix/fix-icon-issue
-
-# 2. Make your changes in VS Code
-# (Edit script.js, style.css, etc.)
-
-# 3. Test with preview
-# Press ⌘Shift+P → Tasks: Run Task → Zendesk: Preview Theme
-
-# 4. Commit with fix: prefix
-git commit -m "fix: correct empty state icon reference"
-
-# 5. Push to GitLab
-git push origin fix/fix-icon-issue
-
-# 6. Create Pull Request on GitLab
-# - GitLab CI runs version:dry-run
-# - Review shows version would bump to 2.2.11 (PATCH)
-
-# 7. After review, merge to main
-# - Creates new pipeline on main
-
-# 8. Trigger release (if ready)
-# - Go to CI/CD → theme_version_release → Run
-# - Version tagged as theme-v2.2.11
-```
-
-#### Workflow 2: Add a New Feature
-
-```bash
-# 1. Create a branch
-git checkout -b feature/add-newsletter-widget
-
-# 2. Make changes (create new templates, JS, CSS)
-
-# 3. Test locally with preview
-
-# 4. Commit with feat: prefix
-git commit -m "feat: add newsletter subscription widget"
-git commit -m "fix: correct widget alignment on mobile"
-
-# 5. Push and create PR
-
-# 6. After merge, release
-# - Version bumps to 2.3.0 (MINOR, due to feat:)
-# - Tagged as theme-v2.3.0
-```
-
-#### Workflow 3: Handle Breaking Changes
-
-```bash
-# 1. Create a branch
-git checkout -b feature/redesign-search
-
-# 2. Make changes
-
-# 3. Commit with BREAKING CHANGE footer
-git commit -m "feat: redesign search page layout
-
-Complete redesign of search page:
-- New responsive grid layout
-- Updated filtering interface
-- Improved performance
-
-BREAKING CHANGE: Old CSS class names removed
-- .search-* → .search-widget-*
-- .filter-* → .search-filter-*
-```
-
-### Troubleshooting
-
-_See the [Local Theme Preview - Troubleshooting](#troubleshooting-preview) section for preview-specific issues._
+- Update this file whenever theme behavior, settings, scripts, or CI jobs change
+- Include documentation updates in the same merge request as feature work
+- Each Confluence page section is marked with `<!-- CONFLUENCE PAGE: ... -->` for easy extraction
 
 ---
 
-## Local Theme Preview
-
-You can preview this Zendesk theme directly from VS Code by using the installed Zendesk CLI.
-
-## Prerequisites for Local Theme Preview
-
-- `zcli` installed locally
-- Access to the target Zendesk Help Center
-- Permission to preview themes in that Zendesk instance
-
-This machine already has `zcli` installed.
-
-## First-time setup
-
-Authenticate once with Zendesk:
-
-```bash
-zcli login -i
-```
-
-That opens the interactive login flow and stores your auth token in the Zendesk CLI profile.
-
-## Preview from VS Code
-
-This repo now includes VS Code tasks in `.vscode/tasks.json`.
-
-Open the command palette and run:
-
-- `Tasks: Run Task`
-- choose `Zendesk: Login` if you have not authenticated yet
-- choose `Zendesk: Preview Theme` to start preview mode
-
-You can also use the Run and Debug sidebar:
-
-- open `Run and Debug`
-- choose `Zendesk: Preview Theme`
-- press the start button
-
-The preview command watches the current theme folder and pushes local changes to Zendesk preview mode.
-
-## Helpful tasks and launch shortcuts
-
-- `Zendesk: Login`
-- `Zendesk: Preview Theme`
-- `Zendesk: List Themes`
-
-## Notes
-
-- The preview is not a standalone local web server. Zendesk renders the preview remotely using your local theme files.
-- Any push from VS Code to GitLab is unrelated to preview mode.
-- If the preview fails, run `Zendesk: Login` again and then retry `Zendesk: Preview Theme`.
-- If you work against more than one Zendesk instance, use the CLI profile that matches the target subdomain.
-
-## Terminal alternative
-
-If you prefer the terminal inside VS Code, run:
-
-```bash
-zcli login -i
-zcli themes:preview
-```
-
-## Troubleshooting {#troubleshooting-preview}
-
-### Preview page won't load / "Page not found"
-
-**Symptom**: Preview URL opens but returns a blank page or "not found" error, or the custom Help Center domain (`help.profisengineering.hilti.com`) doesn't resolve.
-
-**Root cause**: The custom Help Center domain may not be resolvable from your local network or DNS configuration. This is a network/DNS issue, **not a theme compilation issue**. The theme uploads successfully (check for "Ok" in the terminal), but the preview can't authenticate to the custom domain.
-
-**Solutions**:
-
-1. **Switch to Google Public DNS** (recommended quick fix):
-   - Go to **System Preferences** → **Network** → **Wi-Fi** → **Advanced**
-   - **DNS Servers** tab
-   - Remove your current DNS servers
-   - Add: `8.8.8.8` and `8.8.4.4` (Google Public DNS)
-   - Click **OK** and reconnect to Wi-Fi
-   - Try the preview URL again
-
-2. **Flush local DNS cache**:
-
-   ```bash
-   sudo dscacheutil -flushcache
-   ```
-
-3. **Test domain resolution**:
-
-   ```bash
-   nslookup help.profisengineering.hilti.com
-   ```
-
-   - If you see `** server can't find help.profisengineering.hilti.com: NXDOMAIN`, your DNS cannot resolve the custom domain
-   - Try again after switching DNS providers
-
-4. **Check if you're behind a corporate firewall/VPN**:
-   - The custom Help Center domain may require VPN access from external networks
-   - Connect to your corporate VPN and retry
-   - Contact IT if the domain still doesn't resolve on VPN
-
-5. **Verify primary domain works** (sanity check):
-
-   ```bash
-   nslookup hiltiprofisengineering.zendesk.com
-   ```
-
-   - Should return IPs like `216.198.54.11` or `216.198.53.11`
-   - If this fails, you have a general connectivity issue
-
-**After you fix DNS**: Restart the preview:
-
-```bash
-# Kill the current preview (Ctrl+C or run this in another terminal)
-# Then restart
-zcli themes:preview
-```
-
----
-
-## Theme Versioning
-
-This theme now has a small repo-local semantic versioning script that updates `manifest.json` from git history.
-
-## What it does
-
-- Reads the current version from `manifest.json`
-- Uses git tags with the prefix `theme-v` as release anchors
-- Infers the next bump from commit messages since the last theme tag
-- Updates `manifest.json`
-- Can optionally create a matching annotated git tag
-
-## Release rules
-
-- `major`: any commit subject with `!:` or any commit body containing `BREAKING CHANGE:`
-- `minor`: any commit starting with `feat:`
-- `patch`: everything else when commits exist
-
-If the current theme version has four numeric parts, such as `2.2.10.1`, the script treats `2.2.10` as the semantic-version base and bumps from there.
-
-## Commands
-
-Dry run:
-
-```bash
-npm run version:theme:dry
-```
-
-### Auto bump from commit history
-
-```bash
-npm run version:theme
-```
-
-### Force a specific bump
-
-```bash
-npm run version:theme -- --release-as patch
-npm run version:theme -- --release-as minor
-npm run version:theme -- --release-as major
-```
-
-### Update the manifest and create a git tag
-
-```bash
-npm run version:theme -- --tag
-```
-
-## Recommended commit format
-
-Use conventional commits so the script can infer the right release type:
-
-```text
-feat: add article feedback modal
-fix: correct locale-safe search links
-feat!: replace old request form flow
-```
-
-For breaking changes with more context:
-
-```text
-feat: redesign article page
-
-BREAKING CHANGE: removes the legacy sidebar markup used by custom CSS.
-```
-
-## CI usage
-
-You can call the same script from GitHub Actions, GitLab CI, or any other runner.
-
-## GitLab pipeline
-
-This repo now includes a GitLab pipeline in `.gitlab-ci.yml`.
-
-- Any `git push` to GitLab triggers the pipeline, including pushes done from VS Code
-- Merge requests also trigger the validation job
-- The validation job runs `npm run version:theme:dry`
-- A separate manual release job exists for the default branch
-
-Important:
-
-- VS Code itself does not trigger CI directly
-- The trigger happens when VS Code performs a normal `git push` to GitLab
-- The included release job does not auto-commit or auto-push the bumped `manifest.json`
-- That is intentional, because CI-based push-back usually needs a project access token or deploy token with write permissions
-
-Example release step:
-
-```bash
-npm ci
-npm run version:theme -- --tag
-git add manifest.json
-git commit -m "chore: bump theme version"
-git push --follow-tags
-```
-
-If you later want full automatic release commits from GitLab CI, the next step is to add a GitLab project access token and extend the release job to commit the updated `manifest.json` back to the repository.
-
-If you want fully automatic `minor` and `major` releases, your team needs to keep commit messages in conventional-commit format.
-
-## Local preview
-
-For local theme preview from VS Code, see [Local Theme Preview](#local-theme-preview)
-
----
-
-## End of Documentation
-
-All project documentation is now consolidated in this file. For quick navigation, use the [Table of Contents](#table-of-contents) at the top.
+*Last updated: 2026-07-12*

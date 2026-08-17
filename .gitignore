@@ -23,3 +23,10 @@ Thumbs.db
 *~
 .playwright-mcp/
 .env
+
+# Dev/test tooling (not part of Zendesk theme)
+tests/
+.kiro/
+
+# Migration scripts (contain credentials — NEVER commit)
+tooling/migrate-*

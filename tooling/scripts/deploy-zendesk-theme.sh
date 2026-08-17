@@ -93,7 +93,9 @@ restore_manifest() {
 }
 trap restore_manifest EXIT
 
-ZD_DEPLOY_THEME_NAME="$theme_name" node <<'NODE'
+if [[ "$deploy_mode" == "new" ]]; then
+  # For new imports, set the generated/custom theme name in manifest.
+  ZD_DEPLOY_THEME_NAME="$theme_name" node <<'NODE'
 const fs = require('fs');
 const path = 'manifest.json';
 const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -101,7 +103,6 @@ manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
 fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
-if [[ "$deploy_mode" == "new" ]]; then
   echo "Deploy mode: new"
   echo "Theme name for import: ${theme_name}"
   echo "Theme name length: ${#theme_name}/${MAX_THEME_NAME_LEN}"
@@ -114,7 +115,47 @@ if [[ "$deploy_mode" == "new" ]]; then
 
   echo "Zendesk theme import completed successfully."
 else
-  echo "Deploy mode: update"
+  # For updates, preserve the existing theme name in Zendesk.
+  # Query the Zendesk API for the current theme name and write it to manifest
+  # so zcli themes:update doesn't rename the theme.
+  if [[ -n "${ZD_THEME_NAME:-}" ]]; then
+    # Explicit override provided — use it.
+    resolved_theme_name="$(normalize_theme_name "$ZD_THEME_NAME")"
+    echo "Deploy mode: update (explicit name override: ${resolved_theme_name})"
+  else
+    # Resolve current theme name from Zendesk API to avoid renaming.
+    resolved_theme_name=""
+    api_response="$(curl -sS -u "${ZD_EMAIL}/token:${ZD_API_TOKEN}" \
+      "https://${ZD_SUBDOMAIN}.zendesk.com/api/v2/guide/theming/themes/${theme_id}" 2>/dev/null || true)"
+    if [[ -n "$api_response" ]]; then
+      resolved_theme_name="$(printf '%s' "$api_response" | node -e "
+        const fs = require('fs');
+        const input = fs.readFileSync(0, 'utf8');
+        try {
+          const data = JSON.parse(input);
+          const name = data?.theme?.name || '';
+          if (name) process.stdout.write(name);
+        } catch {}
+      " 2>/dev/null || true)"
+    fi
+    if [[ -n "$resolved_theme_name" ]]; then
+      resolved_theme_name="$(normalize_theme_name "$resolved_theme_name")"
+      echo "Deploy mode: update (preserving existing name: ${resolved_theme_name})"
+    else
+      echo "Deploy mode: update (could not resolve existing name, keeping manifest name)"
+    fi
+  fi
+
+  if [[ -n "$resolved_theme_name" ]]; then
+    ZD_DEPLOY_THEME_NAME="$resolved_theme_name" node <<'NODE'
+const fs = require('fs');
+const path = 'manifest.json';
+const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+manifest.name = process.env.ZD_DEPLOY_THEME_NAME;
+fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
+NODE
+  fi
+
   echo "Updating existing themeId: ${theme_id}"
 
   npx zcli themes:update \

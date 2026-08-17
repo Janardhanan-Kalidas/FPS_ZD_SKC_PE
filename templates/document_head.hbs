@@ -1,8 +1,155 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+{{! Page loading progress bar — visible on every page load and on link navigation }}
+<style>
+.hilti-page-loading-bar{position:fixed;top:0;left:0;height:3px;width:0;background:#D2051E;z-index:9999999;pointer-events:none;transition:width 1.2s cubic-bezier(.1,.6,.4,1)}
+.hilti-page-loading-bar.is-animating{width:85%}
+.hilti-page-loading-bar.is-complete{width:100%!important;opacity:0;transition:width .3s ease,opacity .4s ease .2s}
+</style>
+
+{{! Page-loading spinner — 4 slanted bars blinking sequentially, Hilti palette }}
+<style>
+.hilti-page-loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999998;transition:opacity .3s ease}
+.hilti-page-loader.is-hidden{opacity:0;pointer-events:none}
+.hilti-slant-bars{display:flex;gap:6px;align-items:center}
+.hilti-slant-bar{width:18px;height:60px;transform:skewX(-26deg);opacity:0;animation:hilti-blink 0.8s infinite}
+.hilti-slant-bar:nth-child(1){background:#c4c0bc;animation-delay:0s}
+.hilti-slant-bar:nth-child(2){background:#898581;animation-delay:0.1s}
+.hilti-slant-bar:nth-child(3){background:#524f53;animation-delay:0.2s}
+.hilti-slant-bar:nth-child(4){background:#D2051E;animation-delay:0.3s}
+@keyframes hilti-blink{0%,100%{opacity:0}25%,65%{opacity:1}}
+</style>
+<script>
+(function(){
+  var loader=document.createElement('div');
+  loader.className='hilti-page-loader';
+  loader.id='hiltiPageLoader';
+  loader.innerHTML='<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
+  document.documentElement.appendChild(loader);
+  window.addEventListener('load',function(){
+    loader.classList.add('is-hidden');
+    setTimeout(function(){if(loader.parentNode)loader.remove();},400);
+  });
+  // Show loader immediately on internal link/navigation click
+  document.addEventListener('click',function(e){
+    var link=e.target.closest?e.target.closest('a[href]'):null;
+    if(!link)return;
+    var href=link.getAttribute('href');
+    if(!href||href.charAt(0)==='#'||href.indexOf('javascript:')===0)return;
+    if(link.target==='_blank'||e.ctrlKey||e.metaKey||e.shiftKey)return;
+    var existing=document.getElementById('hiltiPageLoader');
+    if(existing){existing.classList.remove('is-hidden');return;}
+    var nav=document.createElement('div');
+    nav.className='hilti-page-loader';
+    nav.id='hiltiPageLoader';
+    nav.innerHTML='<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
+    document.documentElement.appendChild(nav);
+  });
+})();
+</script>
+<script>
+(function() {
+  var bar = document.createElement('div');
+  bar.className = 'hilti-page-loading-bar';
+  bar.id = 'hiltiPageLoadBar';
+  document.documentElement.appendChild(bar);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { bar.classList.add('is-animating'); });
+  });
+  window.addEventListener('load', function() {
+    bar.classList.remove('is-animating');
+    bar.classList.add('is-complete');
+    setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+  });
+  // Show loading bar on internal link click (before browser navigates away)
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    var navBar = document.createElement('div');
+    navBar.className = 'hilti-page-loading-bar';
+    document.documentElement.appendChild(navBar);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { navBar.classList.add('is-animating'); });
+    });
+  });
+})();
+</script>
+<meta name="description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
+<meta property="og:description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
+<meta name="twitter:description" content="Hilti PROFIS Engineering Knowledge Center: expert help articles, troubleshooting guides, release updates, and best practices for anchors, rebar, facades, and structural design workflows." />
+<meta property="og:title" content="Hilti PROFIS Engineering Knowledge Center" />
+<meta name="twitter:title" content="Hilti PROFIS Engineering Knowledge Center" />
+<meta property="og:site_name" content="Hilti PROFIS Engineering Knowledge Center" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
 <meta
   name="theme-settings-fingerprint"
   content="hide_sign_in_link={{#if settings.hide_sign_in_link}}1{{else}}0{{/if}};show_submit_a_request_link={{#if settings.show_submit_a_request_link}}1{{else}}0{{/if}};show_article_submit_cta={{#if settings.show_article_submit_cta}}1{{else}}0{{/if}}">
-<script type="text/javascript">(function(){function i(e){if(!window.frames[e]){if(document.body&&document.body.firstChild){var t=document.body;var n=document.createElement("iframe");n.style.display="none";n.name=e;n.title=e;t.insertBefore(n,t.firstChild)}else{setTimeout(function(){i(e)},5)}}}function e(n,o,r,f,s){function e(e,t,n,i){if(typeof n!=="function"){return}if(!window[o]){window[o]=[]}var a=false;if(s){a=s(e,i,n)}if(!a){window[o].push({command:e,version:t,callback:n,parameter:i})}}e.stub=true;e.stubVersion=2;function t(i){if(!window[n]||window[n].stub!==true){return}if(!i.data){return}var a=typeof i.data==="string";var e;try{e=a?JSON.parse(i.data):i.data}catch(t){return}if(e[r]){var o=e[r];window[n](o.command,o.version,function(e,t){var n={};n[f]={returnValue:e,success:t,callId:o.callId};if(i.source){i.source.postMessage(a?JSON.stringify(n):n,"*")}},o.parameter)}}if(typeof window[n]!=="function"){window[n]=e;if(window.addEventListener){window.addEventListener("message",t,false)}else{window.attachEvent("onmessage",t)}}}e("__tcfapi","__tcfapiBuffer","__tcfapiCall","__tcfapiReturn");i("__tcfapiLocator")})();</script><script type="text/javascript">(function(){(function(e,i){var o=document.createElement("link");o.rel="preconnect";o.as="script";var n=document.createElement("link");n.rel="dns-prefetch";n.as="script";var r=document.createElement("script");r.id="spcloader";r.type="text/javascript";r["async"]=true;r.charset="utf-8";window.didomiConfig=window.didomiConfig||{};window.didomiConfig.sdkPath=window.didomiConfig.sdkPath||i||"https://sdk.privacy-center.org/";const t=window.didomiConfig.sdkPath;var d=t+e+"/loader.js?target="+document.location.hostname;if(window.didomiConfig&&window.didomiConfig.user){var a=window.didomiConfig.user;var c=a.country;var s=a.region;if(c){d=d+"&country="+c;if(s){d=d+"&region="+s}}}o.href=t;n.href=t;r.src=d;var f=document.getElementsByTagName("script")[0];f.parentNode.insertBefore(o,f);f.parentNode.insertBefore(n,f);f.parentNode.insertBefore(r,f)})("1f990818-7044-42c2-8546-ef5a09c3e8f5")})();</script>
+{{! Banner Early Dismissal – prevents flash of dismissed banners (fingerprint-based) }}
+<script>
+try {
+  function normalizeContent(raw) {
+    if (typeof raw !== 'string') return '';
+    var text = raw.replace(/<[^>]*>/g, '');
+    text = text.replace(/\s+/g, ' ');
+    text = text.trim();
+    return text;
+  }
+  function computeFingerprint(text) {
+    if (!text) return '';
+    var FNV_OFFSET = 0x811c9dc5;
+    var FNV_PRIME = 0x01000193;
+    var hash = FNV_OFFSET;
+    for (var i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, FNV_PRIME) >>> 0;
+    }
+    return hash.toString(36);
+  }
+  function buildStorageKey(bannerId, fingerprint, version) {
+    var ver = (version && version.trim()) ? version.trim() : '1';
+    return 'banner_dismissed_' + bannerId + '_' + fingerprint + '_' + ver;
+  }
+
+  var banners = [
+    { id: 'release', content: '{{settings.release_banner_content}}', version: '{{settings.release_banner_version}}' },
+    { id: 'notification', content: '{{settings.notification_banner_content}}', version: '{{settings.notification_banner_version}}' }
+  ];
+
+  var css = '';
+  for (var i = 0; i < banners.length; i++) {
+    var b = banners[i];
+    var normalized = normalizeContent(b.content);
+    if (!normalized) continue;
+    var fp = computeFingerprint(normalized);
+    if (!fp) continue;
+    var key = buildStorageKey(b.id, fp, b.version);
+    if (sessionStorage.getItem(key) === 'true') {
+      css += '.announcement-banner[data-banner-id="' + b.id + '"] { display: none !important; }';
+    }
+  }
+  if (css) {
+    var style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+} catch (e) {}
+</script>
+<script type="text/javascript">(function(){
+  // Skip consent SDK in preview/admin contexts to prevent redirect loops
+  var href = window.location.href;
+  if (/[?&]preview_theme_id=/.test(href) || /\/theming\//.test(href) || /\/admin\/guide\//.test(href) || /\/knowledge\/theme_editor/.test(href)) return;
+  try { if (window.self !== window.top) return; } catch(e) { return; }
+
+  function i(e){if(!window.frames[e]){if(document.body&&document.body.firstChild){var t=document.body;var n=document.createElement("iframe");n.style.display="none";n.name=e;n.title=e;t.insertBefore(n,t.firstChild)}else{setTimeout(function(){i(e)},5)}}}function e(n,o,r,f,s){function e(e,t,n,i){if(typeof n!=="function"){return}if(!window[o]){window[o]=[]}var a=false;if(s){a=s(e,i,n)}if(!a){window[o].push({command:e,version:t,callback:n,parameter:i})}}e.stub=true;e.stubVersion=2;function t(i){if(!window[n]||window[n].stub!==true){return}if(!i.data){return}var a=typeof i.data==="string";var e;try{e=a?JSON.parse(i.data):i.data}catch(t){return}if(e[r]){var o=e[r];window[n](o.command,o.version,function(e,t){var n={};n[f]={returnValue:e,success:t,callId:o.callId};if(i.source){i.source.postMessage(a?JSON.stringify(n):n,"*")}},o.parameter)}}if(typeof window[n]!=="function"){window[n]=e;if(window.addEventListener){window.addEventListener("message",t,false)}else{window.attachEvent("onmessage",t)}}}e("__tcfapi","__tcfapiBuffer","__tcfapiCall","__tcfapiReturn");i("__tcfapiLocator")})();</script><script type="text/javascript">(function(){
+  // Skip Didomi loader in preview/admin contexts to prevent redirect loops
+  var href = window.location.href;
+  if (/[?&]preview_theme_id=/.test(href) || /\/theming\//.test(href) || /\/admin\/guide\//.test(href) || /\/knowledge\/theme_editor/.test(href)) return;
+  try { if (window.self !== window.top) return; } catch(e) { return; }
+
+  (function(e,i){var o=document.createElement("link");o.rel="preconnect";o.as="script";var n=document.createElement("link");n.rel="dns-prefetch";n.as="script";var r=document.createElement("script");r.id="spcloader";r.type="text/javascript";r["async"]=true;r.charset="utf-8";window.didomiConfig=window.didomiConfig||{};window.didomiConfig.sdkPath=window.didomiConfig.sdkPath||i||"https://sdk.privacy-center.org/";const t=window.didomiConfig.sdkPath;var d=t+e+"/loader.js?target="+document.location.hostname;if(window.didomiConfig&&window.didomiConfig.user){var a=window.didomiConfig.user;var c=a.country;var s=a.region;if(c){d=d+"&country="+c;if(s){d=d+"&region="+s}}}o.href=t;n.href=t;r.src=d;var f=document.getElementsByTagName("script")[0];f.parentNode.insertBefore(o,f);f.parentNode.insertBefore(n,f);f.parentNode.insertBefore(r,f)})("1f990818-7044-42c2-8546-ef5a09c3e8f5")})();</script>
 <script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
 <script type="text/javascript" src="{{asset 'util.min.js'}}"></script>
 
@@ -56,6 +203,7 @@
 <style>
   :root {
     --theme-home-icon: url("{{asset 'home.svg'}}");
+    --theme-sort-chevron-icon: url("{{asset 'chevron_icon.svg'}}");
   }
 </style>
 
@@ -137,7 +285,7 @@
   - Category icon mapping is robust and maintainable
 
   Note:
-  - This file MUST be used for any {{asset}} helper usage
+  - This file MUST be used for any asset helper usage
   - No business logic is implemented here
 
   Updated by : Kalidas, Janardhanan
@@ -154,7 +302,7 @@
     '43347810588945': "{{asset 'announcement.svg'}}",
 
     // Category 3 – Getting Started with PE
-    '43357295486993': "{{asset 'Rocket.svg'}}",
+    '43357295486993': "{{asset 'Launcher-App-PROFIS-Engineering-Suite.svg'}}",
 
     // Category 4 – PE Premium Subscription
     '43697046714897': "{{asset 'subscription.svg'}}",
