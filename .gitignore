@@ -30,3 +30,6 @@ tests/
 
 # Migration scripts (contain credentials — NEVER commit)
 tooling/migrate-*
+
+# Image optimization backups (originals, kept locally only)
+.img-backup/

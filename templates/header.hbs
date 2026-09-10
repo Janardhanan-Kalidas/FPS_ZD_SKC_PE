@@ -41,7 +41,7 @@
 
       {{! Logo }}
       <a href="{{page_path 'help_center'}}" class="navbar-brand m{{#is current_locale.direction 'ltr'}}r{{else}}l{{/is}}-auto">
-        <img class="block img-fluid{{~#is settings.nav_style 'standard'}} z-100{{/is}}" id="logo" src="{{settings.logo}}" alt="{{t 'home_page' name=help_center.name}}"> {{!Updated the code with logo+text- Jana}}
+        <img class="block img-fluid{{~#is settings.nav_style 'standard'}} z-100{{/is}}" id="logo" src="{{asset 'Hilti_Logo.svg'}}" alt="{{t 'home_page' name=help_center.name}}"> {{!Logo set to bundled Hilti_Logo.svg asset - was settings.logo}}
         {{~#if settings.tagline}}
           <span class="navbar-tagline mx-3 white-space-no-wrap">
             {{~#if settings.use_translations}}

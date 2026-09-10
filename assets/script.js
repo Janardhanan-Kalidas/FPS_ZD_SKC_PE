@@ -3300,6 +3300,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var checkTimer = null;
   var checkInFlight = false;
+  var suppressReload = false;
+
+  /**
+   * Returns true when the current page load is a back/forward navigation.
+   * On Back/Forward, the browser is restoring a prior history entry and we
+   * must NOT auto-reload — doing so traps the user on the page they tried
+   * to leave. Covers both the Navigation Timing API and legacy fallbacks.
+   */
+  function isBackForwardNavigation() {
+    try {
+      var navEntries = window.performance
+        && typeof window.performance.getEntriesByType === 'function'
+        ? window.performance.getEntriesByType('navigation')
+        : null;
+      if (navEntries && navEntries.length) {
+        return navEntries[0].type === 'back_forward';
+      }
+      // Legacy fallback (deprecated but still present in some browsers)
+      if (window.performance && window.performance.navigation) {
+        return window.performance.navigation.type === 2; // TYPE_BACK_FORWARD
+      }
+    } catch (e) {
+      // If we cannot determine the nav type, err on the safe side below.
+    }
+    return false;
+  }
 
   function getCurrentFingerprint(doc) {
     var targetDoc = doc || document;
@@ -3363,6 +3389,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function maybeReloadForFingerprintChange() {
     if (checkInFlight) return;
+    if (suppressReload) return;
     if (isPreviewOrAdminContext()) return;
     checkInFlight = true;
 
@@ -3418,11 +3445,35 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!getCurrentFingerprint()) return;
     if (isPreviewOrAdminContext()) return;
 
+    // If the user arrived here via Back/Forward, suppress the very next
+    // auto-reload so they land on the page they navigated to.
+    if (isBackForwardNavigation()) {
+      suppressReload = true;
+    }
+
+    // A bfcache restore fires pageshow with persisted=true. Suppress the
+    // reload for that cycle and cancel any pending check so Back works.
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted || isBackForwardNavigation()) {
+        suppressReload = true;
+        if (checkTimer) {
+          window.clearTimeout(checkTimer);
+          checkTimer = null;
+        }
+        // Clear the suppression after this cycle so normal polling resumes.
+        window.setTimeout(function () {
+          suppressReload = false;
+        }, POLL_INTERVAL_MS);
+      }
+    });
+
     window.addEventListener('focus', function () {
+      if (suppressReload) return;
       scheduleCheck(CHECK_DEBOUNCE_MS);
     });
 
     document.addEventListener('visibilitychange', function () {
+      if (suppressReload) return;
       if (document.visibilityState === 'visible') {
         scheduleCheck(CHECK_DEBOUNCE_MS);
       }
