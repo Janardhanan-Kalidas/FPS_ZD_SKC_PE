@@ -18035,8 +18035,6 @@ header.d-flex h1 {
   border: none;
   cursor: pointer;
   padding: 6px;
-  border-radius: 0px;
-  color: #524f53;
   transition: background 0.2s, color 0.2s;
 }
 .hilti-lang-close:hover {
@@ -18081,13 +18079,14 @@ header.d-flex h1 {
   background-color: #fff;
   color: #524f53;
   border-radius: 0;
-  /* Red chevron (Hilti #D2051E), native arrow removed */
+  /* Chevron from Figma (filled triangle), tinted Hilti red #D2051E; native arrow removed */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23D2051E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8 10.6667L4 5.33333L12 5.33333L8 10.6667Z' fill='%23D2051E'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 10px center;
+  background-size: 16px 16px;
 }
 /* Hide default arrow in IE/Edge legacy */
 .hilti-lang-select::-ms-expand { display: none; }
