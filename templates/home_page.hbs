@@ -768,7 +768,7 @@
       ------------------------------------------------------------------ }}
   var I18N = {
     searchTitle:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_search_title')}}{{else}}{{json_stringify "Search the Knowledge Center"}}{{/if}},
-    searchText:    {{#if settings.use_translations}}{{json_stringify (dc 'tour_search_text')}}{{else}}{{json_stringify "Start typing a product, error, or topic to instantly find articles across the PROFIS Engineering help center."}}{{/if}},
+    searchText:    {{#if settings.use_translations}}{{json_stringify (dc 'tour_search_text')}}{{else}}{{json_stringify "Start typing a product, error, or topic to instantly find articles across the PROFIS Engineering Software Knowledge Center."}}{{/if}},
     topicsTitle:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_topics_title')}}{{else}}{{json_stringify "Browse by topic"}}{{/if}},
     topicsText:    {{#if settings.use_translations}}{{json_stringify (dc 'tour_topics_text')}}{{else}}{{json_stringify "Jump into categories like Anchoring to Concrete, Facade, or Getting Started to explore grouped articles."}}{{/if}},
     popularTitle:  {{#if settings.use_translations}}{{json_stringify (dc 'tour_popular_title')}}{{else}}{{json_stringify "Popular & recent"}}{{/if}},
@@ -788,10 +788,10 @@
   // Step definitions. selector is tried in order; first match wins.
   // Any step whose target is missing is skipped automatically.
   var STEPS = [
+    { sel: ['#hiltiLangTrigger'], title: I18N.languageTitle, text: I18N.languageText },
     { sel: ['.hc-hero-search'], title: I18N.searchTitle, text: I18N.searchText },
     { sel: ['#content-blocks', '#custom-blocks'], title: I18N.topicsTitle, text: I18N.topicsText },
     { sel: ['.recent-activity', '.promoted-articles'], title: I18N.popularTitle, text: I18N.popularText },
-    { sel: ['#hiltiLangTrigger'], title: I18N.languageTitle, text: I18N.languageText },
     { sel: ['.header-link'], title: I18N.backToPeTitle, text: I18N.backToPeText }
   ];
 
