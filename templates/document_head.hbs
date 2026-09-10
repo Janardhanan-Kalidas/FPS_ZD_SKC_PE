@@ -6,16 +6,18 @@
 .hilti-page-loading-bar.is-complete{width:100%!important;opacity:0;transition:width .3s ease,opacity .4s ease .2s}
 </style>
 
-{{! Page-loading spinner — 4 slanted bars blinking sequentially, Hilti palette }}
+{{! Page-loading spinner — 5 slanted Hilti bars (from Figma) blinking sequentially }}
 <style>
-.hilti-page-loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999998;transition:opacity .3s ease}
+.hilti-page-loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#ffff;display:flex;align-items:center;justify-content:center;z-index:9999998;transition:opacity .3s ease}
 .hilti-page-loader.is-hidden{opacity:0;pointer-events:none}
-.hilti-slant-bars{display:flex;gap:6px;align-items:center}
-.hilti-slant-bar{width:18px;height:60px;transform:skewX(-26deg);opacity:0;animation:hilti-blink 0.8s infinite}
-.hilti-slant-bar:nth-child(1){background:#c4c0bc;animation-delay:0s}
-.hilti-slant-bar:nth-child(2){background:#898581;animation-delay:0.1s}
-.hilti-slant-bar:nth-child(3){background:#524f53;animation-delay:0.2s}
-.hilti-slant-bar:nth-child(4){background:#D2051E;animation-delay:0.3s}
+.hilti-slant-bars{display:flex;align-items:center}
+.hilti-slant-bars svg{display:block;width:155px;height:35.5px}  
+.hilti-slant-bars svg path{opacity:0;animation:hilti-blink 0.8s infinite}
+.hilti-slant-bars svg path:nth-child(1){animation-delay:0s}
+.hilti-slant-bars svg path:nth-child(2){animation-delay:0.1s}
+.hilti-slant-bars svg path:nth-child(3){animation-delay:0.2s}
+.hilti-slant-bars svg path:nth-child(4){animation-delay:0.3s}
+.hilti-slant-bars svg path:nth-child(5){animation-delay:0.4s}
 @keyframes hilti-blink{0%,100%{opacity:0}25%,65%{opacity:1}}
 </style>
 <script>
@@ -23,12 +25,20 @@
   var loader=document.createElement('div');
   loader.className='hilti-page-loader';
   loader.id='hiltiPageLoader';
-  loader.innerHTML='<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
+  loader.innerHTML='<div class="hilti-slant-bars"><svg viewBox="0 0 155 35.5" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loading"><path d="M20.5 0H39L18.5 35.5H0L20.5 0Z" fill="#fffff"/><path d="M49.5 0H68L47.5 35.5H29L49.5 0Z" fill="#FCFCFC"/><path d="M78.5 0H97L76.5 35.5H58L78.5 0Z" fill="#D7CEBD"/><path d="M107.5 0H126L105.5 35.5H87L107.5 0Z" fill="#524F53"/><path d="M136.5 0H155L134.5 35.5H116L136.5 0Z" fill="#D2051E"/></svg></div>';
   document.documentElement.appendChild(loader);
-  window.addEventListener('load',function(){
-    loader.classList.add('is-hidden');
-    setTimeout(function(){if(loader.parentNode)loader.remove();},400);
-  });
+  function hideLoader(){
+    var el=document.getElementById('hiltiPageLoader');
+    if(!el)return;
+    el.classList.add('is-hidden');
+    setTimeout(function(){if(el.parentNode)el.remove();},400);
+  }
+  window.addEventListener('load',hideLoader);
+  // 'pageshow' fires on the initial load AND on every back/forward display,
+  // including bfcache restores (which do NOT fire 'load'). Hiding here on
+  // every pageshow guarantees the loader is cleared whenever a page becomes
+  // visible — forward navigation, Back, or Forward — so it never gets stuck.
+  window.addEventListener('pageshow',function(){hideLoader();});
   // Show loader immediately on internal link/navigation click
   document.addEventListener('click',function(e){
     var link=e.target.closest?e.target.closest('a[href]'):null;
@@ -41,7 +51,7 @@
     var nav=document.createElement('div');
     nav.className='hilti-page-loader';
     nav.id='hiltiPageLoader';
-    nav.innerHTML='<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
+    nav.innerHTML='<div class="hilti-slant-bars"><svg viewBox="0 0 155 35.5" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loading"><path d="M20.5 0H39L18.5 35.5H0L20.5 0Z" fill="#FFFFFF"/><path d="M49.5 0H68L47.5 35.5H29L49.5 0Z" fill="#FCFCFC"/><path d="M78.5 0H97L76.5 35.5H58L78.5 0Z" fill="#D7CEBD"/><path d="M107.5 0H126L105.5 35.5H87L107.5 0Z" fill="#524F53"/><path d="M136.5 0H155L134.5 35.5H116L136.5 0Z" fill="#D2051E"/></svg></div>';
     document.documentElement.appendChild(nav);
   });
 })();
@@ -55,10 +65,21 @@
   requestAnimationFrame(function() {
     requestAnimationFrame(function() { bar.classList.add('is-animating'); });
   });
-  window.addEventListener('load', function() {
+  function completeBar() {
     bar.classList.remove('is-animating');
     bar.classList.add('is-complete');
     setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+  }
+  window.addEventListener('load', completeBar);
+  // 'pageshow' fires on the initial load AND on every back/forward display,
+  // including bfcache restores (which do NOT fire 'load'). On every pageshow,
+  // remove any leftover loading bars so none stay pinned at the top of the
+  // page — forward navigation, Back, or Forward.
+  window.addEventListener('pageshow', function() {
+    var bars = document.querySelectorAll('.hilti-page-loading-bar');
+    for (var i = 0; i < bars.length; i++) {
+      if (bars[i].parentNode) bars[i].parentNode.removeChild(bars[i]);
+    }
   });
   // Show loading bar on internal link click (before browser navigates away)
   document.addEventListener('click', function(e) {
@@ -153,11 +174,24 @@ try {
 <script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
 <script type="text/javascript" src="{{asset 'util.min.js'}}"></script>
 
+{{! Resource hints — warm up CDN connections early so blocking fetches resolve DNS/TLS sooner }}
+<link rel="preconnect" href="https://use.fontawesome.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://ajax.googleapis.com">
+
 {{! Extensions }}
 <link rel="stylesheet" href="{{asset 'extension-animations.min.css'}}">
 <link rel="stylesheet" href="{{asset 'extension-transitions.min.css'}}">
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+{{! Font Awesome — load non-render-blocking: fetch as low-priority then swap to screen media on load.
+    Falls back to a plain stylesheet for no-JS clients. }}
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css" media="print" onload="this.media='all';this.onload=null;">
+<noscript><link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css"></noscript>
+
+{{! jQuery — deferred so it no longer blocks HTML parsing / first paint. It executes before
+    DOMContentLoaded, keeping $ available for any deferred theme scripts that expect it. The
+    footer still loads jQuery conditionally for Fancybox / video features. }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" defer></script>
 
 {{~#if settings.enable_video_player}}<link rel="stylesheet" href="{{asset 'extension-video.min.css'}}">{{/if~}}
 {{~#if settings.enable_lightboxes}}<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">

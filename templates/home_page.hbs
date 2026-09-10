@@ -184,9 +184,9 @@
   <div class="z-30 hc-hero-content"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
 
     {{! Hero element title - Jana Changes}}
-    <div class="{{#unless settings.hero_heading}}{{#unless settings.hero_text}} hidden{{/unless}}{{/unless}}">
+    <div class="hc-hero-text {{#unless settings.hero_heading}}{{#unless settings.hero_text}} hidden{{/unless}}{{/unless}}">
       {{~#if settings.hero_text}}
-        <h1 class="font-size-xl">
+        <h1 class="hc-hero-welcome">
           {{~#if settings.use_translations}}
              {{dc 'welcome_to_profis_engineering_help_center'}} {{! Created a dynamic content in Admin}}
           {{else}}
@@ -195,7 +195,7 @@
         </h1>
       {{/if~}}
       {{~#if settings.hero_heading}}
-        <p class="font-size-4xl">
+        <p class="hc-hero-heading">
           {{~#if settings.use_translations}}
             {{dc 'fps-pe_-_hero_heading'}}
           {{else}}
@@ -206,7 +206,7 @@
     </div>
 
     {{! Hero element search bar - Jana}}
-    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
+    <div class="search hc-hero-search text-base" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
       <h2 class="sr-only">{{ t 'search' }}</h2>
       {{~#if settings.search_placeholder}}
         {{#if settings.use_translations}}
@@ -672,3 +672,278 @@
 </script>
 
 {{! Additional Categories are updated in the JS and CSS}}
+
+{{! ================================================================
+    HOME PAGE QUICK TOUR
+    - Guided spotlight walkthrough of key home-page areas
+    - Toggle: settings.enable_quick_tour (Theme settings > Home page)
+    - Auto-shows ONCE PER BROWSER SESSION for first-time visitors
+      (sessionStorage), and can be replayed anytime via the
+      floating "Take a tour" button.
+    - Vanilla JS/CSS, no dependencies. Matches the language-modal
+      pattern: focus trap, ESC to close, aria-*, Hilti red accent,
+      respects prefers-reduced-motion.
+    - Steps auto-skip if their target element is not on the page,
+      so it stays robust across theme settings.
+    ================================================================ }}
+{{#if settings.enable_quick_tour}}
+<style>
+  .hilti-tour-launch{position:fixed;right:20px;bottom:20px;z-index:9999990;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:0;border-radius:24px;background:#D2051E;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:background .2s ease,transform .2s ease}
+  .hilti-tour-launch:hover{background:#ab0115}
+  .hilti-tour-launch:focus-visible{outline:3px solid rgba(210,5,30,.4);outline-offset:2px}
+  .hilti-tour-launch svg{width:16px;height:16px;fill:currentColor;flex:none}
+  .hilti-tour-overlay{position:fixed;inset:0;z-index:9999991;pointer-events:none;opacity:0;transition:opacity .25s ease}
+  .hilti-tour-overlay.is-active{opacity:1;pointer-events:auto}
+  /* Single spotlight element: the huge box-shadow spread dims the whole
+     viewport EXCEPT the highlighted rectangle, and the inner ring is the
+     red border. One element, no gaps, no geometry drift. */
+  .hilti-tour-spot{position:fixed;top:0;left:0;width:0;height:0;border-radius:8px;box-shadow:0 0 0 3px #D2051E, 0 0 0 9999px rgba(30,28,30,.62);pointer-events:none;transition:top .2s ease,left .2s ease,width .2s ease,height .2s ease}
+  .hilti-tour-pop{position:fixed;z-index:9999992;max-width:320px;width:calc(100vw - 32px);background:#fff;border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.24);padding:18px 18px 14px;font-family:inherit;color:#524F53;transition:top .25s ease,left .25s ease}
+  .hilti-tour-pop-step{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#D2051E;margin:0 0 6px}
+  .hilti-tour-pop-title{font-size:17px;font-weight:700;color:#2f2d30;margin:0 0 6px;line-height:1.3}
+  .hilti-tour-pop-text{font-size:14px;line-height:1.5;margin:0 0 14px}
+  .hilti-tour-pop-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .hilti-tour-dots{display:flex;gap:6px}
+  .hilti-tour-dot{width:7px;height:7px;border-radius:50%;background:#d7cebd}
+  .hilti-tour-dot.is-on{background:#D2051E}
+  .hilti-tour-btns{display:flex;gap:8px}
+  .hilti-tour-btn{border-radius:20px;font-family:inherit;font-size:13px;font-weight:700;padding:8px 16px;cursor:pointer;border:1px solid transparent;transition:background .2s ease,color .2s ease,border-color .2s ease}
+  .hilti-tour-btn-ghost{background:transparent;color:#898581;border-color:transparent}
+  .hilti-tour-btn-ghost:hover{color:#524F53}
+  .hilti-tour-btn-secondary{background:#f2f0ed;color:#524F53}
+  .hilti-tour-btn-secondary:hover{background:#e4e0da}
+  .hilti-tour-btn-primary{background:#D2051E;color:#fff}
+  .hilti-tour-btn-primary:hover{background:#ab0115}
+  .hilti-tour-btn:focus-visible{outline:3px solid rgba(210,5,30,.4);outline-offset:2px}
+  .hilti-tour-skip{position:absolute;top:12px;right:12px;border:0;background:transparent;color:#a8a4a0;cursor:pointer;padding:4px;line-height:0;border-radius:4px}
+  .hilti-tour-skip:hover{color:#524F53}
+  .hilti-tour-skip svg{width:16px;height:16px;fill:currentColor}
+  @media (prefers-reduced-motion: reduce){
+    .hilti-tour-overlay,.hilti-tour-spot,.hilti-tour-pop,.hilti-tour-launch{transition:none}
+  }
+</style>
+
+<button type="button" class="hilti-tour-launch" id="hiltiTourLaunch" aria-haspopup="dialog">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 15a1.25 1.25 0 110-2.5A1.25 1.25 0 0112 17zm1.6-6.1c-.6.4-.85.65-.85 1.35v.25h-1.5v-.35c0-1.2.5-1.8 1.25-2.3.55-.4.85-.65.85-1.2 0-.65-.5-1.1-1.25-1.1-.7 0-1.25.45-1.35 1.2l-1.45-.25C9 7.9 10.15 7 11.85 7c1.7 0 2.85.95 2.85 2.35 0 .95-.45 1.5-1.1 1.95z"/></svg>
+  <span class="hilti-tour-launch-label">Take a tour</span>
+</button>
+
+<div class="hilti-tour-overlay" id="hiltiTourOverlay" role="dialog" aria-modal="true" aria-labelledby="hiltiTourTitle" aria-describedby="hiltiTourText" aria-hidden="true">
+  <div class="hilti-tour-spot" id="hiltiTourSpot"></div>
+  <div class="hilti-tour-pop" id="hiltiTourPop">
+    <button type="button" class="hilti-tour-skip" id="hiltiTourSkip" aria-label="Skip tour">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </button>
+    <p class="hilti-tour-pop-step" id="hiltiTourStep"></p>
+    <h2 class="hilti-tour-pop-title" id="hiltiTourTitle"></h2>
+    <p class="hilti-tour-pop-text" id="hiltiTourText"></p>
+    <div class="hilti-tour-pop-foot">
+      <div class="hilti-tour-dots" id="hiltiTourDots" aria-hidden="true"></div>
+      <div class="hilti-tour-btns">
+        <button type="button" class="hilti-tour-btn hilti-tour-btn-secondary" id="hiltiTourBack">Back</button>
+        <button type="button" class="hilti-tour-btn hilti-tour-btn-primary" id="hiltiTourNext">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var SEEN_KEY = 'hiltiQuickTourSeen'; // sessionStorage -> once per browser session
+
+  {{! ------------------------------------------------------------------
+      Translatable copy. When "Use translations" is on, each string is
+      pulled from Zendesk dynamic content (create these keys in
+      Admin > Dynamic content); otherwise the hardcoded English fallback
+      is used. json_stringify safely escapes the values into JS literals.
+      Dynamic content keys to create (all optional — fallbacks used if absent):
+        tour_search_title / tour_search_text
+        tour_topics_title / tour_topics_text
+        tour_popular_title / tour_popular_text
+        tour_language_title / tour_language_text
+        tour_backtope_title / tour_backtope_text
+        tour_btn_back / tour_btn_next / tour_btn_done / tour_btn_skip
+        tour_launch_label / tour_step_counter  ("Step {n} of {total}")
+      ------------------------------------------------------------------ }}
+  var I18N = {
+    searchTitle:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_search_title')}}{{else}}{{json_stringify "Search the Knowledge Center"}}{{/if}},
+    searchText:    {{#if settings.use_translations}}{{json_stringify (dc 'tour_search_text')}}{{else}}{{json_stringify "Start typing a product, error, or topic to instantly find articles across the PROFIS Engineering help center."}}{{/if}},
+    topicsTitle:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_topics_title')}}{{else}}{{json_stringify "Browse by topic"}}{{/if}},
+    topicsText:    {{#if settings.use_translations}}{{json_stringify (dc 'tour_topics_text')}}{{else}}{{json_stringify "Jump into categories like Anchoring to Concrete, Facade, or Getting Started to explore grouped articles."}}{{/if}},
+    popularTitle:  {{#if settings.use_translations}}{{json_stringify (dc 'tour_popular_title')}}{{else}}{{json_stringify "Popular & recent"}}{{/if}},
+    popularText:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_popular_text')}}{{else}}{{json_stringify "See promoted articles and the latest activity so you can catch up on what other engineers are reading."}}{{/if}},
+    languageTitle: {{#if settings.use_translations}}{{json_stringify (dc 'tour_language_title')}}{{else}}{{json_stringify "Country & language"}}{{/if}},
+    languageText:  {{#if settings.use_translations}}{{json_stringify (dc 'tour_language_text')}}{{else}}{{json_stringify "Switch your country and language here to see content localized for your region."}}{{/if}},
+    backToPeTitle: {{#if settings.use_translations}}{{json_stringify (dc 'tour_backtope_title')}}{{else}}{{json_stringify "Back to PROFIS Engineering"}}{{/if}},
+    backToPeText:  {{#if settings.use_translations}}{{json_stringify (dc 'tour_backtope_text')}}{{else}}{{json_stringify "This link takes you straight back to the PROFIS Engineering application whenever you are done here."}}{{/if}},
+    btnBack:       {{#if settings.use_translations}}{{json_stringify (dc 'tour_btn_back')}}{{else}}{{json_stringify "Back"}}{{/if}},
+    btnNext:       {{#if settings.use_translations}}{{json_stringify (dc 'tour_btn_next')}}{{else}}{{json_stringify "Next"}}{{/if}},
+    btnDone:       {{#if settings.use_translations}}{{json_stringify (dc 'tour_btn_done')}}{{else}}{{json_stringify "Done"}}{{/if}},
+    skipLabel:     {{#if settings.use_translations}}{{json_stringify (dc 'tour_btn_skip')}}{{else}}{{json_stringify "Skip tour"}}{{/if}},
+    launchLabel:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_launch_label')}}{{else}}{{json_stringify "Take a tour"}}{{/if}},
+    stepCounter:   {{#if settings.use_translations}}{{json_stringify (dc 'tour_step_counter')}}{{else}}{{json_stringify "Step {n} of {total}"}}{{/if}}
+  };
+
+  // Step definitions. selector is tried in order; first match wins.
+  // Any step whose target is missing is skipped automatically.
+  var STEPS = [
+    { sel: ['.hc-hero-search'], title: I18N.searchTitle, text: I18N.searchText },
+    { sel: ['#content-blocks', '#custom-blocks'], title: I18N.topicsTitle, text: I18N.topicsText },
+    { sel: ['.recent-activity', '.promoted-articles'], title: I18N.popularTitle, text: I18N.popularText },
+    { sel: ['#hiltiLangTrigger'], title: I18N.languageTitle, text: I18N.languageText },
+    { sel: ['.header-link'], title: I18N.backToPeTitle, text: I18N.backToPeText }
+  ];
+
+  var overlay = document.getElementById('hiltiTourOverlay');
+  var launch  = document.getElementById('hiltiTourLaunch');
+  if (!overlay || !launch) return;
+
+  var pop   = document.getElementById('hiltiTourPop');
+  var spot  = document.getElementById('hiltiTourSpot');
+  var elStep = document.getElementById('hiltiTourStep');
+  var elTitle = document.getElementById('hiltiTourTitle');
+  var elText = document.getElementById('hiltiTourText');
+  var elDots = document.getElementById('hiltiTourDots');
+  var btnBack = document.getElementById('hiltiTourBack');
+  var btnNext = document.getElementById('hiltiTourNext');
+  var btnSkip = document.getElementById('hiltiTourSkip');
+
+  // Apply translatable labels to static controls
+  btnBack.textContent = I18N.btnBack;
+  btnSkip.setAttribute('aria-label', I18N.skipLabel);
+  var launchLabelEl = launch.querySelector('.hilti-tour-launch-label');
+  if (launchLabelEl) launchLabelEl.textContent = I18N.launchLabel;
+  launch.setAttribute('aria-label', I18N.launchLabel);
+
+  var activeSteps = [];
+  var idx = 0;
+  var lastFocused = null;
+  var PAD = 8; // spotlight padding around target
+
+  function resolveTarget(step){
+    for (var i = 0; i < step.sel.length; i++){
+      var node = document.querySelector(step.sel[i]);
+      if (node && node.offsetParent !== null) return node; // visible
+    }
+    return null;
+  }
+
+  function buildActiveSteps(){
+    activeSteps = [];
+    for (var i = 0; i < STEPS.length; i++){
+      var node = resolveTarget(STEPS[i]);
+      if (node) activeSteps.push({ node: node, data: STEPS[i] });
+    }
+  }
+
+  function renderDots(){
+    elDots.innerHTML = '';
+    for (var i = 0; i < activeSteps.length; i++){
+      var d = document.createElement('span');
+      d.className = 'hilti-tour-dot' + (i === idx ? ' is-on' : '');
+      elDots.appendChild(d);
+    }
+  }
+
+  function positionFor(node){
+    var r = node.getBoundingClientRect();
+    var vw = window.innerWidth, vh = window.innerHeight;
+
+    // Clamp the highlight to the viewport so an oversized or mis-measured
+    // target can never produce a full-page box. getBoundingClientRect gives
+    // viewport coordinates, which is exactly what position:fixed wants.
+    var top = Math.max(r.top - PAD, 4);
+    var left = Math.max(r.left - PAD, 4);
+    var width = Math.max(Math.min(r.width + PAD * 2, vw - left - 4), 0);
+    var height = Math.max(Math.min(r.height + PAD * 2, vh - top - 4), 0);
+
+    spot.style.top = top + 'px';
+    spot.style.left = left + 'px';
+    spot.style.width = width + 'px';
+    spot.style.height = height + 'px';
+
+    // Place popover below the target when there is room, otherwise above
+    var popH = pop.offsetHeight || 180;
+    var popW = pop.offsetWidth || 320;
+    var below = top + height + 12;
+    var placeTop = (below + popH < vh) ? below : Math.max(top - popH - 12, 8);
+    var placeLeft = Math.min(Math.max(left, 12), vw - popW - 12);
+    pop.style.top = placeTop + 'px';
+    pop.style.left = placeLeft + 'px';
+  }
+
+  function render(){
+    var step = activeSteps[idx];
+    if (!step) return;
+    step.node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    elStep.textContent = I18N.stepCounter.replace('{n}', idx + 1).replace('{total}', activeSteps.length);
+    elTitle.textContent = step.data.title;
+    elText.textContent = step.data.text;
+    btnBack.style.visibility = idx === 0 ? 'hidden' : 'visible';
+    btnNext.textContent = idx === activeSteps.length - 1 ? I18N.btnDone : I18N.btnNext;
+    renderDots();
+    // Wait for smooth scroll to settle before measuring
+    setTimeout(function(){ positionFor(step.node); }, 260);
+  }
+
+  function open(){
+    buildActiveSteps();
+    if (!activeSteps.length) return;
+    idx = 0;
+    lastFocused = document.activeElement;
+    overlay.classList.add('is-active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+    render();
+    setTimeout(function(){ btnNext.focus(); }, 300);
+  }
+
+  function close(markSeen){
+    overlay.classList.remove('is-active');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('resize', reposition);
+    window.removeEventListener('scroll', reposition, true);
+    if (markSeen){ try { sessionStorage.setItem(SEEN_KEY, '1'); } catch(e){} }
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  function next(){ if (idx >= activeSteps.length - 1){ close(true); } else { idx++; render(); } }
+  function back(){ if (idx > 0){ idx--; render(); } }
+  function reposition(){ var s = activeSteps[idx]; if (s) positionFor(s.node); }
+
+  function onKey(e){
+    if (e.key === 'Escape'){ e.preventDefault(); close(true); }
+    else if (e.key === 'ArrowRight'){ e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft'){ e.preventDefault(); back(); }
+    else if (e.key === 'Tab'){
+      // Simple focus trap across the popover controls
+      var focusables = pop.querySelectorAll('button:not([style*="visibility: hidden"])');
+      if (!focusables.length) return;
+      var first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  }
+
+  btnNext.addEventListener('click', next);
+  btnBack.addEventListener('click', back);
+  btnSkip.addEventListener('click', function(){ close(true); });
+  launch.addEventListener('click', open);
+
+  // Auto-show once per browser session for first-time visitors
+  function maybeAutoStart(){
+    var seen = false;
+    try { seen = sessionStorage.getItem(SEEN_KEY) === '1'; } catch(e){}
+    if (seen) return;
+    // Give the page (Alpine widgets, async templates) a moment to render targets
+    setTimeout(open, 900);
+  }
+  if (document.readyState === 'complete'){ maybeAutoStart(); }
+  else { window.addEventListener('load', maybeAutoStart); }
+})();
+</script>
+{{/if}}

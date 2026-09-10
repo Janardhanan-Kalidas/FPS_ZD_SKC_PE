@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.19.43",
+  "version": "0.19.45",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -90,7 +90,7 @@
           "type": "text",
           "description": "search_placeholder_description",
           "label": "search_placeholder_label",
-          "value": "Search.."
+          "value": "Search articles..."
         },
         {
           "identifier": "search_translucent",
@@ -653,7 +653,7 @@
           "type": "text",
           "description": "hero_heading_description",
           "label": "hero_heading_label",
-          "value": "Discover PROFIS Engineering Resources and much more..."
+          "value": "How can we help?"
         },
         {
           "identifier": "color_hero_heading",
@@ -667,7 +667,7 @@
           "type": "text",
           "description": "hero_text_description",
           "label": "hero_text_label",
-          "value": ""
+          "value": "Welcome to PROFIS Engineering support"
         },
         {
           "identifier": "color_hero_text",
@@ -819,6 +819,13 @@
               "value": "all"
             }
           ]
+        },
+        {
+          "identifier": "enable_quick_tour",
+          "type": "checkbox",
+          "description": "Show a guided quick tour of the home page. New visitors see it automatically once per browser session, and anyone can replay it with the “Take a tour” button.",
+          "label": "Enable home page quick tour",
+          "value": true
         }
       ]
     },
