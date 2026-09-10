@@ -204,6 +204,8 @@
   "promoted_video_ids_description": "A comma-separated list of YouTube or Vimeo video IDs to display",
   "recent_activity_label": "Recent activity",
   "recent_activity_description": "The style of recent activity to display",
+  "enable_quick_tour_label": "Enable home page quick tour",
+  "enable_quick_tour_description": "Show a guided quick tour of the home page. New visitors see it automatically once per browser session, and anyone can replay it with the Take a tour button.",
   "custom_block_group_label": "Custom blocks",
   "custom_block_style_label": "Custom blocks style",
   "custom_block_style_description": "The style of custom blocks to display on the Home page",

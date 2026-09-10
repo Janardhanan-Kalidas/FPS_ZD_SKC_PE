@@ -1,7 +1,7 @@
 {
   "name": "Hilti [SKC] - PE Theme 2026",
   "author": "Zenplates",
-  "version": "0.19.46",
+  "version": "0.19.47",
   "api_version": 3,
   "default_locale": "en-us",
   "settings": [
@@ -823,8 +823,8 @@
         {
           "identifier": "enable_quick_tour",
           "type": "checkbox",
-          "description": "Show a guided quick tour of the home page. New visitors see it automatically once per browser session, and anyone can replay it with the “Take a tour” button.",
-          "label": "Enable home page quick tour",
+          "description": "enable_quick_tour_description",
+          "label": "enable_quick_tour_label",
           "value": true
         }
       ]
