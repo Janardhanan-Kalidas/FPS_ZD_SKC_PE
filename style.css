@@ -18000,7 +18000,7 @@ header.d-flex h1 {
 /* --- Modal container --- */
 .hilti-lang-modal {
   background: #fff;
-  border-radius: 2px;
+  border-radius: 0;
   width: 90%;
   max-width: 820px;
   display: flex;
@@ -18080,7 +18080,7 @@ header.d-flex h1 {
   border: 1px solid #d0d0d0;
   background: #fff;
   color: #524f53;
-  border-radius: 3px;
+  border-radius: 0;
 }
 .hilti-lang-select:focus {
   outline: none;
