@@ -184,9 +184,9 @@
   <div class="z-30 hc-hero-content"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
 
     {{! Hero element title - Jana Changes}}
-    <div class="{{#unless settings.hero_heading}}{{#unless settings.hero_text}} hidden{{/unless}}{{/unless}}">
+    <div class="hc-hero-text {{#unless settings.hero_heading}}{{#unless settings.hero_text}} hidden{{/unless}}{{/unless}}">
       {{~#if settings.hero_text}}
-        <h1 class="font-size-xl">
+        <h1 class="hc-hero-welcome">
           {{~#if settings.use_translations}}
              {{dc 'welcome_to_profis_engineering_help_center'}} {{! Created a dynamic content in Admin}}
           {{else}}
@@ -195,7 +195,7 @@
         </h1>
       {{/if~}}
       {{~#if settings.hero_heading}}
-        <p class="font-size-4xl">
+        <p class="hc-hero-heading">
           {{~#if settings.use_translations}}
             {{dc 'fps-pe_-_hero_heading'}}
           {{else}}
@@ -206,7 +206,7 @@
     </div>
 
     {{! Hero element search bar - Jana}}
-    <div class="search{{#if settings.search_translucent}} search-translucent blur{{/if}} font-size-lg lg:font-size-xl text-base" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
+    <div class="search hc-hero-search text-base" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
       <h2 class="sr-only">{{ t 'search' }}</h2>
       {{~#if settings.search_placeholder}}
         {{#if settings.use_translations}}
