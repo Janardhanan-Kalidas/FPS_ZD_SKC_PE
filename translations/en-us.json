@@ -171,6 +171,8 @@
   "boxed_layout_description": "Display the page within a boxed layout",
   "bg_color_boxed_label": "Boxed background color",
   "bg_color_boxed_description": "Background color visible when a boxed layout is used",
+  "didomi_api_key_label": "Didomi consent SDK key",
+  "didomi_api_key_description": "Didomi (privacy-center) notice/SDK public key used to load the consent banner. Defaults to the production key; override with a test key for preview/sandbox instances.",
   "home_page_group_label": "Home page elements",
   "hero_heading_label": "Hero heading",
   "hero_heading_description": "The heading text to display within the hero element",
