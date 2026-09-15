@@ -13,6 +13,9 @@ venv/
 # Local reports / generated artifacts
 tooling/reports/
 
+# Local backup of assets/styles (not part of Zendesk theme)
+.img-backup/
+
 # OS metadata
 .DS_Store
 Thumbs.db
