@@ -29,6 +29,15 @@
     loader.classList.add('is-hidden');
     setTimeout(function(){if(loader.parentNode)loader.remove();},400);
   });
+  // Clear the loader on every page show, including back/forward (bfcache) restores.
+  // The 'load' event does NOT fire on bfcache restore, so without this the overlay
+  // shown on link-click stays visible forever when navigating back.
+  window.addEventListener('pageshow',function(e){
+    if(e.persisted){
+      var loaders=document.querySelectorAll('.hilti-page-loader');
+      for(var i=0;i<loaders.length;i++){loaders[i].parentNode&&loaders[i].remove();}
+    }
+  });
   // Show loader immediately on internal link/navigation click
   document.addEventListener('click',function(e){
     var link=e.target.closest?e.target.closest('a[href]'):null;
@@ -59,6 +68,14 @@
     bar.classList.remove('is-animating');
     bar.classList.add('is-complete');
     setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+  });
+  // Remove any lingering loading bars on back/forward (bfcache) restore, since the
+  // 'load' event that normally clears them does not fire on a bfcache restore.
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted) {
+      var bars = document.querySelectorAll('.hilti-page-loading-bar');
+      for (var i = 0; i < bars.length; i++) { bars[i].parentNode && bars[i].remove(); }
+    }
   });
   // Show loading bar on internal link click (before browser navigates away)
   document.addEventListener('click', function(e) {
