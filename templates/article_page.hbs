@@ -40,16 +40,23 @@
             <h3 class="article-sidebar-heading">{{t 'articles_in_section'}}</h3>
             <ul class="article-sidebar-list">
               {{#each section.articles}}
-                <li>
-                  <a class="article-sidebar-link{{#is id ../article.id}} is-active{{/is}}" href="{{url}}">
-                    {{title}}
-                  </a>
-                </li>
+                {{#if (compare @index "<" 6)}}
+                  <li>
+                    <a class="article-sidebar-link{{#is id ../article.id}} is-active{{/is}}" href="{{url}}">
+                      {{title}}
+                    </a>
+                  </li>
+                {{/if}}
               {{/each}}
             </ul>
-            <p class="article-sidebar-more">
-              <a href="{{section.url}}">Show all articles</a>
-            </p>
+            {{! Base "Show all" on the rendered collection (section.articles) rather than section.article_count. }}
+            {{! article_count can desync from the actual list depending on how the article was reached (e.g. via search), }}
+            {{! causing the link to appear even for small sections. Using the same collection the loop renders keeps them in sync. }}
+            {{#if (compare section.articles.length ">" 6)}}
+              <p class="article-sidebar-more">
+                <a href="{{section.url}}">Show all articles</a>
+              </p>
+            {{/if}}
           </div>
         {{else}}
           <div data-element="navigation" data-template="{{settings.article_sidebar}}"></div>
@@ -185,11 +192,11 @@
                 <span>Twitter</span>
               </a>
               <a class="article-share-option" data-share-channel="email">
-                <span class="article-share-option__icon article-share-option__icon--text" aria-hidden="true">@</span>
+                <img src="{{asset 'email.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
                 <span>Email</span>
               </a>
               <button type="button" class="article-share-option article-share-option--copy" id="article-share-copy-link">
-                <img src="{{asset 'share.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
+                <img src="{{asset 'document_copy.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
                 <span>Copy Link</span>
               </button>
             </div>

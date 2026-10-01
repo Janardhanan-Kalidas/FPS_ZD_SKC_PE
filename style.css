@@ -12,6 +12,13 @@
   --color-gray-600: rgba(186, 185, 186, 1);
   --font-heading: 'Hilti Small Bold', 'Hilti Small Extended', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-text: 'Hilti Small Roman', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Font-size scale — tokens map to the raw rem values used across custom theme rules */
+  --fs-2xs: 0.75rem;    /* 12px  — tags, TOC/sidebar links, small meta */
+  --fs-xs: 0.8125rem;   /* 13px  — nav/section links */
+  --fs-sm: 0.875rem;    /* 14px  — body copy, breadcrumbs, headings-sm */
+  --fs-md: 1rem;        /* 16px  — base */
+  --fs-lg: 1.45rem;     /* ~23px — search page H1 */
+  --fs-xl: 1.625rem;    /* 26px  — article title H1 */
   --spacer: 1rem;
   --transition-translate-factor: 0.5;
   --transition-rotate-factor: -4deg;
@@ -3601,7 +3608,7 @@ html[dir="rtl"] .notification-left-aligned {
   padding: 0.5rem 1.5rem;
   clear: both;
   font-weight: 400;
-  font-size: 0.875rem !Important;
+  font-size: 0.875rem !important;
   color: #2D3748;
   text-align: inherit;
   background-color: transparent;
@@ -17517,7 +17524,7 @@ footer ul li a:hover {
 /* 1. Font styling for tabs & links */
 ul.article-tags-custom > li,
 ul.article-tags-custom > li a {
-  font-size: 0.75rem !important;
+  font-size: var(--fs-2xs);
   font-weight: 400 !important;
   line-height: 1 !important;
 }
@@ -17564,7 +17571,7 @@ ul.article-tags-custom > li::after {
 ul.article-tags-custom a {
   color: #cc0000 !important;
   text-decoration: none;
-  font-size: 0.75rem !important;
+  font-size: var(--fs-2xs);
   font-weight: 300 !important;
 }
 
@@ -17678,7 +17685,7 @@ aside.md\:col-4 * {
 
 /* Override only search page H1 styling */
 .search-results-wrapper header > h1.h3 {
-  font-size: 1.45rem !important;
+  font-size: var(--fs-lg);
   font-weight: 600 !important;
   color: #524f53 !important;      /* Hilti Steel */
   padding-bottom: 0 !important;   /* removed extra padding pushing text down */
@@ -19424,7 +19431,7 @@ button.hc-page-btn {
 }
 
 .article-sidebar-heading {
-  font-size: 0.875rem !important;
+  font-size: var(--fs-sm);
   font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -19448,7 +19455,7 @@ button.hc-page-btn {
 .article-sidebar-link {
   display: block;
   padding: 5px 6px;
-  font-size: 0.8125rem;
+  font-size: var(--fs-2xs);
   color: #524f53 !important;
   text-decoration: none;
   border-radius: 2px;
@@ -19477,7 +19484,7 @@ button.hc-page-btn {
 
 .article-sidebar-more a {
   color: #d2051e !important;
-  font-size: 0.75rem !important;
+  font-size: var(--fs-2xs);
   text-decoration: none;
 }
 
@@ -19490,7 +19497,7 @@ button.hc-page-btn {
    Adjust: font-size, color, hover-color
 ---------------------------------------------------------- */
 .article-sidebar-link {
-  font-size: 0.8125rem;       /* ← sidebar link font size (matches category/section) */
+  font-size: var(--fs-2xs);       /* ← sidebar link font size (0.75rem, token-driven) */
   color: #524f53 !important; /* ← sidebar link color */
 }
 
@@ -19585,7 +19592,7 @@ button.hc-page-btn {
 }
 
 .article-page .article-title h1 {
-  font-size: 1.625rem !important;
+  font-size: var(--fs-xl);
   font-weight: 700;
   color: #524f53 !important;
   line-height: 1.25;
@@ -19935,7 +19942,7 @@ body.downvote-feedback-open {
    4. Article body typography
 ---------------------------------------------------------- */
 .article-content {
-  font-size: 0.875rem !important;
+  font-size: var(--fs-sm);
   line-height: 1.75;
   color: #3d3d3d;
 }
@@ -20201,7 +20208,7 @@ body.downvote-feedback-open {
 
 /* Zendesk TOC heading — styled to match left sidebar */
 .article-toc-nav h3 {
-  font-size: 0.875rem !important;
+  font-size: 0.75rem !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.04em;
@@ -20231,7 +20238,7 @@ body.downvote-feedback-open {
 .article-toc-nav a,
 .article-toc-nav .toc-link {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--fs-2xs);
   color: #524f53 !important;
   text-decoration: none !important;
   padding: 5px 6px !important;
