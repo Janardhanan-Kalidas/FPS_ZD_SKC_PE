@@ -8,4 +8,4 @@ variables:
   NODE_VERSION: "25.9.0"
   APPROVE_FOR_PROJECT: "fps_skc_pe"
   ### Set this temporary during pipelines debug for prevent actual deploy/rollback in PROD
-  DRY_RUN: "true"
+  # DRY_RUN: "true"
