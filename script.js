@@ -1346,11 +1346,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement("div");
     container.className = "empty-state";
 
+    const emptyStateText =
+      (window.Theme && window.Theme.emptyStateText) || "No articles yet";
+
     container.innerHTML = [
       emptyStateIcon
         ? `<img src="${emptyStateIcon}" class="empty-state__icon" alt="No articles icon">`
         : "",
-      '<div class="empty-state__text">No articles yet</div>'
+      `<div class="empty-state__text">${emptyStateText}</div>`
     ].join("");
 
     /* 4. Insert right below the section heading (H1 or H2) if present */
