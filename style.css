@@ -19512,6 +19512,7 @@ button.hc-page-btn {
 [data-element="article-navigation"] {
   border-top: 1px solid #CFCCC5;
   padding-top: 1rem;
+  padding-bottom: 1rem; /* match padding-top so the block has equal space above and below */
 }
 
 .article-navigation-no-voting-divider {
@@ -19522,17 +19523,16 @@ button.hc-page-btn {
 [data-element="article-navigation"] .row {
   margin-left: 0;
   margin-right: 0;
-  align-items: center;
+  align-items: flex-start; /* top-align both columns so the labels line up regardless of title length */
   justify-content: space-between;
 }
 
 [data-element="article-navigation"] .row > .sm\:col {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding-left: 0;
   padding-right: 0;
-  min-height: 4.5rem;
 }
 
 [data-element="article-navigation"] .row > .sm\:col.text-right {
@@ -19545,6 +19545,7 @@ button.hc-page-btn {
   color: #524F53;           /* ← label color */
   font-weight: 400;
   letter-spacing: 0.04em;
+  margin-top: 0;            /* reset default h4 top margin so the label sits flush with padding-top */
   margin-bottom: 0.25rem;
 }
 

@@ -368,7 +368,7 @@
                           {{#if more_articles}}
                             <p class="mt-auto">
                               <a href="{{url}}">
-                                {{t 'show_all_articles' count=article_count}}
+                                View more..
                               </a>
                             </p>
                           {{/if}}
@@ -382,7 +382,7 @@
                                 template: 'articles',
                                 sectionId: {{id}}{{#if more_articles}},
                                 templateData: {
-                                  showAll: "{{t 'show_all_articles' count=article_count}}",
+                                  showAll: "View more..",
                                 }{{/if}}
                               });
                             })
@@ -623,7 +623,7 @@
           {{~#if description}}description: {{json_stringify description}},{{/if~}}
           html_url: {{json_stringify url}},
           {{~#if article_count}}article_count: {{article_count}},{{/if~}}
-          {{~#if more_articles}}view_all_articles: {{json_stringify (t 'show_all_articles' count=article_count)}},{{/if~}}
+          {{~#if more_articles}}view_all_articles: {{json_stringify "View more.."}},{{/if~}}
         });
           {{~#each articles~}}
           Theme.contentBlocks.articles.push({
