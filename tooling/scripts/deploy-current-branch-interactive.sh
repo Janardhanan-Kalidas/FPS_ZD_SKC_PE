@@ -305,45 +305,51 @@ else
 fi
 
 echo
-echo "Step 4/4: Choose brand option"
-BRAND_ROWS=()
-while IFS= read -r line; do
-  BRAND_ROWS+=("$line")
-done < <(get_brand_rows)
-if [[ ${#BRAND_ROWS[@]} -eq 0 ]]; then
-  echo "No brands found in tooling/config/brand-theme-map.json"
-  exit 1
-fi
+echo "Step 4/4: Target brand"
 
+selected_brand_key=""
+selected_brand_name=""
+selected_brand_id=""
 selected_theme_brand_key=""
-default_brand_idx=1
-for i in "${!BRAND_ROWS[@]}"; do
-  IFS='|' read -r brand_key brand_name brand_id brand_is_default <<<"${BRAND_ROWS[$i]}"
-  echo "$((i + 1)). ${brand_name} | brandId=${brand_id} | key=${brand_key}"
-  if [[ "$brand_key" == "$selected_theme_brand_key" ]]; then
-    default_brand_idx=$((i + 1))
-  elif [[ "$brand_is_default" == "true" && "$default_brand_idx" -eq 1 ]]; then
-    default_brand_idx=$((i + 1))
-  fi
-done
 
-selected_brand_idx="$(pick_menu_index "Select brand" "$default_brand_idx" "${#BRAND_ROWS[@]}")"
-IFS='|' read -r selected_brand_key selected_brand_name selected_brand_id _ <<<"${BRAND_ROWS[$((selected_brand_idx - 1))]}"
-
-# The chosen environment (Production/Sandbox) is authoritative for the target brand.
-# Override the config brandId with the environment's brandId so the import/update
-# always lands on the brand that belongs to the selected environment.
 if [[ -n "${ZD_BRAND_ID:-}" ]]; then
+  # The chosen environment (Production/Sandbox) is authoritative for the target
+  # brand, so auto-select it instead of prompting from brand-theme-map.json.
   selected_brand_id="$ZD_BRAND_ID"
-  if [[ -n "${ZD_BRAND_NAME:-}" ]]; then
-    selected_brand_name="${selected_brand_name} [${ZD_ENV_NAME}: ${ZD_BRAND_NAME}]"
+  selected_brand_name="${ZD_BRAND_NAME:-${ZD_ENV_NAME} brand}"
+  selected_brand_key="${ZD_ENV_KEY:-env}"
+  echo "Auto-selected from environment '${ZD_ENV_NAME}':"
+  echo "Brand: ${selected_brand_name}"
+  echo "Brand ID: ${selected_brand_id}"
+else
+  # Fallback: no brandId configured for the environment, use the config menu.
+  echo "No brandId set for this environment; choose from configured brands."
+  BRAND_ROWS=()
+  while IFS= read -r line; do
+    BRAND_ROWS+=("$line")
+  done < <(get_brand_rows)
+  if [[ ${#BRAND_ROWS[@]} -eq 0 ]]; then
+    echo "No brands found in tooling/config/brand-theme-map.json"
+    exit 1
   fi
+
+  default_brand_idx=1
+  for i in "${!BRAND_ROWS[@]}"; do
+    IFS='|' read -r brand_key brand_name brand_id brand_is_default <<<"${BRAND_ROWS[$i]}"
+    echo "$((i + 1)). ${brand_name} | brandId=${brand_id} | key=${brand_key}"
+    if [[ "$brand_is_default" == "true" && "$default_brand_idx" -eq 1 ]]; then
+      default_brand_idx=$((i + 1))
+    fi
+  done
+
+  selected_brand_idx="$(pick_menu_index "Select brand" "$default_brand_idx" "${#BRAND_ROWS[@]}")"
+  IFS='|' read -r selected_brand_key selected_brand_name selected_brand_id _ <<<"${BRAND_ROWS[$((selected_brand_idx - 1))]}"
 fi
 
 if [[ -z "$selected_brand_id" ]]; then
-  echo "Selected brand does not have a valid brandId."
-  echo "Update tooling/config/brand-theme-map.json and set brands[].brandId,"
-  echo "or set brandId for this environment in tooling/config/environments.json."
+  echo "No valid brandId resolved."
+  echo "Set brandId for this environment in tooling/config/environments.json,"
+  echo "or add brands[].brandId in tooling/config/brand-theme-map.json."
   exit 1
 fi
 
