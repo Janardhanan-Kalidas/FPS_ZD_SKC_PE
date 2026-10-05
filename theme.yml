@@ -47,7 +47,6 @@ image:
 
 ### Anchors for scripts
 .before_script_anchor: &before_script |
-  # before_script
   - chmod +x $CICD_SCRIPTS_PATH/*.sh
 
 ### GateKeeper check approval
@@ -150,6 +149,7 @@ production_deploy:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  when: manual
 
 .sandbox_deploy:
   stage: deploy
