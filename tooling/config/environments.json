@@ -4,6 +4,7 @@
     {
       "key": "production",
       "name": "Production",
+      "authMode": "profile",
       "subdomain": "hiltiprofisengineering",
       "profile": "hiltiprofisengineering",
       "email": "janardhanan.kalidas@hilti.com",
@@ -13,8 +14,9 @@
     {
       "key": "sandbox",
       "name": "Sandbox",
+      "authMode": "oauth",
       "subdomain": "help-profisengineering",
-      "profile": "help-profisengineering",
+      "tokenEnvVar": "ZD_SANDBOX_OAUTH_TOKEN",
       "email": "janardhanan.kalidas@hilti.com",
       "brandId": "36290156819345",
       "brandName": "Hilti PROFIS Engineering"

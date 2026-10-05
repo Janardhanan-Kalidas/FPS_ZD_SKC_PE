@@ -1,25 +1,36 @@
 #!/usr/bin/env bash
-# Shared helper: prompt for a target Zendesk environment (Production vs Sandbox),
-# switch the active zcli profile, and export environment details for the caller.
+# Shared helper: prompt for a target Zendesk environment (Production vs Sandbox)
+# and set up zcli auth for it, then export environment details for the caller.
+#
+# Two auth modes are supported per environment (set via "authMode" in
+# tooling/config/environments.json):
+#   profile : use a saved zcli profile (Basic auth, email + API token).
+#             Switches the active profile with `zcli profiles:use`.
+#   oauth   : use an OAuth token from an env var (named by "tokenEnvVar"),
+#             exporting ZENDESK_SUBDOMAIN + ZENDESK_OAUTH_TOKEN so zcli
+#             authenticates per-command without a saved profile.
 #
 # Usage (source, do not execute):
 #   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #   source "${SCRIPT_DIR}/lib/select-environment.sh"
 #   select_zendesk_environment            # interactive picker
-#   # or honor a preset: ZD_ENV=production source + select_zendesk_environment
+#   # or honor a preset: ZD_ENV=production select_zendesk_environment
 #
 # After a successful call the following are exported:
 #   ZD_ENV_KEY        e.g. production | sandbox
 #   ZD_ENV_NAME       e.g. Production | Sandbox
+#   ZD_ENV_AUTH_MODE  profile | oauth
 #   ZD_SUBDOMAIN      Zendesk subdomain for the chosen environment
-#   ZD_PROFILE        zcli profile name that was activated
+#   ZD_PROFILE        zcli profile name (profile mode only; empty otherwise)
 #   ZD_BRAND_ID       default PE brandId for the chosen environment
 #   ZD_BRAND_NAME     human-readable brand label
+#   ZD_EMAIL          contact email (from config unless caller set one)
+# For oauth environments it also exports (for zcli to consume):
+#   ZENDESK_SUBDOMAIN, ZENDESK_OAUTH_TOKEN
 
 # Resolve the environment config path. Prefer values the caller already knows
 # (REPO_ROOT or ZD_ENV_CONFIG_FILE); fall back to deriving it from this file's
-# location. Callers that source via an absolute path get correct resolution;
-# the explicit REPO_ROOT path makes it robust regardless of how we were sourced.
+# location.
 if [[ -z "${ZD_ENV_CONFIG_FILE:-}" ]]; then
   if [[ -n "${REPO_ROOT:-}" ]]; then
     ZD_ENV_CONFIG_FILE="${REPO_ROOT}/tooling/config/environments.json"
@@ -30,6 +41,24 @@ if [[ -z "${ZD_ENV_CONFIG_FILE:-}" ]]; then
   fi
 fi
 
+# Load a local env file (for OAuth tokens / secrets) if present. Safe to call
+# repeatedly. Honors a caller-provided REPO_ROOT; otherwise derives it.
+_load_secret_env_files() {
+  local root="${REPO_ROOT:-}"
+  if [[ -z "$root" ]]; then
+    root="$(cd "$(dirname "$ZD_ENV_CONFIG_FILE")/../.." >/dev/null 2>&1 && pwd)"
+  fi
+  local f
+  for f in "${root}/.env" "${root}/.env.local"; do
+    if [[ -f "$f" ]]; then
+      set -a
+      # shellcheck disable=SC1090
+      source "$f"
+      set +a
+    fi
+  done
+}
+
 _env_rows() {
   node - "$ZD_ENV_CONFIG_FILE" <<'NODE'
 const fs = require('fs');
@@ -37,12 +66,15 @@ const path = process.argv[2];
 const data = JSON.parse(fs.readFileSync(path, 'utf8'));
 const envs = Array.isArray(data.environments) ? data.environments : [];
 const defaultKey = data.defaultEnvironmentKey || '';
+// Pipe-delimited row. Keep field order in sync with the readers below.
 for (const env of envs) {
   console.log([
     env.key || '',
     env.name || '',
+    env.authMode || 'profile',
     env.subdomain || '',
     env.profile || '',
+    env.tokenEnvVar || '',
     env.brandId || '',
     env.brandName || '',
     env.email || '',
@@ -74,7 +106,7 @@ select_zendesk_environment() {
   local preset_idx=0
   local i
   for i in "${!rows[@]}"; do
-    IFS='|' read -r key name subdomain profile brand_id brand_name email is_default <<<"${rows[$i]}"
+    IFS='|' read -r key name auth_mode subdomain profile token_var brand_id brand_name email is_default <<<"${rows[$i]}"
     if [[ "$is_default" == "true" ]]; then
       default_idx=$((i + 1))
     fi
@@ -90,10 +122,10 @@ select_zendesk_environment() {
   else
     echo "Choose target Zendesk environment:"
     for i in "${!rows[@]}"; do
-      IFS='|' read -r key name subdomain profile brand_id brand_name email is_default <<<"${rows[$i]}"
+      IFS='|' read -r key name auth_mode subdomain profile token_var brand_id brand_name email is_default <<<"${rows[$i]}"
       local marker=""
       [[ "$is_default" == "true" ]] && marker=" (default)"
-      echo "$((i + 1)). ${name} | ${subdomain}.zendesk.com${marker}"
+      echo "$((i + 1)). ${name} | ${subdomain}.zendesk.com [${auth_mode}]${marker}"
     done
 
     local input=""
@@ -108,26 +140,85 @@ select_zendesk_environment() {
     done
   fi
 
-  IFS='|' read -r ZD_ENV_KEY ZD_ENV_NAME ZD_SUBDOMAIN ZD_PROFILE ZD_BRAND_ID ZD_BRAND_NAME ZD_ENV_EMAIL _ <<<"${rows[$((chosen_idx - 1))]}"
+  local token_env_var=""
+  IFS='|' read -r ZD_ENV_KEY ZD_ENV_NAME ZD_ENV_AUTH_MODE ZD_SUBDOMAIN ZD_PROFILE token_env_var ZD_BRAND_ID ZD_BRAND_NAME ZD_ENV_EMAIL _ <<<"${rows[$((chosen_idx - 1))]}"
+
   # Only set ZD_EMAIL from config when the caller hasn't already provided one.
   if [[ -z "${ZD_EMAIL:-}" && -n "${ZD_ENV_EMAIL:-}" ]]; then
     ZD_EMAIL="$ZD_ENV_EMAIL"
   fi
-  export ZD_ENV_KEY ZD_ENV_NAME ZD_SUBDOMAIN ZD_PROFILE ZD_BRAND_ID ZD_BRAND_NAME ZD_ENV_EMAIL ZD_EMAIL
+  export ZD_ENV_KEY ZD_ENV_NAME ZD_ENV_AUTH_MODE ZD_SUBDOMAIN ZD_PROFILE ZD_BRAND_ID ZD_BRAND_NAME ZD_ENV_EMAIL ZD_EMAIL
 
   if ! command -v zcli >/dev/null 2>&1; then
     echo "zcli is not installed. Run: npm install -g @zendesk/zcli" >&2
     return 1
   fi
 
-  # zcli profiles:use exits 0 even for a missing profile (it just prints an
-  # error), so we can't rely on its exit code. Instead, check whether the
-  # profile is present in `zcli profiles:list`, which is the source of truth
-  # for which accounts are logged in.
+  case "$ZD_ENV_AUTH_MODE" in
+    oauth)
+      _setup_oauth_env "$token_env_var" || return 1
+      ;;
+    profile|"")
+      _setup_profile_env || return 1
+      ;;
+    *)
+      echo "Unknown authMode '${ZD_ENV_AUTH_MODE}' for ${ZD_ENV_NAME}." >&2
+      return 1
+      ;;
+  esac
+
+  echo "Active environment: ${ZD_ENV_NAME} | subdomain=${ZD_SUBDOMAIN} | auth=${ZD_ENV_AUTH_MODE} | brandId=${ZD_BRAND_ID}"
+  return 0
+}
+
+# OAuth mode: read the token from the named env var (loading .env/.env.local if
+# needed) and export ZENDESK_SUBDOMAIN + ZENDESK_OAUTH_TOKEN for zcli.
+_setup_oauth_env() {
+  local token_var="$1"
+
+  if [[ -z "$token_var" ]]; then
+    echo "Environment '${ZD_ENV_NAME}' uses authMode=oauth but has no 'tokenEnvVar' set in the config." >&2
+    return 1
+  fi
+
+  # Try to pick up the token from a local secrets file if not already in env.
+  if [[ -z "${!token_var:-}" ]]; then
+    _load_secret_env_files
+  fi
+
+  local token="${!token_var:-}"
+  if [[ -z "$token" ]]; then
+    echo "Missing OAuth token for ${ZD_ENV_NAME}." >&2
+    echo "Set ${token_var} in ${REPO_ROOT:-<repo>}/.env.local, e.g.:" >&2
+    echo "  ${token_var}=your_oauth_access_token" >&2
+    echo "(.env.local is git-ignored.)" >&2
+    return 1
+  fi
+
+  # zcli reads these at request time; ZENDESK_OAUTH_TOKEN takes precedence and
+  # ZENDESK_SUBDOMAIN selects the account. No saved profile is needed.
+  export ZENDESK_SUBDOMAIN="$ZD_SUBDOMAIN"
+  export ZENDESK_OAUTH_TOKEN="$token"
+  # Clear any Basic-auth env that could interfere with precedence.
+  unset ZENDESK_EMAIL ZENDESK_API_TOKEN ZENDESK_PASSWORD 2>/dev/null || true
+  # Not using a saved profile in this mode.
+  ZD_PROFILE=""
+  export ZD_PROFILE
+
+  echo "Using OAuth auth for ${ZD_ENV_NAME} (token from \$${token_var})."
+  return 0
+}
+
+# Profile mode: ensure the saved zcli profile exists (offer login if not),
+# then switch the active profile to it.
+_setup_profile_env() {
+  # Make sure OAuth env from a previous selection does not leak into this one.
+  unset ZENDESK_OAUTH_TOKEN ZENDESK_SUBDOMAIN 2>/dev/null || true
+
+  # zcli profiles:use exits 0 even for a missing profile, so verify via list.
   if ! _zcli_profile_exists "$ZD_PROFILE"; then
     echo "No zcli profile '${ZD_PROFILE}' is logged in for ${ZD_ENV_NAME} (${ZD_SUBDOMAIN}.zendesk.com)."
     local do_login="yes"
-    # Allow non-interactive callers to opt out via ZD_AUTO_LOGIN=no.
     if [[ "${ZD_AUTO_LOGIN:-yes}" == "no" ]]; then
       do_login="no"
     else
@@ -158,14 +249,11 @@ select_zendesk_environment() {
   echo "Switching zcli active profile to '${ZD_PROFILE}' (${ZD_ENV_NAME})..."
   zcli profiles:use "$ZD_PROFILE" >/dev/null 2>&1
 
-  # Confirm the switch actually took effect.
   local active_now=""
   active_now="$(cat "${HOME}/.zcli" 2>/dev/null | node -e "try{const d=JSON.parse(require('fs').readFileSync(0,'utf8'));process.stdout.write(String(d?.activeProfile?.subdomain||''))}catch{}" 2>/dev/null || true)"
   if [[ "$active_now" != "$ZD_PROFILE" ]]; then
     echo "Warning: active profile reads '${active_now}', expected '${ZD_PROFILE}'." >&2
   fi
-
-  echo "Active environment: ${ZD_ENV_NAME} | subdomain=${ZD_SUBDOMAIN} | brandId=${ZD_BRAND_ID}"
   return 0
 }
 
@@ -174,7 +262,6 @@ _zcli_profile_exists() {
   local target="$1"
   local list_output=""
   list_output="$(zcli profiles:list 2>/dev/null || true)"
-  # profiles:list prints one account name per row (optionally with "<= active").
   printf '%s\n' "$list_output" \
     | sed 's/<= active//' \
     | awk '{$1=$1; print}' \
