@@ -85,6 +85,23 @@
       "problemMatcher": []
     },
     {
+      "label": "Zendesk: Refresh Sandbox OAuth Token",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/refresh-sandbox-token.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Zendesk: Trigger GitLab Branch Deploy (Interactive)",
       "type": "shell",
       "command": "bash",

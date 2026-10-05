@@ -195,6 +195,33 @@ _setup_oauth_env() {
     return 1
   fi
 
+  # If the token is stale (expired/revoked), try to auto-refresh it via the
+  # client_credentials grant, using the refresh helper, then reload it. Only
+  # attempt this when the client credentials are available and a refresh script
+  # exists. Set ZD_SKIP_TOKEN_CHECK=1 to skip the pre-flight verification.
+  if [[ "${ZD_SKIP_TOKEN_CHECK:-0}" != "1" ]] && ! _oauth_token_valid "$ZD_SUBDOMAIN" "$token"; then
+    echo "OAuth token for ${ZD_ENV_NAME} is not valid (expired or revoked); attempting refresh..."
+    local refresh_script="${REPO_ROOT:-$(cd "$(dirname "$ZD_ENV_CONFIG_FILE")/../.." && pwd)}/tooling/scripts/refresh-sandbox-token.sh"
+    if [[ -f "$refresh_script" ]]; then
+      if bash "$refresh_script"; then
+        _load_secret_env_files
+        token="${!token_var:-}"
+      else
+        echo "Automatic token refresh failed." >&2
+        echo "Run: bash tooling/scripts/refresh-sandbox-token.sh  (ensure client id/secret are in .env.local)." >&2
+        return 1
+      fi
+    else
+      echo "No refresh helper found at ${refresh_script}." >&2
+      return 1
+    fi
+
+    if [[ -z "$token" ]] || ! _oauth_token_valid "$ZD_SUBDOMAIN" "$token"; then
+      echo "Token still invalid after refresh for ${ZD_ENV_NAME}." >&2
+      return 1
+    fi
+  fi
+
   # zcli reads these at request time; ZENDESK_OAUTH_TOKEN takes precedence and
   # ZENDESK_SUBDOMAIN selects the account. No saved profile is needed.
   export ZENDESK_SUBDOMAIN="$ZD_SUBDOMAIN"
@@ -207,6 +234,18 @@ _setup_oauth_env() {
 
   echo "Using OAuth auth for ${ZD_ENV_NAME} (token from \$${token_var})."
   return 0
+}
+
+# Return 0 if the given OAuth token authenticates against the subdomain.
+_oauth_token_valid() {
+  local subdomain="$1"
+  local token="$2"
+  [[ -z "$token" ]] && return 1
+  local code
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 12 \
+    -H "Authorization: Bearer ${token}" \
+    "https://${subdomain}.zendesk.com/api/v2/account/settings.json" 2>/dev/null || echo 000)"
+  [[ "$code" == "200" ]]
 }
 
 # Profile mode: ensure the saved zcli profile exists (offer login if not),
