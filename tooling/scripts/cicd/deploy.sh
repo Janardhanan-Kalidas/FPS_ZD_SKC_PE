@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Author: Janardhanan Kalidas
+# Date: 2026-10-05
+set -Eeuo pipefail
+
+fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+api() {
+  curl --fail-with-body --silent --show-error     --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}"     --header 'Accept: application/json' "$@"
+}
+
+[[ -f build.env ]] || fail "build.env is missing."
+set -a; source build.env; set +a
+ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
+[[ -s "$ARCHIVE" ]] || fail "Theme archive is missing: ${ARCHIVE}"
+[[ "$ZENDESK_BRAND_ID" == "36275984782609" ]] || fail "Production brand ID safety check failed."
+[[ "$DEPLOYMENT_TYPE" == "NEW_THEME" ]] || fail "Only NEW_THEME deployment is allowed."
+
+BASE_URL="https://${ZENDESK_SUBDOMAIN}.zendesk.com"
+BRAND_RESPONSE="$(api "${BASE_URL}/api/v2/brands/${ZENDESK_BRAND_ID}.json")"
+ACTUAL_BRAND="$(jq -er '.brand.name' <<<"$BRAND_RESPONSE")" || fail "Unable to read Zendesk brand response."
+[[ "$ACTUAL_BRAND" == "$ZENDESK_BRAND_NAME" ]] || fail "Brand mismatch. Expected '${ZENDESK_BRAND_NAME}', received '${ACTUAL_BRAND}'."
+printf 'Validated Zendesk brand: %s (%s)\n' "$ACTUAL_BRAND" "$ZENDESK_BRAND_ID"
+
+IMPORT_RESPONSE="$(api   --request POST   --header 'Content-Type: application/json'   --data "{\"job\":{\"attributes\":{\"brand_id\":\"${ZENDESK_BRAND_ID}\",\"format\":\"zip\"}}}"   "${BASE_URL}/api/v2/guide/theming/jobs/themes/imports")"
+
+JOB_ID="$(jq -er '.job.id' <<<"$IMPORT_RESPONSE")" || fail "Import response has no job ID."
+THEME_ID="$(jq -er '.job.data.theme_id' <<<"$IMPORT_RESPONSE")" || fail "Import response has no theme ID."
+UPLOAD_URL="$(jq -er '.job.data.upload.url' <<<"$IMPORT_RESPONSE")" || fail "Import response has no upload URL."
+
+UPLOAD_ARGS=()
+while IFS= read -r encoded; do
+  key="$(printf '%s' "$encoded" | base64 -d | jq -r '.key')"
+  value="$(printf '%s' "$encoded" | base64 -d | jq -r '.value')"
+  UPLOAD_ARGS+=(--form-string "${key}=${value}")
+done < <(jq -r '.job.data.upload.parameters | to_entries[] | @base64' <<<"$IMPORT_RESPONSE")
+
+curl --fail-with-body --silent --show-error   --request POST   "${UPLOAD_ARGS[@]}"   --form "file=@${ARCHIVE};type=application/zip"   "$UPLOAD_URL" >/dev/null
+printf 'Uploaded theme archive for job %s.\n' "$JOB_ID"
+
+INTERVAL="${JOB_POLL_INTERVAL_SECONDS:-5}"
+TIMEOUT="${JOB_POLL_TIMEOUT_SECONDS:-600}"
+ELAPSED=0
+while (( ELAPSED < TIMEOUT )); do
+  STATUS_RESPONSE="$(api "${BASE_URL}/api/v2/guide/theming/jobs/${JOB_ID}")"
+  STATUS="$(jq -er '.job.status' <<<"$STATUS_RESPONSE")" || fail "Unable to read import status."
+  printf 'Import status: %s\n' "$STATUS"
+  case "$STATUS" in
+    completed)
+      printf 'Deployment successful. Theme: %s | Theme ID: %s\n' "$THEME_NAME" "$THEME_ID"
+      exit 0
+      ;;
+    failed)
+      ERRORS="$(jq -c '.job.errors // []' <<<"$STATUS_RESPONSE")"
+      fail "Zendesk import failed: ${ERRORS}"
+      ;;
+    pending) ;;
+    *) fail "Unexpected import status: ${STATUS}" ;;
+  esac
+  sleep "$INTERVAL"
+  ELAPSED=$((ELAPSED + INTERVAL))
+done
+fail "Import job did not complete within ${TIMEOUT} seconds."

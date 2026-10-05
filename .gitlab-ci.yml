@@ -1,11 +1,17 @@
 ### use pipeline template from Gitlab
 include:
-  - project: "bu-f-ps/infra/pipeline-templates"
-    file: "/zendesk/theme.yml"
+  ## Use local template file during debugging.
+  - local: '/theme.yml'
+  # - project: "bu-f-ps/infra/pipeline-templates"
+  #   file: "/zendesk/theme.yml"
 
 variables:
-  ZCLI_VERSION: "1.0.0-beta.56"
-  NODE_VERSION: "25.9.0"
   APPROVE_FOR_PROJECT: "fps_skc_pe"
-  ### Set this temporary during pipelines debug for prevent actual deploy/rollback in PROD
-  DRY_RUN: "true"
+  DEPLOYMENT_TYPE: "NEW_THEME"
+  JOB_POLL_INTERVAL_SECONDS: "5"
+  JOB_POLL_TIMEOUT_SECONDS: "600"
+  THEME_ARCHIVE: "dist/theme.zip"
+  THEME_NAME_PREFIX: "Hilti [SKC] - PE_Theme"
+  THEME_SOURCE_DIR: "."
+  ZENDESK_BRAND_ID: "36275984782609"
+  ZENDESK_BRAND_NAME: "Hilti PROFIS Engineering"
