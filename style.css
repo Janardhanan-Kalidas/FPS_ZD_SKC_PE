@@ -19730,6 +19730,54 @@ button.hc-page-btn {
   display: block;
 }
 
+/* Error toast — Figma Design System "toast" (node 3:1740) */
+.share-error-toast {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #2d2d2d;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  z-index: 10060;
+  max-width: 344px;
+  box-sizing: border-box;
+}
+
+.share-error-toast.show {
+  display: flex;
+}
+
+.share-error-toast__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.share-error-toast__icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.share-error-toast__text {
+  flex: 1 0 0;
+  min-width: 0;
+  margin: 0;
+  color: #fff;
+  font-family: "Hilti", "HiltiSmallRoman", Arial, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
 .article-share-modal {
   position: fixed;
   inset: 0;

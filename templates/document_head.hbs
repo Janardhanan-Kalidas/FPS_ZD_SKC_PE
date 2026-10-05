@@ -77,6 +77,9 @@
     if (!link) return;
     var href = link.getAttribute('href');
     if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    // External-protocol links (mailto:, tel:, sms:, etc.) hand off to the OS
+    // and never trigger a page load, so the spinner would never clear. Skip them.
+    if (/^(mailto:|tel:|sms:|callto:|facetime:|skype:)/i.test(href)) return;
     if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey) return;
 
     // Spinner: reuse existing if present, otherwise create a new one
