@@ -6,6 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$REPO_ROOT"
 
+# shellcheck source=tooling/scripts/lib/select-environment.sh
+source "${SCRIPT_DIR}/lib/select-environment.sh"
+
 if ! command -v zcli >/dev/null 2>&1; then
   echo "zcli is not installed. Run: npm install -g @zendesk/zcli"
   exit 1
@@ -28,6 +31,10 @@ normalize_theme_name() {
 }
 
 theme_version="$(node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));process.stdout.write(String(m.version||'unknown'));")"
+
+echo "Step 0/5: Choose target environment"
+select_zendesk_environment
+echo
 
 echo "Step 1/5: Current branch and local status"
 current_branch="$(git branch --show-current)"
@@ -69,8 +76,10 @@ zcli themes:list
 
 echo
 echo "Step 4/5: Choose target brand"
-echo "If you leave brandId empty, zcli will ask you interactively."
-read -r -p "Enter brandId (optional): " brand_id
+echo "Default brandId comes from the selected environment (${ZD_ENV_NAME})."
+echo "Leave empty to use the environment default, or type a brandId to override."
+read -r -p "Enter brandId [${ZD_BRAND_ID:-interactive}]: " brand_id
+brand_id="${brand_id:-${ZD_BRAND_ID:-}}"
 
 echo
 echo "Step 5/6: Choose theme name"
@@ -86,6 +95,7 @@ theme_name="$(normalize_theme_name "$theme_name")"
 
 echo
 echo "Step 6/6: Confirm deployment"
+echo "Environment: ${ZD_ENV_NAME} (${ZD_SUBDOMAIN}.zendesk.com)"
 echo "Branch: $(git branch --show-current)"
 if [[ -n "$brand_id" ]]; then
   echo "Brand ID: $brand_id"

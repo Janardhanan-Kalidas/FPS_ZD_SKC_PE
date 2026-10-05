@@ -16,11 +16,11 @@
       "problemMatcher": []
     },
     {
-      "label": "Zendesk: Preview Theme",
+      "label": "Zendesk: Preview Theme (Choose Environment)",
       "type": "shell",
-      "command": "zcli",
+      "command": "bash",
       "args": [
-        "themes:preview"
+        "tooling/scripts/preview-theme-interactive.sh"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -28,23 +28,25 @@
       "isBackground": true,
       "presentation": {
         "reveal": "always",
-        "panel": "shared"
+        "panel": "shared",
+        "focus": true
       },
       "problemMatcher": []
     },
     {
-      "label": "Zendesk: List Themes",
+      "label": "Zendesk: List Themes (Choose Environment)",
       "type": "shell",
-      "command": "zcli",
+      "command": "bash",
       "args": [
-        "themes:list"
+        "tooling/scripts/list-themes-interactive.sh"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "presentation": {
         "reveal": "always",
-        "panel": "shared"
+        "panel": "shared",
+        "focus": true
       },
       "problemMatcher": []
     },
@@ -70,7 +72,7 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "tooling/scripts/deploy-current-branch-noninteractive.sh"
+        "tooling/scripts/deploy-current-branch-interactive.sh"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

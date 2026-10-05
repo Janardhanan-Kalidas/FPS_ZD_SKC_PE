@@ -1,0 +1,23 @@
+{
+  "defaultEnvironmentKey": "sandbox",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "subdomain": "hiltiprofisengineering",
+      "profile": "hiltiprofisengineering",
+      "email": "janardhanan.kalidas@hilti.com",
+      "brandId": "36275984782609",
+      "brandName": "Hilti PROFIS Engineering"
+    },
+    {
+      "key": "sandbox",
+      "name": "Sandbox",
+      "subdomain": "fieldwirelabs1747668292",
+      "profile": "fieldwirelabs",
+      "email": "janardhanan.kalidas@hilti.com",
+      "brandId": "36290156819345",
+      "brandName": "Hilti PROFIS Engineering"
+    }
+  ]
+}

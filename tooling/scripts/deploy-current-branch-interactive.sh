@@ -6,6 +6,9 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 CONFIG_FILE="${REPO_ROOT}/tooling/config/brand-theme-map.json"
 cd "$REPO_ROOT"
 
+# shellcheck source=tooling/scripts/lib/select-environment.sh
+source "${SCRIPT_DIR}/lib/select-environment.sh"
+
 load_local_env_file() {
   local env_file="$1"
   if [[ -f "$env_file" ]]; then
@@ -254,6 +257,10 @@ NODE
   printf '%s' "$active_subdomain"
 }
 
+echo "Step 0/4: Choose target environment"
+select_zendesk_environment
+echo
+
 current_branch="$(git branch --show-current)"
 if [[ -z "$current_branch" ]]; then
   echo "Unable to detect current git branch."
@@ -323,9 +330,20 @@ done
 selected_brand_idx="$(pick_menu_index "Select brand" "$default_brand_idx" "${#BRAND_ROWS[@]}")"
 IFS='|' read -r selected_brand_key selected_brand_name selected_brand_id _ <<<"${BRAND_ROWS[$((selected_brand_idx - 1))]}"
 
+# The chosen environment (Production/Sandbox) is authoritative for the target brand.
+# Override the config brandId with the environment's brandId so the import/update
+# always lands on the brand that belongs to the selected environment.
+if [[ -n "${ZD_BRAND_ID:-}" ]]; then
+  selected_brand_id="$ZD_BRAND_ID"
+  if [[ -n "${ZD_BRAND_NAME:-}" ]]; then
+    selected_brand_name="${selected_brand_name} [${ZD_ENV_NAME}: ${ZD_BRAND_NAME}]"
+  fi
+fi
+
 if [[ -z "$selected_brand_id" ]]; then
   echo "Selected brand does not have a valid brandId."
-  echo "Update tooling/config/brand-theme-map.json and set brands[].brandId."
+  echo "Update tooling/config/brand-theme-map.json and set brands[].brandId,"
+  echo "or set brandId for this environment in tooling/config/environments.json."
   exit 1
 fi
 
@@ -421,6 +439,7 @@ fi
 
 echo
 echo "Deployment summary"
+echo "Environment: ${ZD_ENV_NAME} (${ZD_SUBDOMAIN}.zendesk.com)"
 echo "Branch: ${current_branch}"
 echo "Brand: ${selected_brand_name}"
 echo "Brand ID: ${selected_brand_id}"
