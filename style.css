@@ -12,6 +12,13 @@
   --color-gray-600: rgba(186, 185, 186, 1);
   --font-heading: 'Hilti Small Bold', 'Hilti Small Extended', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-text: 'Hilti Small Roman', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Font-size scale — tokens map to the raw rem values used across custom theme rules */
+  --fs-2xs: 0.75rem;    /* 12px  — tags, TOC/sidebar links, small meta */
+  --fs-xs: 0.8125rem;   /* 13px  — nav/section links */
+  --fs-sm: 0.875rem;    /* 14px  — body copy, breadcrumbs, headings-sm */
+  --fs-md: 1rem;        /* 16px  — base */
+  --fs-lg: 1.45rem;     /* ~23px — search page H1 */
+  --fs-xl: 1.625rem;    /* 26px  — article title H1 */
   --spacer: 1rem;
   --transition-translate-factor: 0.5;
   --transition-rotate-factor: -4deg;
@@ -3601,7 +3608,7 @@ html[dir="rtl"] .notification-left-aligned {
   padding: 0.5rem 1.5rem;
   clear: both;
   font-weight: 400;
-  font-size: 0.875rem !Important;
+  font-size: 0.875rem !important;
   color: #2D3748;
   text-align: inherit;
   background-color: transparent;
@@ -16521,10 +16528,10 @@ a:hover .icon-circle {
 
 .kc-footer-logo {
   width: 8rem;
-  height: 1.875rem;
+  height: auto; /* Preserve the wordmark aspect ratio (110:16) */
   display: block;
   object-fit: contain;
-  margin-bottom: 0.75rem; /* Space between logo and social icons */
+  margin-bottom: 1.25rem; /* Space between logo and social icons */
 }
 
 .footer-social-row {
@@ -17517,7 +17524,7 @@ footer ul li a:hover {
 /* 1. Font styling for tabs & links */
 ul.article-tags-custom > li,
 ul.article-tags-custom > li a {
-  font-size: 0.75rem !important;
+  font-size: var(--fs-2xs);
   font-weight: 400 !important;
   line-height: 1 !important;
 }
@@ -17564,7 +17571,7 @@ ul.article-tags-custom > li::after {
 ul.article-tags-custom a {
   color: #cc0000 !important;
   text-decoration: none;
-  font-size: 0.75rem !important;
+  font-size: var(--fs-2xs);
   font-weight: 300 !important;
 }
 
@@ -17678,7 +17685,7 @@ aside.md\:col-4 * {
 
 /* Override only search page H1 styling */
 .search-results-wrapper header > h1.h3 {
-  font-size: 1.45rem !important;
+  font-size: var(--fs-lg);
   font-weight: 600 !important;
   color: #524f53 !important;      /* Hilti Steel */
   padding-bottom: 0 !important;   /* removed extra padding pushing text down */
@@ -18018,7 +18025,7 @@ header.d-flex h1 {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid #524f53;
+  border-bottom: 1px solid #E5E7EB;
 }
 .hilti-lang-modal-title {
   display: flex;
@@ -18040,7 +18047,6 @@ header.d-flex h1 {
   transition: background 0.2s, color 0.2s;
 }
 .hilti-lang-close:hover {
-  background: #f5f5f5;
   color: #D2051E;
 }
 
@@ -18075,12 +18081,18 @@ header.d-flex h1 {
 .hilti-lang-select {
   width: 100%;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 36px 0 10px;
   font-size: 0.875rem;
   border: 1px solid #d0d0d0;
-  background: #fff;
+  background-color: #fff;
   color: #524f53;
   border-radius: 3px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%23524f53' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
 .hilti-lang-select:focus {
   outline: none;
@@ -18100,33 +18112,36 @@ header.d-flex h1 {
   padding-top: 20px;
 }
 .hilti-lang-btn {
-  min-width: 96px;
-  height: 36px;
-  padding: 0 14px;
-  border: 1px solid #d0d0d0;
-  background: #f5f5f5;
-  color: #524f53;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-family: 'Hilti Small Bold', 'Hilti Small Extended', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: normal;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
-.hilti-lang-btn:hover {
-  background: #eee;
-  border-color: #bbb;
-}
+/* Secondary — Figma node 4:336: white bg, 1px #e5e7eb border, #374151 text */
 .hilti-lang-btn-secondary {
-  background: #f5f5f5;
-  border-color: #d0d0d0;
-  color: #524f53;
+  background: #fff;
+  border-color: #e5e7eb;
+  color: #374151;
 }
 .hilti-lang-btn-secondary:hover {
-  background: #eee;
-  border-color: #bbb;
+  background: #f5f5f5;
+  border-color: #d0d0d0;
 }
+/* Primary — Figma node 4:338: #d2051e bg, white text, subtle drop shadow */
 .hilti-lang-btn-primary {
-  background: #D2051E;
-  border-color: #D2051E;
+  background: #d2051e;
+  border-color: #d2051e;
   color: #fff;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 .hilti-lang-btn-primary:hover {
   background: #ab0115;
@@ -18136,6 +18151,7 @@ header.d-flex h1 {
   background: #d9d9d9;
   border-color: #d9d9d9;
   color: #999;
+  box-shadow: none;
   cursor: not-allowed;
 }
 .hilti-lang-current {
@@ -19424,7 +19440,7 @@ button.hc-page-btn {
 }
 
 .article-sidebar-heading {
-  font-size: 0.875rem !important;
+  font-size: var(--fs-sm);
   font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -19448,7 +19464,7 @@ button.hc-page-btn {
 .article-sidebar-link {
   display: block;
   padding: 5px 6px;
-  font-size: 0.8125rem;
+  font-size: var(--fs-2xs);
   color: #524f53 !important;
   text-decoration: none;
   border-radius: 2px;
@@ -19477,7 +19493,7 @@ button.hc-page-btn {
 
 .article-sidebar-more a {
   color: #d2051e !important;
-  font-size: 0.75rem !important;
+  font-size: var(--fs-2xs);
   text-decoration: none;
 }
 
@@ -19490,7 +19506,7 @@ button.hc-page-btn {
    Adjust: font-size, color, hover-color
 ---------------------------------------------------------- */
 .article-sidebar-link {
-  font-size: 0.8125rem;       /* ← sidebar link font size (matches category/section) */
+  font-size: var(--fs-2xs);       /* ← sidebar link font size (0.75rem, token-driven) */
   color: #524f53 !important; /* ← sidebar link color */
 }
 
@@ -19505,6 +19521,7 @@ button.hc-page-btn {
 [data-element="article-navigation"] {
   border-top: 1px solid #CFCCC5;
   padding-top: 1rem;
+  padding-bottom: 1rem; /* match padding-top so the block has equal space above and below */
 }
 
 .article-navigation-no-voting-divider {
@@ -19515,17 +19532,16 @@ button.hc-page-btn {
 [data-element="article-navigation"] .row {
   margin-left: 0;
   margin-right: 0;
-  align-items: center;
+  align-items: flex-start; /* top-align both columns so the labels line up regardless of title length */
   justify-content: space-between;
 }
 
 [data-element="article-navigation"] .row > .sm\:col {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding-left: 0;
   padding-right: 0;
-  min-height: 4.5rem;
 }
 
 [data-element="article-navigation"] .row > .sm\:col.text-right {
@@ -19538,6 +19554,7 @@ button.hc-page-btn {
   color: #524F53;           /* ← label color */
   font-weight: 400;
   letter-spacing: 0.04em;
+  margin-top: 0;            /* reset default h4 top margin so the label sits flush with padding-top */
   margin-bottom: 0.25rem;
 }
 
@@ -19585,7 +19602,7 @@ button.hc-page-btn {
 }
 
 .article-page .article-title h1 {
-  font-size: 1.625rem !important;
+  font-size: var(--fs-xl);
   font-weight: 700;
   color: #524f53 !important;
   line-height: 1.25;
@@ -19720,6 +19737,54 @@ button.hc-page-btn {
 
 .article-share-toast.show {
   display: block;
+}
+
+/* Error toast — Figma Design System "toast" (node 3:1740) */
+.share-error-toast {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #2d2d2d;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  z-index: 10060;
+  max-width: 344px;
+  box-sizing: border-box;
+}
+
+.share-error-toast.show {
+  display: flex;
+}
+
+.share-error-toast__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.share-error-toast__icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.share-error-toast__text {
+  flex: 1 0 0;
+  min-width: 0;
+  margin: 0;
+  color: #fff;
+  font-family: "Hilti", "HiltiSmallRoman", Arial, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .article-share-modal {
@@ -19935,7 +20000,7 @@ body.downvote-feedback-open {
    4. Article body typography
 ---------------------------------------------------------- */
 .article-content {
-  font-size: 0.875rem !important;
+  font-size: var(--fs-sm);
   line-height: 1.75;
   color: #3d3d3d;
 }
@@ -20201,7 +20266,7 @@ body.downvote-feedback-open {
 
 /* Zendesk TOC heading — styled to match left sidebar */
 .article-toc-nav h3 {
-  font-size: 0.875rem !important;
+  font-size: 0.75rem !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.04em;
@@ -20231,7 +20296,7 @@ body.downvote-feedback-open {
 .article-toc-nav a,
 .article-toc-nav .toc-link {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--fs-2xs);
   color: #524f53 !important;
   text-decoration: none !important;
   padding: 5px 6px !important;

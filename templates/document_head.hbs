@@ -19,77 +19,79 @@
 @keyframes hilti-blink{0%,100%{opacity:0}25%,65%{opacity:1}}
 </style>
 <script>
-(function(){
-  var loader=document.createElement('div');
-  loader.className='hilti-page-loader';
-  loader.id='hiltiPageLoader';
-  loader.innerHTML='<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
-  document.documentElement.appendChild(loader);
-  window.addEventListener('load',function(){
-    loader.classList.add('is-hidden');
-    setTimeout(function(){if(loader.parentNode)loader.remove();},400);
-  });
-  // Clear the loader on every page show, including back/forward (bfcache) restores.
-  // The 'load' event does NOT fire on bfcache restore, so without this the overlay
-  // shown on link-click stays visible forever when navigating back.
-  window.addEventListener('pageshow',function(e){
-    if(e.persisted){
-      var loaders=document.querySelectorAll('.hilti-page-loader');
-      for(var i=0;i<loaders.length;i++){loaders[i].parentNode&&loaders[i].remove();}
-    }
-  });
-  // Show loader immediately on internal link/navigation click
-  document.addEventListener('click',function(e){
-    var link=e.target.closest?e.target.closest('a[href]'):null;
-    if(!link)return;
-    var href=link.getAttribute('href');
-    if(!href||href.charAt(0)==='#'||href.indexOf('javascript:')===0)return;
-    if(link.target==='_blank'||e.ctrlKey||e.metaKey||e.shiftKey)return;
-    var existing=document.getElementById('hiltiPageLoader');
-    if(existing){existing.classList.remove('is-hidden');return;}
-    var nav=document.createElement('div');
-    nav.className='hilti-page-loader';
-    nav.id='hiltiPageLoader';
-    nav.innerHTML='<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
-    document.documentElement.appendChild(nav);
-  });
-})();
-</script>
-<script>
 (function() {
-  var bar = document.createElement('div');
-  bar.className = 'hilti-page-loading-bar';
+  // Consolidated page-loading indicator: full-screen spinner (hilti-page-loader)
+  // + top progress bar (hilti-page-loading-bar) driven by a SINGLE click listener
+  // and shared load/pageshow handlers. Previously two separate IIFEs each registered
+  // their own document click listener; merged to avoid duplicate event work.
+
+  // ----- Helpers to build each visual -----
+  function createLoader() {
+    var loader = document.createElement('div');
+    loader.className = 'hilti-page-loader';
+    loader.id = 'hiltiPageLoader';
+    loader.innerHTML = '<div class="hilti-slant-bars"><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div><div class="hilti-slant-bar"></div></div>';
+    document.documentElement.appendChild(loader);
+    return loader;
+  }
+
+  function createBar() {
+    var bar = document.createElement('div');
+    bar.className = 'hilti-page-loading-bar';
+    document.documentElement.appendChild(bar);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { bar.classList.add('is-animating'); });
+    });
+    return bar;
+  }
+
+  // ----- Initial render on first page load -----
+  var loader = createLoader();
+  var bar = createBar();
   bar.id = 'hiltiPageLoadBar';
-  document.documentElement.appendChild(bar);
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { bar.classList.add('is-animating'); });
-  });
+
+  // ----- Complete both on window load -----
   window.addEventListener('load', function() {
+    loader.classList.add('is-hidden');
+    setTimeout(function() { if (loader.parentNode) loader.remove(); }, 400);
     bar.classList.remove('is-animating');
     bar.classList.add('is-complete');
     setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
   });
-  // Remove any lingering loading bars on back/forward (bfcache) restore, since the
-  // 'load' event that normally clears them does not fire on a bfcache restore.
+
+  // ----- Clear lingering overlays on back/forward (bfcache) restore -----
+  // The 'load' event does NOT fire on bfcache restore, so without this the overlay
+  // shown on link-click stays visible forever when navigating back.
   window.addEventListener('pageshow', function(e) {
     if (e.persisted) {
+      var loaders = document.querySelectorAll('.hilti-page-loader');
+      for (var i = 0; i < loaders.length; i++) { loaders[i].parentNode && loaders[i].remove(); }
       var bars = document.querySelectorAll('.hilti-page-loading-bar');
-      for (var i = 0; i < bars.length; i++) { bars[i].parentNode && bars[i].remove(); }
+      for (var j = 0; j < bars.length; j++) { bars[j].parentNode && bars[j].remove(); }
     }
   });
-  // Show loading bar on internal link click (before browser navigates away)
+
+  // ----- Single click listener drives BOTH visuals on internal navigation -----
   document.addEventListener('click', function(e) {
     var link = e.target.closest ? e.target.closest('a[href]') : null;
     if (!link) return;
     var href = link.getAttribute('href');
     if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    // External-protocol links (mailto:, tel:, sms:, etc.) hand off to the OS
+    // and never trigger a page load, so the spinner would never clear. Skip them.
+    if (/^(mailto:|tel:|sms:|callto:|facetime:|skype:)/i.test(href)) return;
     if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    var navBar = document.createElement('div');
-    navBar.className = 'hilti-page-loading-bar';
-    document.documentElement.appendChild(navBar);
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() { navBar.classList.add('is-animating'); });
-    });
+
+    // Spinner: reuse existing if present, otherwise create a new one
+    var existing = document.getElementById('hiltiPageLoader');
+    if (existing) {
+      existing.classList.remove('is-hidden');
+    } else {
+      createLoader();
+    }
+
+    // Progress bar: always start a fresh animating bar before navigation
+    createBar();
   });
 })();
 </script>
@@ -167,7 +169,7 @@ try {
   try { if (window.self !== window.top) return; } catch(e) { return; }
 
   (function(e,i){var o=document.createElement("link");o.rel="preconnect";o.as="script";var n=document.createElement("link");n.rel="dns-prefetch";n.as="script";var r=document.createElement("script");r.id="spcloader";r.type="text/javascript";r["async"]=true;r.charset="utf-8";window.didomiConfig=window.didomiConfig||{};window.didomiConfig.sdkPath=window.didomiConfig.sdkPath||i||"https://sdk.privacy-center.org/";const t=window.didomiConfig.sdkPath;var d=t+e+"/loader.js?target="+document.location.hostname;if(window.didomiConfig&&window.didomiConfig.user){var a=window.didomiConfig.user;var c=a.country;var s=a.region;if(c){d=d+"&country="+c;if(s){d=d+"&region="+s}}}o.href=t;n.href=t;r.src=d;var f=document.getElementsByTagName("script")[0];f.parentNode.insertBefore(o,f);f.parentNode.insertBefore(n,f);f.parentNode.insertBefore(r,f)})("{{settings.didomi_api_key}}")})();</script>
-<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
+<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: { emptyStateIcon: "{{asset 'Work-in-progress.svg'}}" }, locale: "{{help_center.locale}}", emptyStateText: "{{t 'empty'}}", routes: { newRequest: "{{page_path 'new_request'}}" }, signedIn: {{signed_in}} });</script>
 <script type="text/javascript" src="{{asset 'util.min.js'}}"></script>
 
 {{! Extensions }}

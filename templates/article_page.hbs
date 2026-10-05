@@ -40,16 +40,23 @@
             <h3 class="article-sidebar-heading">{{t 'articles_in_section'}}</h3>
             <ul class="article-sidebar-list">
               {{#each section.articles}}
-                <li>
-                  <a class="article-sidebar-link{{#is id ../article.id}} is-active{{/is}}" href="{{url}}">
-                    {{title}}
-                  </a>
-                </li>
+                {{#if (compare @index "<" 6)}}
+                  <li>
+                    <a class="article-sidebar-link{{#is id ../article.id}} is-active{{/is}}" href="{{url}}">
+                      {{title}}
+                    </a>
+                  </li>
+                {{/if}}
               {{/each}}
             </ul>
-            <p class="article-sidebar-more">
-              <a href="{{section.url}}">Show all articles</a>
-            </p>
+            {{! Base "Show all" on the rendered collection (section.articles) rather than section.article_count. }}
+            {{! article_count can desync from the actual list depending on how the article was reached (e.g. via search), }}
+            {{! causing the link to appear even for small sections. Using the same collection the loop renders keeps them in sync. }}
+            {{#if (compare section.articles.length ">" 6)}}
+              <p class="article-sidebar-more">
+                <a href="{{section.url}}">View more..</a>
+              </p>
+            {{/if}}
           </div>
         {{else}}
           <div data-element="navigation" data-template="{{settings.article_sidebar}}"></div>
@@ -185,17 +192,27 @@
                 <span>Twitter</span>
               </a>
               <a class="article-share-option" data-share-channel="email">
-                <span class="article-share-option__icon article-share-option__icon--text" aria-hidden="true">@</span>
+                <img src="{{asset 'email.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
                 <span>Email</span>
               </a>
               <button type="button" class="article-share-option article-share-option--copy" id="article-share-copy-link">
-                <img src="{{asset 'share.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
+                <img src="{{asset 'document_copy.svg'}}" width="16" height="16" alt="" aria-hidden="true" class="article-share-option__icon-img">
                 <span>Copy Link</span>
               </button>
             </div>
           </div>
         </div>
         <span id="share-toast" class="article-share-toast">Link copied!</span>
+
+        {{! Error toast — Figma Design System "toast" (node 3:1740) }}
+        <div id="share-error-toast" class="share-error-toast" role="alert" aria-live="assertive" aria-hidden="true">
+          <span class="share-error-toast__icon-wrap" aria-hidden="true">
+            <svg class="share-error-toast__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <p class="share-error-toast__text">No email app is configured on this device.</p>
+        </div>
 
       </div>
 
@@ -590,6 +607,7 @@
   var modal = document.getElementById('article-share-modal');
   var copyBtn = document.getElementById('article-share-copy-link');
   var toast = document.getElementById('share-toast');
+  var errorToast = document.getElementById('share-error-toast');
   if (!trigger || !modal) return;
 
   var currentUrl = window.location.href;
@@ -627,6 +645,64 @@
     trigger.focus();
   }
 
+  var toastTimer = null;
+  var errorToastTimer = null;
+
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() {
+      toast.classList.remove('show');
+    }, 2000);
+  }
+
+  function showErrorToast(message) {
+    if (!errorToast) return;
+    var textEl = errorToast.querySelector('.share-error-toast__text');
+    if (textEl && message) textEl.textContent = message;
+    errorToast.setAttribute('aria-hidden', 'false');
+    errorToast.classList.add('show');
+    if (errorToastTimer) clearTimeout(errorToastTimer);
+    errorToastTimer = setTimeout(function() {
+      errorToast.classList.remove('show');
+      errorToast.setAttribute('aria-hidden', 'true');
+    }, 4000);
+  }
+
+  function launchEmailShare() {
+    // There is no API to ask whether a mailto: handler exists. We detect a
+    // successful hand-off to a mail client indirectly: launching an external
+    // app blurs the window / hides the page. If neither happens within a short
+    // window, we assume no client is configured and show an error.
+    //
+    // An iframe cannot be used here: this document ships a Permissions-Policy
+    // that forbids "unload", so an iframe navigation to mailto: is blocked and
+    // silently hangs. Assigning window.location to a mailto: hands off to the
+    // OS without unloading the current document when a handler is present, and
+    // is a no-op (no spinner) when one is not.
+    var launched = false;
+    function markLaunched() { launched = true; }
+
+    window.addEventListener('blur', markLaunched);
+    document.addEventListener('visibilitychange', markLaunched);
+
+    try {
+      window.location.href = shareLinks.email;
+    } catch (err) {
+      launched = false;
+    }
+
+    setTimeout(function() {
+      window.removeEventListener('blur', markLaunched);
+      document.removeEventListener('visibilitychange', markLaunched);
+      if (!launched && document.visibilityState === 'visible' && document.hasFocus()) {
+        showErrorToast('No email app is configured on this device.');
+      }
+    }, 1500);
+  }
+
   trigger.addEventListener('click', openModal);
 
   modal.querySelectorAll('[data-share-close]').forEach(function(closeEl) {
@@ -634,7 +710,18 @@
   });
 
   modal.querySelectorAll('.article-share-option[data-share-channel]').forEach(function(link) {
-    link.addEventListener('click', function() {
+    link.addEventListener('click', function(e) {
+      var channel = link.getAttribute('data-share-channel');
+      if (channel === 'email') {
+        // A mailto: with no registered OS handler leaves the browser spinning
+        // on a navigation that never resolves. There is no API to query for a
+        // handler, so we detect a successful launch via loss of focus: when a
+        // mail client opens, the window blurs / the page is hidden. If neither
+        // happens within a short window, we assume no client is configured and
+        // surface an error instead of leaving the loader running.
+        e.preventDefault();
+        launchEmailShare();
+      }
       setTimeout(closeModal, 50);
     });
   });
@@ -648,10 +735,10 @@
   if (copyBtn) {
     copyBtn.addEventListener('click', function() {
       navigator.clipboard.writeText(currentUrl).then(function() {
-        if (!toast) return;
-        toast.classList.add('show');
-        setTimeout(function() { toast.classList.remove('show'); }, 2000);
+        showToast('Link copied!');
         closeModal();
+      }).catch(function() {
+        showErrorToast('Could not copy link.');
       });
     });
   }

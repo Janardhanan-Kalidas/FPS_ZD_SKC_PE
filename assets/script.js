@@ -732,6 +732,8 @@
       var ul = allULs[i];
       if (ul.closest && ul.closest('header, nav, footer, .breadcrumbs, .pagination')) continue;
       if (ul.closest && ul.closest('.article-content, [itemprop="articleBody"]')) continue;
+      // Sidebar category/section navigation must always show every category — never collapse it.
+      if (ul.closest && ul.closest('[data-element="navigation"]')) continue;
       var liCount = 0;
       for (var c = 0; c < ul.children.length; c++) if (ul.children[c].tagName === 'LI') liCount++;
       if (liCount >= (MAX_VISIBLE + 1)) out.push({ ul: ul, liCount: liCount });
@@ -744,6 +746,12 @@
     try {
       if (!ul) return;
       if (ul.getAttribute('data-view-toggle-ready') === '1') return;
+      // Never attach the View more/less toggle to the sidebar navigation list.
+      // The sidebar must always display the full category list on direct load.
+      if (ul.closest && ul.closest('[data-element="navigation"]')) {
+        ul.setAttribute('data-view-toggle-ready', '1');
+        return;
+      }
 
       function getItems() {
         var items = [];
@@ -906,6 +914,7 @@
           for (var s = 0; s < scopeULs.length; s++) {
             var ul = scopeULs[s];
             if (ul.closest && ul.closest('header, nav, footer, .breadcrumbs, .pagination')) continue;
+            if (ul.closest && ul.closest('[data-element="navigation"]')) continue;
             var liCount = 0;
             for (var c = 0; c < ul.children.length; c++) if (ul.children[c].tagName === 'LI') liCount++;
             if (liCount >= (MAX_VISIBLE + 1)) initForUL(ul);
@@ -1335,11 +1344,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement("div");
     container.className = "empty-state";
 
+    const emptyStateText =
+      (window.Theme && window.Theme.emptyStateText) || "No articles yet";
+
     container.innerHTML = [
       emptyStateIcon
         ? `<img src="${emptyStateIcon}" class="empty-state__icon" alt="No articles icon">`
         : "",
-      '<div class="empty-state__text">No articles yet</div>'
+      `<div class="empty-state__text">${emptyStateText}</div>`
     ].join("");
 
     /* 4. Insert right below the section heading (H1 or H2) if present */
