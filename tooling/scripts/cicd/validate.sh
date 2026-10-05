@@ -22,7 +22,9 @@ require ZENDESK_API_TOKEN
 [[ "${DEPLOYMENT_TYPE:-}" == "NEW_THEME" ]] || fail "Deployment type must be NEW_THEME."
 [[ "$ZENDESK_SUBDOMAIN" =~ ^[A-Za-z0-9-]+$ ]] || fail "ZENDESK_SUBDOMAIN must contain only the account subdomain."
 
-RELEASE_VERSION="${BASH_REMATCH[1]}"
+#RELEASE_VERSION="${BASH_REMATCH[1]}"
+echo "CI_COMMIT_BRANCH: $CI_COMMIT_BRANCH"
+RELEASE_VERSION="${BASH_REMATCH[1]:-}"
 THEME_NAME="${THEME_NAME_PREFIX} ${RELEASE_VERSION}"
 
 cat > build.env <<EOF
