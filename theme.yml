@@ -31,7 +31,6 @@ image:
 ### Environments
 # Used to target PROD environment using Linux docker runner
 .env_prod_anchor: &env_prod
-  image: node:$NODE_VERSION
   variables:
     ENVIRONMENT: "prod"
   environment:
