@@ -4,6 +4,7 @@
 set -Eeuo pipefail
 
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+require() { [[ -n "${!1:-}" ]] || fail "Required GitLab variable $1 is not set."; }
 
 ### file 'build.env' is not passing physically, but env variables from dotenv file are being passed to the script, so we can validate them here
 # [[ -f build.env ]] || fail "build.env is missing."
