@@ -69,16 +69,16 @@ h1 {
 */
 .search [type="search"],
 .search .form-field > input {
-  border-radius: 0 !important;
+  border-radius: 0;
 }
 
 .search [type="search"]:focus,
 .search .form-field > input:focus,
 .form-field [type="search"]:focus {
-  border-color: #d2051e !important;
-  box-shadow: none !important;
-  outline: none !important;
-  border-radius: 0 !important;
+  border-color: #d2051e;
+  box-shadow: none;
+  outline: none;
+  border-radius: 0;
 }
 
 /* ============================================================
@@ -128,7 +128,7 @@ h1 {
   gap: 0.3rem;
   width: 100%;
   padding: 0.875rem 1rem;
-  color: #524f53 !important;
+  color: #524f53;
   font-size: 0.875rem;
   line-height: 1.4;
   text-decoration: none;
@@ -153,7 +153,7 @@ h1 {
 }
 
 .hc-autocomplete-panel .hc-autocomplete-title {
-  color: #524f53 !important;
+  color: #524f53;
   font-weight: 600;
   font-size: 0.9375rem;
 }
@@ -163,7 +163,7 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #524f53 !important;
+  color: #524f53;
   font-size: 0.75rem;
   opacity: 0.72;
 }
@@ -174,7 +174,7 @@ h1 {
 }
 
 .hc-autocomplete-panel .hc-autocomplete-excerpt {
-  color: #524f53 !important;
+  color: #524f53;
   font-size: 0.8rem;
   line-height: 1.45;
   padding-top: 0;
@@ -183,12 +183,12 @@ h1 {
 
 .hc-autocomplete-panel .hc-autocomplete-option--card.is-active .hc-autocomplete-excerpt,
 .hc-autocomplete-panel .hc-autocomplete-option--card:hover .hc-autocomplete-excerpt {
-  color: #524f53 !important;
+  color: #524f53;
 }
 
 .hc-autocomplete-panel .hc-autocomplete-mark {
   background-color: transparent;
-  color: #d2051e !important;
+  color: #d2051e;
   font-style: normal;
   font-weight: 700;
   padding: 0;
@@ -212,7 +212,7 @@ h1 {
   padding: 12px 26px;
   font-size: 16px;
   font-weight: 700;
-  color: #fff !important;
+  color: #fff;
   border: none;
   background: #d2051e;
   text-align: center;
@@ -222,17 +222,17 @@ h1 {
 .hc-autocomplete-panel .hc-autocomplete-link--footer:hover,
 .hc-autocomplete-panel .hc-autocomplete-link--footer:focus-visible,
 .hc-autocomplete-panel .hc-autocomplete-option--footer.is-active .hc-autocomplete-link--footer {
-  background: #B10007 !important;
-  color: #fff !important;
+  background: #B10007;
+  color: #fff;
 }
 
 .hc-autocomplete-panel .hc-autocomplete-empty,
 .hc-autocomplete-panel .hc-autocomplete-loading {
-  color: #524f53 !important;
+  color: #524f53;
 }
 
 .hc-autocomplete-panel .hc-autocomplete-empty.hc-autocomplete-empty--no-results {
-  color: #d2051e !important;
+  color: #d2051e;
 }
 
 @media (max-width: 575px) {
@@ -266,8 +266,8 @@ h1 {
 mark,
 .search-keyword-highlight {
   /* Use the same yellow-only highlight for generic mark or helper classes */
-  background-color: #fff3cd !important;
-  color: inherit !important;
+  background-color: #fff3cd;
+  color: inherit;
   font-weight: 700;
   font-style: normal;
   padding: 0 0.15rem;
@@ -589,7 +589,7 @@ hr {
 }
 
 [tabindex="-1"]:focus {
-  outline: none !important;
+  outline: none;
 }
 
 a,
@@ -671,7 +671,7 @@ strong {
 em {
   padding: 0 3px;
   background-color: #fff3cd;
-  color: #d2051e !important;
+  color: #d2051e;
   font-weight: 700;
   font-style: normal;
 }
@@ -717,7 +717,7 @@ small,
 
 mark {
   padding: .2rem;
-  color: #d2051e !important;
+  color: #d2051e;
   font-weight: 700;
   background-color: #fff3cd;
 }
@@ -1026,7 +1026,7 @@ caption {
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1;
-  border-radius: 0 !important; /*Popular Keywords tabs converted to Rectangle - Jana */
+  border-radius: 0; /*Popular Keywords tabs converted to Rectangle - Jana */
   text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
@@ -1579,14 +1579,14 @@ fieldset:disabled a.button {
 
 /* Search placeholder text color */
 .search [type="search"]::placeholder {
-  color: #BAB9BA !important;
+  color: #BAB9BA;
   opacity: 1;
 }
 
 /* Optional legacy support */
-.search [type="search"]::-webkit-input-placeholder { color: #BAB9BA !important; }
-.search [type="search"]::-moz-placeholder { color: #BAB9BA !important; opacity: 1; }
-.search [type="search"]:-ms-input-placeholder { color: #BAB9BA !important; }
+.search [type="search"]::-webkit-input-placeholder { color: #BAB9BA; }
+.search [type="search"]::-moz-placeholder { color: #BAB9BA; opacity: 1; }
+.search [type="search"]:-ms-input-placeholder { color: #BAB9BA; }
 
 .search-sm [type="search"] {
   padding: 0.375em 0.675em;
@@ -2373,7 +2373,7 @@ fieldset:disabled a.button {
   cursor: pointer;
   opacity: .6;
   transition: opacity 100ms ease;
-  text-decoration: none !important;
+  text-decoration: none;
 }
 
 .notification-dismiss:hover {
@@ -3265,7 +3265,7 @@ html[dir="rtl"] .notification-left-aligned {
 .hero h1,
 .hero h2,
 .hero .hc-hero-heading {
-  color: #524F53 !important;
+  color: #524F53;
 }
 
 @keyframes skeleton {
@@ -3473,8 +3473,8 @@ html[dir="rtl"] .notification-left-aligned {
   display: inline-flex;
   align-items: center;
   gap: 2px;                      /* icon spacing */
-  font-size: 0.875rem !important;
-  color: #524f53 !important;     /* Hilti Steel */
+  font-size: 0.875rem;
+  color: #524f53;     /* Hilti Steel */
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -3492,7 +3492,7 @@ html[dir="rtl"] .notification-left-aligned {
 
 /* Search page variant: keep Home text but hide the icon */
 .bc-home--no-icon::before {
-  content: none !important;
+  content: none;
   display: none !important;
 }
 
@@ -3505,15 +3505,15 @@ html[dir="rtl"] .notification-left-aligned {
 .bc-native ol,
 .bc-native li {
   display: flex !important;
-  align-items: center !important;
+  align-items: center;
   margin: 0;
   padding: 0;
-  font-size: 0.875rem !important;
+  font-size: 0.875rem;
 }
 
 .bc-native a {
-  color: #524f53 !important;
-  font-size: 0.875rem !important;
+  color: #524f53;
+  font-size: 0.875rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -3526,9 +3526,9 @@ html[dir="rtl"] .notification-left-aligned {
 .bc-native a[aria-current="page"],
 .bc-native ol.breadcrumbs li:last-child a,
 .bc-native ol.breadcrumbs li:last-child span {
-  color: #524f53 !important;
+  color: #524f53;
   font-weight: 600;
-  text-decoration: none !important;
+  text-decoration: none;
   pointer-events: none;
   cursor: default;
 }
@@ -3564,14 +3564,14 @@ html[dir="rtl"] .notification-left-aligned {
 /* Hover effect for breadcrumb links — excluded on the active page item */
 .breadcrumbs-wrapper a:not([aria-current="page"]):hover,
 .bc-native ol.breadcrumbs li:not(:last-child) a:hover {
-  text-decoration: underline !important;
-  color: #d2051e !important;     /* Hilti Red */
+  text-decoration: underline;
+  color: #d2051e;     /* Hilti Red */
 }
 
 /* Home hover */
 .bc-home:hover {
-  text-decoration: underline !important;
-  color: #d2051e !important;
+  text-decoration: underline;
+  color: #d2051e;
 }
 
 
@@ -3608,7 +3608,7 @@ html[dir="rtl"] .notification-left-aligned {
   padding: 0.5rem 1.5rem;
   clear: both;
   font-weight: 400;
-  font-size: 0.875rem !important;
+  font-size: 0.875rem;
   color: #2D3748;
   text-align: inherit;
   background-color: transparent;
@@ -3893,7 +3893,7 @@ html[dir="rtl"] .notification-left-aligned {
 
 .navbar-tagline {
   font-weight: 600;
-  margin-left: 10px !important; /* Adjusted to '10px' as per UX - Jana */
+  margin-left: 10px; /* Adjusted to '10px' as per UX - Jana */
   }
 
 .navbar-toggle {
@@ -4125,16 +4125,16 @@ html[dir="rtl"] .notification-left-aligned {
 
 .expand {
   display: flex !important;
-  height: 100% !important;
-  max-height: none !important;
+  height: 100%;
+  max-height: none;
   overflow: visible;
 }
 
 @media (min-width: 576px) {
   .sm\:expand {
     display: flex !important;
-    height: 100% !important;
-    max-height: none !important;
+    height: 100%;
+    max-height: none;
     overflow: visible;
   }
 }
@@ -4142,8 +4142,8 @@ html[dir="rtl"] .notification-left-aligned {
 @media (min-width: 768px) {
   .md\:expand {
     display: flex !important;
-    height: 100% !important;
-    max-height: none !important;
+    height: 100%;
+    max-height: none;
     overflow: visible;
   }
 }
@@ -4151,8 +4151,8 @@ html[dir="rtl"] .notification-left-aligned {
 @media (min-width: 992px) {
   .lg\:expand {
     display: flex !important;
-    height: 100% !important;
-    max-height: none !important;
+    height: 100%;
+    max-height: none;
     overflow: visible;
   }
 }
@@ -4160,8 +4160,8 @@ html[dir="rtl"] .notification-left-aligned {
 @media (min-width: 1200px) {
   .xl\:expand {
     display: flex !important;
-    height: 100% !important;
-    max-height: none !important;
+    height: 100%;
+    max-height: none;
     overflow: visible;
   }
 }
@@ -15008,8 +15008,8 @@ html[dir="rtl"] .notification-left-aligned {
 
 @media (prefers-reduced-motion: reduce) {
   *, *:before, .notification-inline.notification-error::before, *:after {
-    animation: none !important;
-    transition: none !important;
+    animation: none !important; /* Overrides all component/inline animations for WCAG 2.3.3 reduced-motion; universal reset must beat every specificity */
+    transition: none !important; /* Overrides all component/inline transitions for WCAG 2.3.3 reduced-motion; universal reset must beat every specificity */
   }
 }
 
@@ -15043,8 +15043,8 @@ html[dir="rtl"] .notification-left-aligned {
 
 @media (prefers-reduced-motion: reduce) {
   *, *:before, .notification-inline.notification-error::before, *:after {
-    animation: none !important;
-    transition: none !important;
+    animation: none !important; /* Overrides all component/inline animations for WCAG 2.3.3 reduced-motion; universal reset must beat every specificity */
+    transition: none !important; /* Overrides all component/inline transitions for WCAG 2.3.3 reduced-motion; universal reset must beat every specificity */
   }
 }
 
@@ -15819,7 +15819,7 @@ a:hover .icon-circle {
 .content em {
   /* Allow search keyword highlights to use global em styling (Hilti Red on yellow) */
   /* For regular italic emphasis in article content, authors should use <i> instead */
-  color: #d2051e !important;
+  color: #d2051e;
   background-color: #fff3cd;
   padding: 0 3px;
   font-weight: 700;
@@ -15829,7 +15829,7 @@ a:hover .icon-circle {
 .article-page .article-content em {
   padding: 0;
   background-color: transparent;
-  color: inherit !important;
+  color: inherit;
   font-weight: inherit;
 }
 
@@ -16366,8 +16366,8 @@ a:hover .icon-circle {
 /* Applies to BOTH Zendesk UI icons and JS‑injected icons */
 .h-full.bg-white img,
 .h-full.bg-white .js-category-icon {
-  height: 80px !important;
-  width: 80px !important;
+  height: 80px;
+  width: 80px;
   margin: 0px auto;
   display: block;
   object-fit: contain;
@@ -16378,8 +16378,8 @@ a:hover .icon-circle {
    so the category name text stays aligned across all tiles. */
 .h-full.bg-white img[alt="Category icon 43357295486993"],
 .h-full.bg-white .js-category-icon[alt="Category icon 43357295486993"] {
-  height: 56px !important;
-  width: 56px !important;
+  height: 56px;
+  width: 56px;
   padding: 12px 0;
   box-sizing: content-box;
 }
@@ -16461,8 +16461,8 @@ a:hover .icon-circle {
 .cards-wrapper.animating li,
 .cards-wrapper.expanded li,
 .cards-wrapper li {
-  opacity: 1 !important;
-  transform: none !important;
+  opacity: 1;
+  transform: none;
 }
 
 /* Respect reduced motion preference */
@@ -16492,7 +16492,7 @@ a:hover .icon-circle {
 /* Make footer container the anchor context */
 
 .custom-footer-layout {
-  position: relative !important;
+  position: relative;
 }
 
 /* Back to Top — OLD STYLES REMOVED (replaced by .article-back-to-top in footer) */
@@ -16569,7 +16569,7 @@ a:hover .icon-circle {
 }
 
 .article-title h1 {
-  color:  #524f53 !important; /* Jana - Hilti Steel for article title */
+  color:  #524f53; /* Jana - Hilti Steel for article title */
   font-size: 1.5rem;
 }
 
@@ -16980,13 +16980,13 @@ a:hover .icon-circle {
     display: block;
     border: 1px solid #ccc;
     border-radius: 6px;
-    z-index: 9999 !important;
+    z-index: 9999 !important; /* Overrides Zendesk hc-multiselect widget stacking so the injected search box stays above the option list */
     background: white;
-    pointer-events: auto !important;
+    pointer-events: auto !important; /* Overrides Zendesk hc-multiselect widget rule setting pointer-events:none on the injected search box */
 }
 
 .hc-multiselect-menu {
-    pointer-events: auto !important;
+    pointer-events: auto !important; /* Overrides Zendesk hc-multiselect widget rule setting pointer-events:none on the open menu */
     flex-direction: column;
 }
 
@@ -17026,29 +17026,29 @@ a:hover .icon-circle {
    PRIMARY HILTI BUTTON (Submit) — SQUARE
    ========================================================================= */
 .new-request-page .zf-actions-row input[type="submit"] {
-  background: #d2051e !important;
-  color: #fff !important;
-  border: none !important;
-  padding: 12px 28px !important;
-  height: 48px !important;
-  line-height: 24px !important;
-  font-weight: 600 !important;
-  font-size: 16px !important;
+  background: #d2051e;
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  height: 48px;
+  line-height: 24px;
+  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
   box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
   transition: all 0.2s ease;
-  border-radius: 0 !important; /* SQUARE */
+  border-radius: 0; /* SQUARE */
 }
 
 .new-request-page .zf-actions-row input[type="submit"]:hover {
-  background: #b30419 !important;
+  background: #b30419;
 }
 
 .new-request-page .zf-actions-row input[type="submit"]:active {
-  background: #960315 !important;
+  background: #960315;
   transform: scale(0.98);
 }
 
@@ -17056,14 +17056,14 @@ a:hover .icon-circle {
    SECONDARY HILTI BUTTON (Cancel) — SQUARE
    ========================================================================= */
 .new-request-page .hilti-cancel-btn {
-  background: #fff !important;
-  color: #d2051e !important;
-  border: 2px solid #d2051e !important;
-  padding: 12px 28px !important;
-  height: 48px !important;
-  line-height: 24px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
+  background: #fff;
+  color: #d2051e;
+  border: 2px solid #d2051e;
+  padding: 12px 28px;
+  height: 48px;
+  line-height: 24px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
 
   display: inline-flex !important;
@@ -17072,15 +17072,15 @@ a:hover .icon-circle {
   white-space: nowrap;
 
   transition: all 0.2s ease;
-  border-radius: 0 !important;  /* SQUARE */
+  border-radius: 0;  /* SQUARE */
 }
 
 .new-request-page .hilti-cancel-btn:hover {
-  background: #f7e6e8 !important;
+  background: #f7e6e8;
 }
 
 .new-request-page .hilti-cancel-btn:active {
-  background: #f2cbd1 !important;
+  background: #f2cbd1;
   transform: scale(0.98);
 }
 
@@ -17090,7 +17090,7 @@ a:hover .icon-circle {
 .new-request-page .zf-actions-wrapper {
   width: 100%;
   display: flex !important;
-  justify-content: center !important;
+  justify-content: center;
   margin-top: 15px;
 }
 
@@ -17108,8 +17108,8 @@ a:hover .icon-circle {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  height: 48px !important;
-  border-radius: 0 !important;  /* SQUARE */
+  height: 48px;
+  border-radius: 0;  /* SQUARE */
 }
 
 /* Mobile layout */
@@ -17141,7 +17141,7 @@ a:hover .icon-circle {
   background: #fff;
   width: 380px;
   padding: 24px;
-  border-radius: 0 !important; /* SQUARE */
+  border-radius: 0; /* SQUARE */
   box-shadow: 0 0 12px rgba(0,0,0,0.25);
 }
 
@@ -17171,16 +17171,16 @@ a:hover .icon-circle {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 0 !important; /* SQUARE */
+  border-radius: 0; /* SQUARE */
 }
 
 /* YES button */
 .new-request-page .hilti-modal-yes {
-  background: #d2051e !important;
-  color: #fff !important;
-  border: none !important;               /* REMOVE BLACK BORDER */
-  outline: none !important;              /* REMOVE FOCUS OUTLINE FROM ZENDESK */
-  box-shadow: none !important;           /* REMOVE BLACK SHADOW */
+  background: #d2051e;
+  color: #fff;
+  border: none;               /* REMOVE BLACK BORDER */
+  outline: none;              /* REMOVE FOCUS OUTLINE FROM ZENDESK */
+  box-shadow: none;           /* REMOVE BLACK SHADOW */
 }
 .new-request-page .hilti-modal-yes:hover {
   background: #b30419;
@@ -17289,7 +17289,7 @@ a:hover .icon-circle {
 
 .hilti-section-list a,
 .hilti-red {
-  color: #d2051e !important;  /* Hilti Red */
+  color: #d2051e;  /* Hilti Red */
   font-weight: 400;
   font-size: 1.125rem;
   text-decoration: none;
@@ -17297,7 +17297,7 @@ a:hover .icon-circle {
 
 .hilti-section-list a:hover,
 .hilti-section-list a:focus {
-  color: #BF040F !important;  /* darker hover red */
+  color: #BF040F;  /* darker hover red */
   text-decoration: underline;
 }
 /* Underline the category list -Jana */
@@ -17347,22 +17347,22 @@ footer ul li a:hover {
   grid-template-columns: 1fr;      
   gap: 2.5rem 3rem;
   align-items: stretch;
-  margin-left: 0 !important;        /* <-- added for left alignment */
-  padding-left: 0 !important;       /* <-- added for left alignment */
+  margin-left: 0;        /* <-- added for left alignment */
+  padding-left: 0;       /* <-- added for left alignment */
 }
 
 @media (min-width: 992px) {
   .section-grid {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 /* Override Bootstrap .col-12 inside the grid (alignment fix included) */
 .section-grid > .col-12,
 .section-grid > .col-12.mb-4 {
-  width: 100% !important;
-  padding: 0 !important;            /* <-- already existed, ensures alignment */
-  margin: 0 !important;
+  width: 100%;
+  padding: 0;            /* <-- already existed, ensures alignment */
+  margin: 0;
   display: block !important;
 }
 
@@ -17427,9 +17427,9 @@ footer ul li a:hover {
  * ============================================================================ */
 
 .lock-icon {
-  width: 12px !important;
-  height: 12px !important;
-  fill: #777 !important;
+  width: 12px;
+  height: 12px;
+  fill: #777;
   flex-shrink: 0;
   margin-left: 8px;
   align-self: center;
@@ -17442,7 +17442,7 @@ footer ul li a:hover {
 
 .col-12.mb-4 a[href*="/sections/"] {
   display: inline-block;
-  color: #524f53 !important; /* Hilti Steel */
+  color: #524f53; /* Hilti Steel */
   font-size: 1rem;
   font-weight: 400;
   text-decoration: none;
@@ -17525,54 +17525,54 @@ footer ul li a:hover {
 ul.article-tags-custom > li,
 ul.article-tags-custom > li a {
   font-size: var(--fs-2xs);
-  font-weight: 400 !important;
-  line-height: 1 !important;
+  font-weight: 400;
+  line-height: 1;
 }
 
 
 /* 2. Individual tag appearance (auto-size, rectangles) */
 ul.article-tags-custom > li {
   display: inline-flex !important;
-  align-items: stretch !important;
-  white-space: nowrap !important;
-  height: auto !important;
-  background: none !important;
-  border: none !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  margin: 0 !important;
+  align-items: stretch;
+  white-space: nowrap;
+  height: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  margin: 0;
 }
 
 
 /* 3. Flex container spacing (SINGLE GAP SYSTEM) */
 ul.article-tags-custom {
   display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 5px !important;                   /* <<< ONLY spacing rule */
+  flex-wrap: wrap;
+  gap: 5px;                   /* <<< ONLY spacing rule */
 
   list-style: none;
   padding: 0;
   margin: 20px 0;
 
-  align-items: center !important;
-  line-height: normal !important;
+  align-items: center;
+  line-height: normal;
 }
 
 
 /* 4. REMOVE divider lines from the theme */
 ul.article-tags-custom > li::before,
 ul.article-tags-custom > li::after {
-  content: none !important;
+  content: none;
   display: none !important;
 }
 
 
 /* 5. Link styling (red + clean) */
 ul.article-tags-custom a {
-  color: #cc0000 !important;
+  color: #cc0000;
   text-decoration: none;
   font-size: var(--fs-2xs);
-  font-weight: 300 !important;
+  font-weight: 300;
 }
 
 ul.article-tags-custom a:hover {
@@ -17590,12 +17590,12 @@ ul.article-tags-custom a:hover {
 
 /* Apply Hilti Steel color to the sidebar element itself */
 aside.md\:col-4 {
-  color: #524f53 !important;
+  color: #524f53;
 }
 
 /* Apply the same text color to all descendants inside it */
 aside.md\:col-4 * {
-  color: #524f53 !important;
+  color: #524f53;
 }
 
 /* -----------------------------------------------------------
@@ -17611,12 +17611,12 @@ aside.md\:col-4 * {
 ------------------------------------------------------------ */
 
 .container {
-  max-width: 1280px !important;  /* Wider, cleaner content width */
+  max-width: 1280px;  /* Wider, cleaner content width */
   width: 100%;                   /* Allow full responsive scaling */
   margin-left: auto;             /* Center the container */
   margin-right: auto;
-  padding-left: 2rem !important; /* Unified gutter — matches row-lg compensation */
-  padding-right: 2rem !important;
+  padding-left: 2rem; /* Unified gutter — matches row-lg compensation */
+  padding-right: 2rem;
 }
 
 /* ============================================================
@@ -17643,7 +17643,7 @@ aside.md\:col-4 * {
   padding: 6px 8px;
   font-size: 0.875rem;
   font-weight: 400;
-  color: #524f53 !important; /* Hilti grey */
+  color: #524f53; /* Hilti grey */
   text-decoration: none;
   transition: all 0.2s ease-in-out;
 }
@@ -17663,7 +17663,7 @@ aside.md\:col-4 * {
 [data-element="navigation"] ul li a.underline,
 [data-element="navigation"] ul li.font-bold > a {
   background-color: #e7e5e2;
-  color: #d2051e !important;
+  color: #d2051e;
   font-weight: 700;
 }
 
@@ -17671,7 +17671,7 @@ aside.md\:col-4 * {
    5. Remove bullets + normalize spacing
 ------------------------------------------------------------ */
 [data-element="navigation"] ul {
-  list-style: none !important;
+  list-style: none;
   margin: 0;
   padding: 0;
 }
@@ -17686,17 +17686,17 @@ aside.md\:col-4 * {
 /* Override only search page H1 styling */
 .search-results-wrapper header > h1.h3 {
   font-size: var(--fs-lg);
-  font-weight: 600 !important;
-  color: #524f53 !important;      /* Hilti Steel */
-  padding-bottom: 0 !important;   /* removed extra padding pushing text down */
-  margin-bottom: 0 !important;    /* removed bottom gap to align with dropdown */
-  line-height: 1.25 !important;   /* optimized baseline alignment */
+  font-weight: 600;
+  color: #524f53;      /* Hilti Steel */
+  padding-bottom: 0;   /* removed extra padding pushing text down */
+  margin-bottom: 0;    /* removed bottom gap to align with dropdown */
+  line-height: 1.25;   /* optimized baseline alignment */
   display: flex;                  /* allow centering */
   align-items: center;            /* vertical alignment with dropdown */
 }
 
 .search-results-wrapper header {
-  margin-bottom: 1.5rem !important;
+  margin-bottom: 1.5rem;
 }
 
 /* Main header wrapper */
@@ -17762,8 +17762,8 @@ header.d-flex h1 {
 .category-layout .container .row > .col:not(aside),
 .section-layout .container .row > .col:not(aside),
 .article-layout .container .row > .col:not(aside) {
-    flex: 1 !important;
-    max-width: calc(100% - 240px) !important;   /* The rest after sidebar */
+    flex: 1;
+    max-width: calc(100% - 240px);   /* The rest after sidebar */
     padding-right: 2rem;
     box-sizing: border-box;
 }
@@ -17772,8 +17772,8 @@ header.d-flex h1 {
 .category-layout aside,
 .section-layout aside,
 .article-layout aside {
-    flex: 0 0 220px !important;     /* Adjust width here (200–260px) */
-    max-width: 220px !important;
+    flex: 0 0 220px;     /* Adjust width here (200–260px) */
+    max-width: 220px;
     padding-left: 16px;
     box-sizing: border-box;
 }
@@ -17792,8 +17792,8 @@ header.d-flex h1 {
     .category-layout .container .row > .col:not(aside),
     .section-layout .container .row > .col:not(aside),
     .article-layout .container .row > .col:not(aside) {
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
+        flex: 0 0 100%;
+        max-width: 100%;
         padding: 0;
     }
 }
@@ -17820,37 +17820,37 @@ header.d-flex h1 {
 [id^="articles-"] ul.row-sm,
 [id^="articles-"] ul.list-unstyled {
     display: flex !important;
-    flex-wrap: wrap !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    gap: 0 !important;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    gap: 0;
 }
 
 /* Allow LI to respect responsive column classes from template */
 [id^="articles-"] ul li {
     display: block !important;
-    width: 100% !important;
-    margin-bottom: 0 !important;
-    padding: 0 !important;
+    width: 100%;
+    margin-bottom: 0;
+    padding: 0;
 }
 
 /* Respect template's responsive column classes (md:col-6, lg:col-4, etc.) */
 [id^="articles-"] ul li.md\:col-6 {
-    width: 50% !important;
-    max-width: 50% !important;
+    width: 50%;
+    max-width: 50%;
 }
 
 [id^="articles-"] ul li.lg\:col-4 {
-    width: 33.333% !important;
-    max-width: 33.333% !important;
+    width: 33.333%;
+    max-width: 33.333%;
 }
 
 /* Default: single column on small screens */
 @media (max-width: 768px) {
     [id^="articles-"] ul li,
     [id^="articles-"] ul li.md\:col-6 {
-        width: 100% !important;
-        max-width: 100% !important;
+        width: 100%;
+        max-width: 100%;
     }
 }
 
@@ -17861,16 +17861,16 @@ header.d-flex h1 {
 
 [id^="articles-"] ul li .media {
     display: flex !important;
-    align-items: center !important;
-    padding: 12px 0 !important;
-    border-bottom: 1px solid #e6e6e6 !important;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e6e6e6;
 }
 
 /* Icon size and spacing */
 [id^="articles-"] ul li .media img.svg-icon {
-    width: 22px !important;
-    height: 22px !important;
-    margin-right: 12px !important;
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
 }
 
 
@@ -17879,12 +17879,12 @@ header.d-flex h1 {
    --------------------------------------------------------------- */
 
 [id^="articles-"] ul li .media-body a {
-    font-size: 0.875rem !important;
-    font-weight: 300 !important;
-    color: #333 !important;
-    text-decoration: none !important;
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: #333;
+    text-decoration: none;
     display: inline-block !important;
-    padding: 4px 0 !important;
+    padding: 4px 0;
 }
 
 /* ---------------------------------------------------------------
@@ -17893,8 +17893,8 @@ header.d-flex h1 {
 
 [id^="articles-"] ul li .media-body a:hover,
 [id^="articles-"] ul li .media-body a:focus {
-    color: #E3000F !important;               /* Hilti Red */
-    text-decoration: underline !important;
+    color: #E3000F;               /* Hilti Red */
+    text-decoration: underline;
 }
 
 
@@ -17932,16 +17932,16 @@ header.d-flex h1 {
 .section-page .cards-wrapper ul.is-collapsed,
 .category-page .cards-wrapper ul[style*="height"],
 .section-page .cards-wrapper ul[style*="height"] {
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
+  height: auto !important; /* Overrides Zendesk runtime inline style="height:NNpx"; an inline style is only beatable by !important */
+  max-height: none !important; /* Overrides Zendesk runtime inline style="height:NNpx"; an inline style is only beatable by !important */
+  overflow: visible !important; /* Overrides Zendesk runtime inline style on the collapsed card list; inline style only beatable by !important */
 }
 
 .article-page .article-left-sidebar .cards-wrapper ul.is-collapsed,
 .article-page .article-left-sidebar .cards-wrapper ul[style*="height"] {
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
+  height: auto !important; /* Overrides Zendesk runtime inline style="height:NNpx"; an inline style is only beatable by !important */
+  max-height: none !important; /* Overrides Zendesk runtime inline style="height:NNpx"; an inline style is only beatable by !important */
+  overflow: visible !important; /* Overrides Zendesk runtime inline style on the collapsed card list; inline style only beatable by !important */
 }
 
 /* Hide Show more / Show less toggle link entirely */
@@ -18261,7 +18261,7 @@ header.d-flex h1 {
   width: 85%;
 }
 .hilti-page-loading-bar.is-complete {
-  width: 100% !important;
+  width: 100%;
   opacity: 0;
   transition: width 0.3s ease, opacity 0.4s ease 0.2s;
 }
@@ -18293,10 +18293,10 @@ header.d-flex h1 {
 ---------------------------------------------------------- */
 .category-page #page-container > .row {
   display: flex !important;
-  flex-wrap: nowrap !important;
-  align-items: flex-start !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  margin-left: 0;
+  margin-right: 0;
   gap: 2rem;
   padding-top: 1.5rem;
   padding-bottom: 2rem;
@@ -18306,10 +18306,10 @@ header.d-flex h1 {
    2. Main content column — fills remaining width
 ---------------------------------------------------------- */
 .category-page #page-container > .row > .col {
-  flex: 1 1 0 !important;
+  flex: 1 1 0;
   min-width: 0;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* ----------------------------------------------------------
@@ -18319,14 +18319,14 @@ header.d-flex h1 {
   font-size: 1.625rem;
   font-weight: 700;
   color: #524f53;
-  margin: 0 0 0.25rem !important;
+  margin: 0 0 0.25rem;
   padding: 0;
   line-height: 1.25;
 }
 
 .category-page .py-4 {
-  padding-top: 0 !important;
-  padding-bottom: 1rem !important;
+  padding-top: 0;
+  padding-bottom: 1rem;
 }
 
 .category-page .py-4 > p {
@@ -18339,22 +18339,22 @@ header.d-flex h1 {
    4. Section grid — consistent gap between panels
 ---------------------------------------------------------- */
 .category-page .section-grid {
-  gap: 0 !important;
+  gap: 0;
 }
 
 .category-page .section-grid > .col-12 {
-  padding-bottom: 0 !important;
-  border-bottom: none !important;
-  margin-bottom: 1.5rem !important;
-  padding-top: 0 !important;
+  padding-bottom: 0;
+  border-bottom: none;
+  margin-bottom: 1.5rem;
+  padding-top: 0;
 }
 
 .category-page .section-grid > .col-12:has(> p > a) {
-  margin-bottom: 1rem !important;
+  margin-bottom: 1rem;
 }
 
 .category-page .section-grid > .col-12:last-child {
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
 }
 
 /* ----------------------------------------------------------
@@ -18364,20 +18364,20 @@ header.d-flex h1 {
   font-size: 0.9375rem;
   font-weight: 700;
   color: #d2051e;
-  margin: 0 !important;
+  margin: 0;
   padding-top: 0.35rem;
   padding-bottom: 0.35rem;
-  border-top: none !important;
-  border-bottom: none !important;
+  border-top: none;
+  border-bottom: none;
 }
 
 .category-page .section-grid h2 a {
-  color: inherit !important;
+  color: inherit;
   text-decoration: none;
 }
 
 .category-page .section-grid h2 a:hover {
-  color: #D2051D !important;
+  color: #D2051D;
   text-decoration: underline;
 }
 
@@ -18385,30 +18385,30 @@ header.d-flex h1 {
    6. Article list rows — tighter padding, clear dividers
 ---------------------------------------------------------- */
 .category-page #page-container ul.list-unstyled li > div {
-  padding-top: 0.5rem !important;
-  padding-bottom: 0.5rem !important;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 /* Keep bottom border on the last article in each section */
 .category-page #page-container ul.list-unstyled li:last-child > div.border-bottom {
-  border-bottom: 1px solid #e8e8e8 !important;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 /* Indent article borders so left/right column borders don't visually merge */
 .category-page #page-container ul.list-unstyled li > div.border-bottom {
-  border-bottom-color: #e8e8e8 !important;
-  margin-right: 1.5rem !important;
+  border-bottom-color: #e8e8e8;
+  margin-right: 1.5rem;
 }
 
 .category-page #page-container ul.list-unstyled li a.link-stretched {
   font-size: 0.875rem;
   font-weight: 400;
-  color: #524f53 !important;
+  color: #524f53;
   text-decoration: none;
 }
 
 .category-page #page-container ul.list-unstyled li a.link-stretched:hover {
-  color: #d2051e !important;
+  color: #d2051e;
   text-decoration: underline;
 }
 
@@ -18417,7 +18417,7 @@ header.d-flex h1 {
 ---------------------------------------------------------- */
 .category-page #page-container .section-grid p > a {
   font-size: 0.875rem;
-  color: #D2051E !important;
+  color: #D2051E;
   text-decoration: none;
   font-weight: 400;
   display: inline-block;
@@ -18425,7 +18425,7 @@ header.d-flex h1 {
 }
 
 .category-page #page-container .section-grid p > a:hover {
-  color: #D2051E !important;
+  color: #D2051E;
   text-decoration: underline;
 }
 
@@ -18433,21 +18433,21 @@ header.d-flex h1 {
    8. Sidebar — top edge aligned with section grid start
 ---------------------------------------------------------- */
 .category-page #page-container > .row > aside {
-  flex: 0 0 220px !important;
-  max-width: 220px !important;
+  flex: 0 0 220px;
+  max-width: 220px;
   min-width: 180px;
-  padding: 0 !important;
+  padding: 0;
   align-self: flex-start;
 }
 
 /* Sidebar card wrapper — strip Zendesk's my-6 margin and py-4 padding so
    CATEGORIES heading aligns flush with the category page title */
 .category-page [data-element="navigation"] > div {
-  background-color: #ffff !important;
+  background-color: #ffff;
   border: 1px solid #e8e8e8;
   border-radius: 2px;
-  margin: 0 !important;
-  padding: 0.75rem 1.125rem 1rem !important;
+  margin: 0;
+  padding: 0.75rem 1.125rem 1rem;
 }
 
 /* "Categories" heading inside sidebar */
@@ -18456,8 +18456,8 @@ header.d-flex h1 {
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0.06em;
-  color: #524f53 !important;
-  margin: 0 0 0.625rem !important;
+  color: #524f53;
+  margin: 0 0 0.625rem;
   padding-top: 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #d8d5cf;
@@ -18465,25 +18465,25 @@ header.d-flex h1 {
 
 /* Sidebar list items */
 .category-page [data-element="navigation"] ul li a {
-  padding: 5px 6px !important;
-  font-size: 0.8125rem !important;
+  padding: 5px 6px;
+  font-size: 0.8125rem;
   border-radius: 0px;
-  color: #524f53 !important;
+  color: #524f53;
   transition: background 0.15s, color 0.15s;
 }
 
 .category-page [data-element="navigation"] ul li a:hover {
-  background-color: #F1F1F1 !important;
-  color: #d2051e !important;
+  background-color: #F1F1F1;
+  color: #d2051e;
 }
 
 /* Active / current category in sidebar */
 .category-page [data-element="navigation"] ul li a.underline,
 .category-page [data-element="navigation"] ul li a[aria-current="page"] {
-  background-color: #e8e8e8 !important;
-  color: #d2051e !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
+  background-color: #e8e8e8;
+  color: #d2051e;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* ----------------------------------------------------------
@@ -18491,14 +18491,14 @@ header.d-flex h1 {
 ---------------------------------------------------------- */
 @media (max-width: 768px) {
   .category-page #page-container > .row {
-    flex-direction: column !important;
+    flex-direction: column;
     gap: 1.5rem;
     padding-top: 1rem;
   }
 
   .category-page #page-container > .row > aside {
-    flex: 0 0 100% !important;
-    max-width: 100% !important;
+    flex: 0 0 100%;
+    max-width: 100%;
     width: 100%;
   }
 
@@ -18517,10 +18517,10 @@ header.d-flex h1 {
 /* 1. Page container row */
 .section-page #page-container > .row {
   display: flex !important;
-  flex-wrap: nowrap !important;
-  align-items: flex-start !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  margin-left: 0;
+  margin-right: 0;
   gap: 2rem;
   padding-top: 1.5rem;
   padding-bottom: 2rem;
@@ -18528,10 +18528,10 @@ header.d-flex h1 {
 
 /* 2. Main content column */
 .section-page #page-container > .row > .col {
-  flex: 1 1 0 !important;
+  flex: 1 1 0;
   min-width: 0;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* 3. Section title h1 */
@@ -18540,14 +18540,14 @@ header.d-flex h1 {
   font-size: 1.625rem;
   font-weight: 700;
   color: #524f53;
-  margin: 0 0 0.25rem !important;
+  margin: 0 0 0.25rem;
   padding: 0;
   line-height: 1.25;
 }
 
 .section-page .sm\:flex.py-4 {
-  padding-top: 0 !important;
-  padding-bottom: 1rem !important;
+  padding-top: 0;
+  padding-bottom: 1rem;
 }
 
 .section-page .sm\:flex.py-4 > p {
@@ -18558,52 +18558,52 @@ header.d-flex h1 {
 
 /* 4. Inner row containing article list + article list ul rows — neutralise negative margins */
 .section-page #page-container > .row > .col > .row {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .section-page #page-container > .row > .col > .row > [class*="col"] {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* The article ul itself uses row/row-sm which has negative margins */
 .section-page #page-container ul.row,
 .section-page #page-container ul[class*="row-"] {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .section-page #page-container ul.row > li[class*="col"],
 .section-page #page-container ul[class*="row-"] > li[class*="col"] {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* 5. Article list rows — same padding and dividers as category page */
 .section-page #page-container ul.list-unstyled li > div {
-  padding-top: 0.6rem !important;
-  padding-bottom: 0.6rem !important;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
 }
 
 .section-page #page-container ul.list-unstyled li > div.border-bottom {
-  border-bottom-color: #e8e8e8 !important;
+  border-bottom-color: #e8e8e8;
 }
 
 /* Last article gets bottom border */
 .section-page #page-container ul.list-unstyled li:last-child > div.border-bottom {
-  border-bottom: 1px solid #e8e8e8 !important;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .section-page #page-container ul.list-unstyled li a.link-stretched {
   font-size: 0.875rem;
   font-weight: 400;
-  color: #524f53 !important;
+  color: #524f53;
   text-decoration: none;
 }
 
 .section-page #page-container ul.list-unstyled li a.link-stretched:hover {
-  color: #d2051e !important;
+  color: #d2051e;
   text-decoration: underline;
 }
 
@@ -18631,89 +18631,89 @@ header.d-flex h1 {
 .section-page .section-article-column > li > div {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: none !important;
+  border-bottom: none;
 }
 
 /* 6. Sidebar — same width and card style as category page */
 .section-page #page-container > .row > aside {
-  flex: 0 0 240px !important;
-  max-width: 240px !important;
+  flex: 0 0 240px;
+  max-width: 240px;
   min-width: 200px;
-  padding: 0 !important;
+  padding: 0;
   align-self: flex-start;
 }
 
 .section-page [data-element="navigation"] > div {
-  background-color: #ffff !important;
+  background-color: #ffff;
   border: 1px solid #e8e8e8;
   border-radius: 2px;
-  margin: 0 !important;
-  padding: 0.75rem 1.125rem 1rem !important;
+  margin: 0;
+  padding: 0.75rem 1.125rem 1rem;
 }
 
 .section-page [data-element="navigation"] h3 {
-  font-size: 0.875rem !important;
+  font-size: 0.875rem;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0.02em;
   line-height: 1.35;
   white-space: normal;
   overflow-wrap: anywhere;
-  color: #524f53 !important;
-  margin: 0 0 0.75rem !important;
+  color: #524f53;
+  margin: 0 0 0.75rem;
   padding-top: 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #d8d5cf;
 }
 
 .section-page [data-element="navigation"] ul li a {
-  padding: 5px 6px !important;
-  font-size: 0.8125rem !important;
+  padding: 5px 6px;
+  font-size: 0.8125rem;
   line-height: 1.35;
   white-space: normal;
   overflow-wrap: anywhere;
   border-radius: 2px;
-  color: #524f53 !important;
+  color: #524f53;
   transition: background 0.15s, color 0.15s;
 }
 
 .section-page [data-element="navigation"] ul li a:hover {
-  background-color: #F1F1F1 !important;
-  color: #d2051e !important;
+  background-color: #F1F1F1;
+  color: #d2051e;
 }
 
 .section-page [data-element="navigation"] ul li a.underline,
 .section-page [data-element="navigation"] ul li a[aria-current="page"] {
-  background-color: #E7E5E2 !important;
-  color: #d2051e !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
+  background-color: #E7E5E2;
+  color: #d2051e;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .section-page [data-element="navigation"] .sidebar-heading-link {
-  color: #524f53 !important;
-  font-size: 0.875rem !important;
+  color: #524f53;
+  font-size: 0.875rem;
   line-height: 1.35;
   text-decoration: none;
 }
 
 .section-page [data-element="navigation"] .sidebar-section-link {
-  color: #524f53 !important;
-  font-size: 0.8125rem !important;
+  color: #524f53;
+  font-size: 0.8125rem;
   line-height: 1.35;
   text-decoration: none;
 }
 
 .section-page [data-element="navigation"] .sidebar-section-link.is-active {
-  background-color: #e8e8e8 !important;
-  color: #d2051e !important;
-  font-weight: 600 !important;
+  background-color: #e8e8e8;
+  color: #d2051e;
+  font-weight: 600;
 }
 
 /* 7. Mobile: stack layout */
 @media (max-width: 768px) {
   .section-page #page-container > .row {
-    flex-direction: column !important;
+    flex-direction: column;
     gap: 1.5rem;
     padding-top: 1rem;
   }
@@ -18724,8 +18724,8 @@ header.d-flex h1 {
   }
 
   .section-page #page-container > .row > aside {
-    flex: 0 0 100% !important;
-    max-width: 100% !important;
+    flex: 0 0 100%;
+    max-width: 100%;
     width: 100%;
   }
 
@@ -19062,14 +19062,14 @@ header.d-flex h1 {
 }
 
 .hc-category-link {
-  color: #524f53 !important;
+  color: #524f53;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .hc-category-link:hover {
-  color: #d2051e !important;
+  color: #d2051e;
   text-decoration: underline;
 }
 
@@ -19330,7 +19330,7 @@ button.hc-page-btn {
 .hc-page-current {
   background: #d2051e;
   border-color: #d2051e;
-  color: #fff !important;
+  color: #fff;
   font-weight: 700;
   cursor: default;
 }
@@ -19442,19 +19442,19 @@ button.hc-page-btn {
 
 .article-sidebar-heading {
   font-size: var(--fs-sm);
-  font-weight: 700 !important;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   line-height: 1.35;
-  color: #524F53 !important;
-  margin: 0 0 0.5rem !important;
-  padding: 0.75rem 0 0.5rem 0 !important;
+  color: #524F53;
+  margin: 0 0 0.5rem;
+  padding: 0.75rem 0 0.5rem 0;
   border-bottom: 1px solid #d8d5cf;
 }
 
 .article-sidebar-list {
-  list-style: none !important;
-  margin: 0 !important;
+  list-style: none;
+  margin: 0;
   padding: 0;
 }
 
@@ -19466,7 +19466,7 @@ button.hc-page-btn {
   display: block;
   padding: 5px 6px;
   font-size: var(--fs-2xs);
-  color: #524f53 !important;
+  color: #524f53;
   text-decoration: none;
   border-radius: 2px;
   transition: background 0.15s, color 0.15s;
@@ -19476,14 +19476,14 @@ button.hc-page-btn {
 }
 
 .article-sidebar-link:hover {
-  background-color: #F1F1F1 !important;
-  color: #d2051e !important;
+  background-color: #F1F1F1;
+  color: #d2051e;
   text-decoration: none;
 }
 
 .article-sidebar-link.is-active {
-  background-color: #e8e8e8 !important;
-  color: #d2051e !important;
+  background-color: #e8e8e8;
+  color: #d2051e;
   font-weight: 600;
 }
 
@@ -19493,7 +19493,7 @@ button.hc-page-btn {
 }
 
 .article-sidebar-more a {
-  color: #d2051e !important;
+  color: #d2051e;
   font-size: var(--fs-2xs);
   text-decoration: none;
 }
@@ -19508,11 +19508,11 @@ button.hc-page-btn {
 ---------------------------------------------------------- */
 .article-sidebar-link {
   font-size: var(--fs-2xs);       /* ← sidebar link font size (0.75rem, token-driven) */
-  color: #524f53 !important; /* ← sidebar link color */
+  color: #524f53; /* ← sidebar link color */
 }
 
 .article-sidebar-link:hover {
-  color: #d2051e !important; /* ← sidebar link hover color */
+  color: #d2051e; /* ← sidebar link hover color */
 }
 
 /* ----------------------------------------------------------
@@ -19595,19 +19595,19 @@ button.hc-page-btn {
 
 /* Article title — aligned with sidebars top */
 .article-page .article-title {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  padding-top: 0;
+  padding-bottom: 0;
   border-bottom: none;
-  margin: 0 !important;
-  margin-bottom: 0 !important;
+  margin: 0;
+  margin-bottom: 0;
 }
 
 .article-page .article-title h1 {
   font-size: var(--fs-xl);
   font-weight: 700;
-  color: #524f53 !important;
+  color: #524f53;
   line-height: 1.25;
-  margin: 0 !important;
+  margin: 0;
   padding: calc(0.75rem + 1px) 0 0 0;
 }
 
@@ -19654,13 +19654,13 @@ button.hc-page-btn {
 }
 
 .article-author-link {
-  color: #524f53 !important;
+  color: #524f53;
   font-weight: 300;
   text-decoration: none;
 }
 
 .article-author-link:hover {
-  color: #d2051e !important;
+  color: #d2051e;
 }
 
 .article-meta-sep {
@@ -19945,9 +19945,9 @@ button.hc-page-btn {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  list-style: none !important;
-  margin: 0.625rem 0 0.75rem !important;
-  padding: 0 !important;
+  list-style: none;
+  margin: 0.625rem 0 0.75rem;
+  padding: 0;
 }
 
 .article-tag-link {
@@ -19955,7 +19955,7 @@ button.hc-page-btn {
   padding: 2px 8px;
   font-size: 0.6875rem;
   font-weight: 500;
-  color: #524f53 !important;
+  color: #524f53;
   background: #e8e8e8;
   border-radius: 0;
   text-decoration: none;
@@ -19965,7 +19965,7 @@ button.hc-page-btn {
 
 .article-tag-link:hover {
   background: #E7E5E2;
-  color: #D2051D !important;
+  color: #D2051D;
 }
 
 /* ----------------------------------------------------------
@@ -20262,45 +20262,45 @@ body.downvote-feedback-open {
 
 /* Zendesk TOC wrapper — strip all default spacing on all nested divs */
 .article-toc-nav {
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
 }
 
 .article-toc-nav > div,
 .article-toc-nav > div > div {
-  background-color: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  max-height: none;
+  overflow: visible;
 }
 
 /* Zendesk TOC heading — styled to match left sidebar */
 .article-toc-nav h3 {
-  font-size: 0.75rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #524f53 !important;
-  margin: 0 0 0.5rem 0 !important;
-  padding: 0.75rem 0 0.5rem 0 !important;
-  border: none !important;
-  border-bottom: 1px solid #d8d5cf !important;
+  color: #524f53;
+  margin: 0 0 0.5rem 0;
+  padding: 0.75rem 0 0.5rem 0;
+  border: none;
+  border-bottom: 1px solid #d8d5cf;
 }
-  padding: 0 !important;
-  border: none !important;
+  padding: 0;
+  border: none;
 }
 
 /* Zendesk TOC ordered list */
 .article-toc-nav ol {
-  list-style: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .article-toc-nav ol li {
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
 }
 
 /* TOC links injected by Zendesk */
@@ -20308,32 +20308,32 @@ body.downvote-feedback-open {
 .article-toc-nav .toc-link {
   display: block;
   font-size: var(--fs-2xs);
-  color: #524f53 !important;
-  text-decoration: none !important;
-  padding: 5px 6px !important;
+  color: #524f53;
+  text-decoration: none;
+  padding: 5px 6px;
   line-height: 1.35;
   border-right: none;
   border-radius: 0%;
   transition: color 0.15s, background 0.15s;
   background-color: transparent;
-  font-weight: normal !important;
+  font-weight: normal;
   text-align: left;
   margin-bottom: 0;
 }
 
 .article-toc-nav a:hover,
 .article-toc-nav .toc-link:hover {
-  color: #d2051e !important;
+  color: #d2051e;
   background-color: #e8e8e8;
 }
 
 .article-toc-nav a.is-active,
 .article-toc-nav .toc-link.is-active,
 .article-toc-nav a.active {
-  color: #d2051e !important;
+  color: #d2051e;
   background-color: #e8e8e8;
-  font-weight: 600 !important;
-  text-decoration: none !important;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* h3 TOC entries get indent */
@@ -21128,10 +21128,10 @@ body.downvote-feedback-open {
 
   .navbar-brand .navbar-tagline,
   .navbar-brand .white-space-no-wrap {
-    white-space: normal !important;
+    white-space: normal;
     font-size: 0.8rem;
     line-height: 1.3;
-    margin-left: 8px !important;
+    margin-left: 8px;
   }
 
   .navbar-brand #logo {
@@ -21161,7 +21161,7 @@ body.downvote-feedback-open {
   }
 
   .hero .hc-hero-content h1.hc-hero-welcome {
-    white-space: normal !important;
+    white-space: normal;
     font-size: 0.875rem;
     text-align: left;
   }
