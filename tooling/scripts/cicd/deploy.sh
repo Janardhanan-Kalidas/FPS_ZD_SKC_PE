@@ -9,6 +9,9 @@ api() {
   curl --fail-with-body --silent --show-error     --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}"     --header 'Accept: application/json' "$@"
 }
 
+[[ -f build.env ]] || fail "build.env is missing."
+set -a; source build.env; set +a
+
 require ZENDESK_EMAIL
 require ZENDESK_API_TOKEN
 require THEME_NAME

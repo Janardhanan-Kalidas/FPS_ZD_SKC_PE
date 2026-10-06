@@ -113,8 +113,8 @@ validate_release:
   script:
     - $CICD_SCRIPTS_PATH/validate.sh
   artifacts:
-    reports:
-      dotenv: build.env
+    paths:
+      - build.env
     expire_in: 1 day
 
 package_theme:
@@ -126,8 +126,6 @@ package_theme:
   script:
     - $CICD_SCRIPTS_PATH/package.sh
   artifacts:
-    reports:
-      dotenv: build.env
     name: "zendesk-theme-${RELEASE_VERSION}-${CI_COMMIT_SHORT_SHA}"
     paths:
       - dist/theme.zip
