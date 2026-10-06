@@ -140,8 +140,8 @@ production_deploy:
     - job: package_theme
       artifacts: true
   resource_group: zendesk-pe-production-theme
-  variables:
-    GIT_STRATEGY: none
+  # variables:
+  #   GIT_STRATEGY: none
   script:
     - *check_approval
     - $CICD_SCRIPTS_PATH/deploy.sh
@@ -159,8 +159,8 @@ production_deploy:
     - job: package_theme
       artifacts: true
   resource_group: zendesk-pe-sandbox-theme
-  variables:
-    GIT_STRATEGY: none
+  # variables:
+  #   GIT_STRATEGY: none
   script:
     - $CICD_SCRIPTS_PATH/deploy.sh
   retry:
