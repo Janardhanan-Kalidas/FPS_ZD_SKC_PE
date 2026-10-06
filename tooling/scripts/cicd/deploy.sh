@@ -41,6 +41,7 @@ ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 DRY_RUN="${DRY_RUN:-false}"
 
 #### DEBUGGING: Print the values of key variables for debugging purposes
+echo "DEBUG: ENVIRONMENT: $ENVIRONMENT"
 echo "DEBUG: ZENDESK_SUBDOMAIN: $ZENDESK_SUBDOMAIN"
 echo "DEBUG: ZENDESK_EMAIL: $ZENDESK_EMAIL"
 echo "DEBUG: Token length is ${#ZENDESK_API_TOKEN}"
@@ -51,14 +52,12 @@ echo "DEBUG: DRY_RUN: $DRY_RUN"
 echo "DEBUG: THEME_NAME: $THEME_NAME"
 echo "DEBUG: THEME_ARCHIVE: $THEME_ARCHIVE"
 echo "DEBUG: Archive size: $(wc -c < "$ARCHIVE" | tr -d ' ') bytes"
-e
 
 BASE_URL="https://${ZENDESK_SUBDOMAIN}.zendesk.com"
 BRAND_RESPONSE="$(api "${BASE_URL}/api/v2/brands/${ZENDESK_BRAND_ID}.json")"
 
 ### DEBUGGING: Print the brand response for debugging purposes
 echo "DEBUG: Brand response: $BRAND_RESPONSE"
-
 
 ACTUAL_BRAND="$(jq -er '.brand.name' <<<"$BRAND_RESPONSE")" || fail "Unable to read Zendesk brand response."
 [[ "$ACTUAL_BRAND" == "$ZENDESK_BRAND_NAME" ]] || fail "Brand mismatch. Expected '${ZENDESK_BRAND_NAME}', received '${ACTUAL_BRAND}'."
