@@ -155,7 +155,9 @@ h1 {
 .hc-autocomplete-panel .hc-autocomplete-title {
   color: #524f53;
   font-weight: 600;
-  font-size: 0.9375rem;
+  /* Issue 5: raise the suggestion title to 1rem so the keyword/title reads
+     clearly instead of looking shrunken next to the row text. */
+  font-size: 1rem;
 }
 
 .hc-autocomplete-panel .hc-autocomplete-breadcrumb {
@@ -187,8 +189,11 @@ h1 {
 }
 
 .hc-autocomplete-panel .hc-autocomplete-mark {
-  background-color: transparent;
-  color: #d2051e;
+  /* Issue 5: highlight the matched substring with a soft yellow background
+     (clean/accessible on white) instead of red text, matching the generic
+     mark/.search-keyword-highlight rule (#fff3cd). */
+  background-color: #fff3cd;
+  color: inherit;
   font-style: normal;
   font-weight: 700;
   padding: 0;
@@ -18386,7 +18391,16 @@ header.d-flex h1 {
 ---------------------------------------------------------- */
 .category-page #page-container ul.list-unstyled li > div {
   padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  /* Issue 2: fixed 16px gap between the article title's last line and the
+     divider (border-bottom on this same box), stable regardless of how many
+     lines the title wraps to, since it is the box's own padding-bottom. */
+  padding-bottom: 16px;
+}
+
+/* Issue 2: neutralise the title link's own vertical margin so the row's
+   16px padding-bottom is the ONLY gap to the divider (wrapped or not). */
+.category-page #page-container ul.list-unstyled li > div .media-body a.link-stretched {
+  margin-bottom: 0;
 }
 
 /* Keep bottom border on the last article in each section */
@@ -18583,7 +18597,14 @@ header.d-flex h1 {
 /* 5. Article list rows — same padding and dividers as category page */
 .section-page #page-container ul.list-unstyled li > div {
   padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  /* Issue 2: fixed 16px gap between the title's last line and the divider
+     (border-bottom on this box), stable across wrapped titles. */
+  padding-bottom: 16px;
+}
+
+/* Issue 2: zero the title link's margin so 16px padding is the only gap. */
+.section-page #page-container ul.list-unstyled li > div .media-body a.link-stretched {
+  margin-bottom: 0;
 }
 
 .section-page #page-container ul.list-unstyled li > div.border-bottom {
@@ -18612,11 +18633,19 @@ header.d-flex h1 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 2rem;
   align-items: start;
+  /* Issue 3: fill the article column region so both tracks (1fr/1fr) resolve
+     to equal widths and the left column's left edge + right column's right
+     edge align flush with the section title/content edges. */
+  width: 100%;
 }
 
 .section-page .section-article-column {
+  /* Issue 3: strip all list margins/padding so both columns start/end flush
+     with their grid cell (no stray left/right indent that skews one column). */
   margin: 0;
   padding-left: 0;
+  padding-right: 0;
+  list-style: none;
 }
 
 .section-page .section-article-column > li {
@@ -18630,8 +18659,17 @@ header.d-flex h1 {
 
 .section-page .section-article-column > li > div {
   padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  /* Issue 2/3: the divider is border-bottom on the parent li, so the title's
+     last line sits 16px above it via this box's padding-bottom. Keeping it
+     identical to the category/section single-column rows makes the first and
+     subsequent rows of BOTH columns share one baseline rhythm (Issue 3). */
+  padding-bottom: 16px;
   border-bottom: none;
+}
+
+/* Issue 2/3: zero the title link margin in the two-column layout too. */
+.section-page .section-article-column > li > div .media-body a.link-stretched {
+  margin-bottom: 0;
 }
 
 /* 6. Sidebar — same width and card style as category page */
@@ -20845,6 +20883,61 @@ body.downvote-feedback-open {
   .kc-footer {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* --- Home Page Body + Footer Copyright Alignment (Issue 1) ---
+   The header .navbar and .kc-footer cap at 1440px with a 40/32/24/16
+   responsive gutter ladder, but the home-page body content uses the
+   generic .container (1280px / 2rem) and the footer copyright strip is
+   a bare .container too — so their left/right edges sit ~160px inside the
+   header/footer edges. Re-align the home body content and the copyright
+   strip onto the SAME 1440 + 40/32/24/16 system so logo, body, and footer
+   share identical left/right edges. Scoped to .home-page so other pages
+   keep their own container rules. */
+
+.home-page #page-container > .content-blocks > .container,
+.home-page #page-container > .promoted-articles > .container,
+.home-page #page-container > .video-library > .container,
+.home-page #page-container > .recent-activity > .container,
+.kc-footer-bottom-text {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
+  .home-page #page-container > .content-blocks > .container,
+  .home-page #page-container > .promoted-articles > .container,
+  .home-page #page-container > .video-library > .container,
+  .home-page #page-container > .recent-activity > .container,
+  .kc-footer-bottom-text {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page #page-container > .content-blocks > .container,
+  .home-page #page-container > .promoted-articles > .container,
+  .home-page #page-container > .video-library > .container,
+  .home-page #page-container > .recent-activity > .container,
+  .kc-footer-bottom-text {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .home-page #page-container > .content-blocks > .container,
+  .home-page #page-container > .promoted-articles > .container,
+  .home-page #page-container > .video-library > .container,
+  .home-page #page-container > .recent-activity > .container,
+  .kc-footer-bottom-text {
+    padding-left: 40px;
+    padding-right: 40px;
   }
 }
 
