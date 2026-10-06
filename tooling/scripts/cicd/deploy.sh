@@ -34,6 +34,11 @@ DRY_RUN="${DRY_RUN:-false}"
 
 BASE_URL="https://${ZENDESK_SUBDOMAIN}.zendesk.com"
 BRAND_RESPONSE="$(api "${BASE_URL}/api/v2/brands/${ZENDESK_BRAND_ID}.json")"
+
+### DEBUGGING: Print the brand response for debugging purposes
+echo "DEBUG: Brand response: $BRAND_RESPONSE"
+
+
 ACTUAL_BRAND="$(jq -er '.brand.name' <<<"$BRAND_RESPONSE")" || fail "Unable to read Zendesk brand response."
 [[ "$ACTUAL_BRAND" == "$ZENDESK_BRAND_NAME" ]] || fail "Brand mismatch. Expected '${ZENDESK_BRAND_NAME}', received '${ACTUAL_BRAND}'."
 printf 'Validated Zendesk brand: %s (%s)\n' "$ACTUAL_BRAND" "$ZENDESK_BRAND_ID"
