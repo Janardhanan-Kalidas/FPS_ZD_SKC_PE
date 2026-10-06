@@ -612,12 +612,41 @@
 
   var currentUrl = window.location.href;
   var encodedUrl = encodeURIComponent(currentUrl);
+
+  // Resolve the real article title from the page so the email reflects the
+  // actual article. Prefer the article <h1> (itemprop="name"); fall back to
+  // document.title if it is missing for any reason.
+  function getArticleTitle() {
+    var heading = document.querySelector('.article-title h1[itemprop="name"]');
+    var title = heading ? (heading.getAttribute('title') || heading.textContent) : '';
+    title = (title || document.title || '').trim();
+    return title;
+  }
+
+  var articleTitle = getArticleTitle();
+  var brand = 'PROFIS Engineering Software Knowledge Center';
+  var emailSubject = brand + ' | ' + articleTitle;
+  var emailBody = [
+    'Hello,',
+    '',
+    'I would like to share the following article from the ' + brand + ' with you:',
+    '',
+    'Title: ' + articleTitle,
+    'Link: ' + currentUrl,
+    '',
+    'I hope you find this resource useful.',
+    '',
+    'Best Regards,',
+    'Hilti PROFIS Engineering',
+    'Software Knowledge Center'
+  ].join('\r\n');
+
   var shareLinks = {
     facebook: 'https://facebook.com/sharer.php?u=' + encodedUrl,
     linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodedUrl,
     twitter: 'https://x.com/intent/tweet?url=' + encodedUrl,
     xing: 'https://www.xing.com/spi/shares/new?url=' + encodedUrl,
-    email: 'mailto:?subject=' + encodeURIComponent('Please Review This Information') + '&body=' + encodeURIComponent('I found this on Engineering Centre and think it could be beneficial for you, ' + currentUrl)
+    email: 'mailto:?subject=' + encodeURIComponent(emailSubject) + '&body=' + encodeURIComponent(emailBody)
   };
 
   modal.querySelectorAll('[data-share-channel]').forEach(function(link) {

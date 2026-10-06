@@ -27,7 +27,7 @@
     <!-- LEFT SIDE: Logo (Top) and Social Medias (Bottom) -->
     <div class="footer-column-left">
       <div class="kc-footer-logo-wrap">
-        <img src="{{asset 'Hilti_Logo_white.svg'}}" alt="PE Knowledge Center" class="kc-footer-logo" />
+        <img src="{{asset 'Hilti_Logo_footer.svg'}}" alt="PE Knowledge Center" class="kc-footer-logo" />
       </div>
       
       <div class="footer-social-row">
@@ -102,8 +102,9 @@
        - Styled via the `.kc-footer-bottom-text` class in CSS
     --------------------------------------------------------------- }}
     <div class="container kc-footer-bottom-text">
-        © 2026 PROFIS Engineering Software Knowledge Center. All rights reserved.
+        © <span class="kc-footer-year">2026</span> PROFIS Engineering Software Knowledge Center. All rights reserved.
     </div>
+    <script type="text/javascript">(function(){var y=document.querySelector('.kc-footer-year');if(y){y.textContent=new Date().getFullYear();}})();</script>
 
 </div>         
 
@@ -695,8 +696,8 @@
   <symbol id="icon-star">
     <polygon points="213 325 81 405 116 255 0 154 153 141 213 0 273 141 426 154 310 255 345 405"></polygon>
   </symbol>
-  <symbol id="icon-chevron-down">
-    <path fill="none" stroke="currentColor" stroke-linecap="round" d="M3 4.5l2.6 2.6c.2.2.5.2.7 0L9 4.5"/>
+  <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+    <path fill="#D2051E" fill-rule="evenodd" clip-rule="evenodd" d="M5.45926 9.61373L7.22703 7.84596L11.9993 12.618L16.773 7.84596L18.5407 9.61373L13.7673 14.3863L11.9996 16.154L5.45926 9.61373Z"/>
   </symbol>
   <symbol id="icon-agent">
     <path fill="currentColor" d="M6 0C2.7 0 0 2.7 0 6s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm2.3 7H3.7c-.3 0-.4-.3-.3-.5C3.9 7.6 4.9 7 6 7s2.1.6 2.6 1.5c.1.2 0 .5-.3.5z"/>

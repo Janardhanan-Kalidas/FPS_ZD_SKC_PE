@@ -924,6 +924,7 @@
     });
     var observeRoot = document.querySelector('main') || document.body;
     rootMo.observe(observeRoot, { childList: true, subtree: true });
+    setTimeout(function () { rootMo.disconnect(); }, 10000);
   });
 })();
 
@@ -939,11 +940,15 @@
     /* ---- 1) Hide system "issue type" dropdown ---- */
     function hideIssueTypeSelector() {
       var el = document.querySelector('.request_ticket_form_id');
-      if (el) el.style.display = 'none';
+      if (el) {
+        el.style.display = 'none';
+        hideObserver.disconnect();
+      }
     }
     hideIssueTypeSelector();
     var hideObserver = new MutationObserver(hideIssueTypeSelector);
     hideObserver.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { hideObserver.disconnect(); }, 10000);
 
     /* ---- 2) Multiselect search logic ---- */
     var targetId = 'request_custom_fields_37069904162321';
@@ -1029,11 +1034,13 @@
           if (menu) {
             initSearchForSpecificMenu(menu);
             waitForMenuAndInit(menu);
+            observer.disconnect();
           }
         });
       });
     });
     observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { observer.disconnect(); }, 10000);
 
     /* ---- 3) Remove "-" from any tagger dropdown ---- */
     function removeDashFromDropdown(fieldId, replacementText) {
@@ -1065,8 +1072,12 @@
         });
       }
       process();
-      var ob = new MutationObserver(process);
+      var ob = new MutationObserver(function () {
+        process();
+        ob.disconnect();
+      });
       ob.observe(document.body, { childList: true, subtree: true });
+      setTimeout(function () { ob.disconnect(); }, 10000);
     }
     // Call for your dropdown field
     removeDashFromDropdown('request_custom_fields_44160434738577', 'Select a Hilti SW Product');
@@ -2062,6 +2073,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // 1. Clean the query display in title and search bar
     var cleanedQuery = cleanQuery(rawQuery);
 
+    // Set by applyTagSearchHeading() below; read later by triggerBuildFilters() to decide whether
+    // to hydrate per-card content-tag chips on a tag-filtered search (no text query).
+    var isTagSearch = false;
+
     function isSameSearchReferrer() {
       if (!cleanedQuery) return false;
       if (!document.referrer) return false;
@@ -2149,6 +2164,124 @@ document.addEventListener('DOMContentLoaded', function () {
     if (searchMeta.totalResults && searchMeta.totalPages) {
       searchMeta.perPage = Math.max(1, Math.ceil(searchMeta.totalResults / searchMeta.totalPages));
     }
+
+    // 1b. Content-tag search heading.
+    // Clicking an article content tag navigates to /search?content_tags=<id>[,<id>...] with no
+    // text query (Zendesk uses the plural "content_tags" param; it may hold a comma-separated
+    // list of tag IDs). The server-rendered title then falls back to a generic "Search Results"
+    // label and the empty query produces a 'for ""' artifact. Detect that case, resolve the
+    // tag's readable name via the Content Tags API, and rewrite the heading to name the tag.
+    // The result list, count, pagination and filters are untouched — only the heading changes.
+    (function applyTagSearchHeading() {
+      var tagParams;
+      try {
+        tagParams = new URLSearchParams(window.location.search);
+      } catch (e) {
+        return;
+      }
+
+      // Accept the live "content_tags" param plus older singular variants as fallbacks.
+      var rawTagParam = (tagParams.get('content_tags') ||
+        tagParams.get('content_tag_ids') ||
+        tagParams.get('content_tag_id') || '').trim();
+
+      // A tag search can carry multiple ids (comma-separated); use the first for the heading.
+      var tagIds = rawTagParam ? rawTagParam.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+      var contentTagId = tagIds[0] || '';
+      // Assign the init-scope flag (not a local) so triggerBuildFilters() can see it.
+      isTagSearch = !!contentTagId && !cleanedQuery;
+      if (!isTagSearch) return;
+
+      // On a tag search there is no text query, so blank out any ".hc-clean-query" spans the
+      // server rendered — otherwise a stray 'for ""' can flash before the heading is replaced.
+      document.querySelectorAll('.hc-clean-query').forEach(function(el) {
+        el.textContent = '';
+      });
+
+      var titleEl = document.querySelector('.hc-results-title');
+      if (!titleEl) return;
+
+      // Resolve the content tag's readable name. Standalone resolver (the richer helper used for
+      // result cards is scoped elsewhere); cheap, cached per page via a module-local map.
+      var apiOrigin = window.location.origin;
+      function fetchTagName(tagId) {
+        var cache = applyTagSearchHeading._cache || (applyTagSearchHeading._cache = {});
+        if (typeof cache[tagId] === 'string') return Promise.resolve(cache[tagId]);
+        if (cache[tagId] && typeof cache[tagId].then === 'function') return cache[tagId];
+
+        var endpoint = apiOrigin + '/api/v2/guide/content_tags/' + encodeURIComponent(tagId);
+        var p = fetch(endpoint, {
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function(r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        }).then(function(data) {
+          var ct = data && (data.content_tag || data);
+          var name = (ct && ct.name) ? String(ct.name).trim() : '';
+          cache[tagId] = name;
+          return name;
+        }).catch(function() {
+          cache[tagId] = '';
+          return '';
+        });
+
+        cache[tagId] = p;
+        return p;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // The real total comes from a server-rendered element ("hc-server-results-count"), which is
+      // emitted for every search including tag searches. The visible title only carries a count
+      // for text queries, so fall back to it (then to rendered card count) only if needed.
+      function readTagResultsCount() {
+        var el = document.querySelector('.hc-server-results-count');
+        if (el) {
+          var n = parseInt(el.getAttribute('data-results-count') || '', 10);
+          if (Number.isFinite(n) && n >= 0) return n;
+        }
+        var fromTitle = readResultsCountFromTitle();
+        if (fromTitle) return fromTitle;
+        return document.querySelectorAll('.hc-results-list .hc-result-card').length;
+      }
+
+      // When "label" is provided the heading names the tag in quotes; when omitted it uses a
+      // generic phrasing suitable for the brief pre-resolution flash. Mirrors the keyword-search
+      // heading, including the trailing "in all categories".
+      function renderHeading(label) {
+        var hasResults = !!document.querySelector('.hc-results-list .hc-result-card');
+        var count = readTagResultsCount();
+        var tagPhrase = label ? ' tagged "<strong>' + escapeHtml(label) + '</strong>"' : ' for the selected tag';
+
+        if (!hasResults || !count) {
+          titleEl.innerHTML = label
+            ? 'No results tagged "<strong>' + escapeHtml(label) + '</strong>"'
+            : 'No results for the selected tag';
+          return;
+        }
+
+        titleEl.innerHTML =
+          'Showing <strong>' + count + '</strong> result' + (count === 1 ? '' : 's') +
+          tagPhrase + ' in all categories';
+      }
+
+      // Render immediately with the generic phrasing so there is never a "Search Results" flash,
+      // then upgrade to the real tag name (or the raw id) once the API resolves.
+      renderHeading('');
+
+      fetchTagName(contentTagId).then(function(name) {
+        renderHeading(name || contentTagId);
+      }).catch(function() {
+        renderHeading(contentTagId);
+      });
+    })();
 
     // Set by buildFilters(); lets sort changes re-render filtered results from source data.
     var rerenderFilteredResults = null;
@@ -2366,7 +2499,8 @@ document.addEventListener('DOMContentLoaded', function () {
         tags = '<ul class="article-tags-custom hc-result-tags">' + r.tags.map(function(tag) {
           var tagName = typeof tag === 'string' ? tag : (tag && tag.name) || '';
           if (!tagName) return '';
-          var tagHref = (helpCenterUrl || '/hc') + 'search?query=' + encodeURIComponent(tagName) + '&utf8=%E2%9C%93';
+          var tagId = (tag && typeof tag === 'object') ? (tag.id || '') : '';
+          var tagHref = buildTagSearchHref(tagName, tagId);
           return '<li><a class="article-tag-link" title="Search results" href="' + esc(tagHref) + '">' + esc(tagName) + '</a></li>';
         }).join('') + '</ul>';
       }
@@ -2417,6 +2551,31 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Like extractTagNames, but returns objects {name, id?} when content_tag_ids are available
+    // in the same payload, enabling card chips to link to ?content_tags=<id> (matching the
+    // article page) instead of the less-precise ?query=<name>. Falls back to name-only objects
+    // when IDs aren't available or don't line up.
+    function extractTagsWithIds(article) {
+      if (!article) return [];
+      var names = extractTagNames(article);
+      if (!names.length) return names.map(function(n) { return { name: n }; });
+
+      var ids = Array.isArray(article.content_tag_ids) ? article.content_tag_ids : [];
+      // Only pair when lengths match (1:1 correspondence); otherwise names only.
+      if (ids.length === names.length && ids.length > 0) {
+        return names.map(function(n, i) { return { name: n, id: ids[i] || '' }; });
+      }
+      return names.map(function(n) { return { name: n }; });
+    }
+
+    // Build a tag-search URL: prefer ?content_tags=<id> (matches article-page tag links) when
+    // the content_tag ID is available; fall back to ?query=<name> for the keyword-search path.
+    function buildTagSearchHref(tagName, tagId) {
+      var base = (helpCenterUrl || '/hc') + 'search?';
+      if (tagId) return base + 'content_tags=' + encodeURIComponent(tagId) + '&utf8=%E2%9C%93';
+      return base + 'query=' + encodeURIComponent(tagName) + '&utf8=%E2%9C%93';
+    }
+
     // Add tags to currently rendered server-side cards using API data keyed by URL.
     // This keeps template validation strict while still showing labels on initial load.
     function insertTagsIntoCard(card, tags) {
@@ -2428,12 +2587,13 @@ document.addEventListener('DOMContentLoaded', function () {
       tags.forEach(function(tag) {
         var tagName = typeof tag === 'string' ? tag : (tag && tag.name) || '';
         if (!tagName) return;
+        var tagId = (tag && typeof tag === 'object') ? (tag.id || '') : '';
 
         var li = document.createElement('li');
         var a = document.createElement('a');
         a.className = 'article-tag-link';
         a.title = 'Search results';
-        a.href = (helpCenterUrl || '/hc') + 'search?query=' + encodeURIComponent(tagName) + '&utf8=%E2%9C%93';
+        a.href = buildTagSearchHref(tagName, tagId);
         a.textContent = tagName;
         li.appendChild(a);
         tagsEl.appendChild(li);
@@ -2808,23 +2968,13 @@ document.addEventListener('DOMContentLoaded', function () {
             updatedAt:    article.updated_at || article.created_at || '',
             voteSum:      article.vote_sum      || 0,
             commentCount: article.comment_count || 0,
-            tags:         extractTagNames(article),
+            tags:         extractTagsWithIds(article),
             category:     sec ? (categoryMap[sec.categoryId] || null) : null,
             section:      sec ? sec.name : null
           };
         }
 
         fetchJson(searchBase + '&page=1').then(function(data) {
-          if (data && data.results && data.results.length) {
-            try {
-              console.debug('[SearchTags] sample fields', {
-                label_names: data.results[0].label_names,
-                content_tag_names: data.results[0].content_tag_names,
-                tags: data.results[0].tags,
-                content_tags: data.results[0].content_tags
-              });
-            } catch (e) {}
-          }
           (data.results || []).forEach(function(a) { if (a.html_url) allRows[a.html_url] = mapArticle(a); });
 
           // Keep API count, but preserve native page-count truth for unfiltered pagination.
@@ -3217,6 +3367,13 @@ document.addEventListener('DOMContentLoaded', function () {
         hydrateTagsOnlyFromSearchAPI();
       } else {
         buildFiltersViaAPI();
+      }
+
+      // On a content-tag search there is no text query, so the query-based hydration paths above
+      // return nothing and the result cards show no tags. Hydrate chips directly from each card's
+      // article id instead (query-independent), mirroring the article page's tag chips.
+      if (isTagSearch) {
+        hydrateTagsFromArticleDetailsForVisibleCards();
       }
     }
 

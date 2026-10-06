@@ -16528,7 +16528,7 @@ a:hover .icon-circle {
 
 .kc-footer-logo {
   width: 8rem;
-  height: auto; /* Preserve the wordmark aspect ratio (110:16) */
+  height: auto; /* Preserve the wordmark aspect ratio (128:30) */
   display: block;
   object-fit: contain;
   margin-bottom: 1.25rem; /* Space between logo and social icons */
@@ -18090,9 +18090,10 @@ header.d-flex h1 {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%23524f53' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.45926 9.61373L7.22703 7.84596L11.9993 12.618L16.773 7.84596L18.5407 9.61373L13.7673 14.3863L11.9996 16.154L5.45926 9.61373Z' fill='%23D2051E'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 10px center;
+  background-size: 16px 16px;
 }
 .hilti-lang-select:focus {
   outline: none;
@@ -19862,7 +19863,7 @@ button.hc-page-btn {
 }
 
 .article-share-option:hover,
-.article-share-option:focus {
+.article-share-option:focus-visible {
   border-color: #d2051e;
   color: #d2051e;
   outline: none;
@@ -19889,6 +19890,16 @@ button.hc-page-btn {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  transition: filter 0.12s ease;
+}
+
+/* The email and copy-link icons are <img> SVGs, so CSS `color` cannot recolor
+   them the way `fill: currentColor` recolors the inline-SVG channel icons.
+   On hover/focus, recolor the grey (#524F53) source icon to Hilti red
+   (#d2051e) with a filter chain so these options match the others. */
+.article-share-option:hover .article-share-option__icon-img,
+.article-share-option:focus-visible .article-share-option__icon-img {
+  filter: brightness(0) saturate(100%) invert(13%) sepia(88%) saturate(6000%) hue-rotate(351deg) brightness(82%) contrast(100%);
 }
 
 .article-share-option--copy {
@@ -21104,6 +21115,102 @@ body.downvote-feedback-open {
 }
 
 /* ============================================================================
+   MOBILE CLEANUP — Home Page
+   Fixes: header overflow, hero banner, category card spacing
+   ============================================================================ */
+
+/* --- 1. Header: Prevent tagline text overflow on mobile --- */
+@media (max-width: 767px) {
+  .navbar-brand {
+    max-width: calc(100% - 60px); /* leave room for hamburger toggle */
+    overflow: hidden;
+  }
+
+  .navbar-brand .navbar-tagline,
+  .navbar-brand .white-space-no-wrap {
+    white-space: normal !important;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    margin-left: 8px !important;
+  }
+
+  .navbar-brand #logo {
+    max-width: 80px;
+    flex-shrink: 0;
+  }
+}
+
+/* --- 2. Hero Banner: Better proportions on mobile --- */
+@media (max-width: 767px) {
+  .hero {
+    min-height: 160px;
+    background-position: center right;
+  }
+
+  .hero .hc-hero-content {
+    position: relative;
+    top: auto;
+    transform: none;
+    padding: 1rem;
+    align-items: flex-start;
+  }
+
+  .hero .hc-hero-content > div:first-child {
+    width: 100%;
+    text-align: left;
+  }
+
+  .hero .hc-hero-content h1.hc-hero-welcome {
+    white-space: normal !important;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .hero .hc-hero-content p.hc-hero-heading {
+    font-size: 1.5rem;
+    text-align: left;
+  }
+
+  .hero .search {
+    max-width: 100%;
+  }
+}
+
+/* --- 3. Category Cards: Tighter spacing on mobile --- */
+@media (max-width: 767px) {
+  .content-blocks .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .content-blocks .list-unstyled {
+    gap: 0.75rem;
+  }
+
+  .content-blocks .list-unstyled > li > .card {
+    padding: 1rem 0.75rem;
+  }
+
+  .content-blocks .list-unstyled > li > .card img,
+  .content-blocks .list-unstyled > li > .card svg {
+    max-height: 48px;
+    width: auto;
+  }
+
+  .content-blocks .list-unstyled > li > .card h3 {
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Browse By Categories heading */
+  .content-blocks h3.inline-flex {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ============================================================================
    SCROLL-SPY: Active TOC link highlight
    ============================================================================ */
 .article-toc-nav .toc-active {
@@ -21250,100 +21357,4 @@ body.downvote-feedback-open {
 
 .error-page-link:hover {
   background-color: #ab0115;
-}
-
-/* ============================================================================
-   MOBILE CLEANUP — Home Page
-   Fixes: header overflow, hero banner, category card spacing
-   ============================================================================ */
-
-/* --- 1. Header: Prevent tagline text overflow on mobile --- */
-@media (max-width: 767px) {
-  .navbar-brand {
-    max-width: calc(100% - 60px); /* leave room for hamburger toggle */
-    overflow: hidden;
-  }
-
-  .navbar-brand .navbar-tagline,
-  .navbar-brand .white-space-no-wrap {
-    white-space: normal !important;
-    font-size: 0.8rem;
-    line-height: 1.3;
-    margin-left: 8px !important;
-  }
-
-  .navbar-brand #logo {
-    max-width: 80px;
-    flex-shrink: 0;
-  }
-}
-
-/* --- 2. Hero Banner: Better proportions on mobile --- */
-@media (max-width: 767px) {
-  .hero {
-    min-height: 160px;
-    background-position: center right;
-  }
-
-  .hero .hc-hero-content {
-    position: relative;
-    top: auto;
-    transform: none;
-    padding: 1rem;
-    align-items: flex-start;
-  }
-
-  .hero .hc-hero-content > div:first-child {
-    width: 100%;
-    text-align: left;
-  }
-
-  .hero .hc-hero-content h1.hc-hero-welcome {
-    white-space: normal !important;
-    font-size: 0.875rem;
-    text-align: left;
-  }
-
-  .hero .hc-hero-content p.hc-hero-heading {
-    font-size: 1.5rem;
-    text-align: left;
-  }
-
-  .hero .search {
-    max-width: 100%;
-  }
-}
-
-/* --- 3. Category Cards: Tighter spacing on mobile --- */
-@media (max-width: 767px) {
-  .content-blocks .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .content-blocks .list-unstyled {
-    gap: 0.75rem;
-  }
-
-  .content-blocks .list-unstyled > li > .card {
-    padding: 1rem 0.75rem;
-  }
-
-  .content-blocks .list-unstyled > li > .card img,
-  .content-blocks .list-unstyled > li > .card svg {
-    max-height: 48px;
-    width: auto;
-  }
-
-  .content-blocks .list-unstyled > li > .card h3 {
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.25rem;
-  }
-
-  /* Browse By Categories heading */
-  .content-blocks h3.inline-flex {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-  }
 }

@@ -102,6 +102,9 @@
     <section class="hc-search-main">
       
       {{! Results Header with Count }}
+      {{! Server-rendered results_count, always emitted so JS can read the true total even on a }}
+      {{! content-tag search, where the query is empty and the heading below carries no count. }}
+      <span class="hc-server-results-count" data-results-count="{{results_count}}" hidden aria-hidden="true"></span>
       <div class="hc-results-header">
         <h1 class="hc-results-title" data-display-query="{{query}}">
           {{#if query}}
