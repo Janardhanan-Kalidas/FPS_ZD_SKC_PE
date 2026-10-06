@@ -126,6 +126,8 @@ package_theme:
   script:
     - $CICD_SCRIPTS_PATH/package.sh
   artifacts:
+    reports:
+      dotenv: build.env
     name: "zendesk-theme-${RELEASE_VERSION}-${CI_COMMIT_SHORT_SHA}"
     paths:
       - dist/theme.zip
