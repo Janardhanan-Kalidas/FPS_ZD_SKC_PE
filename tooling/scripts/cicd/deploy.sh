@@ -8,8 +8,16 @@ require() { [[ -n "${!1:-}" ]] || fail "Required GitLab variable $1 is not set."
 # api() {
 #   curl --fail-with-body --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
 # }
+# api() {
+#   curl --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
+# }
 api() {
-  curl --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
+  # encode "email/token:token_value" in Base64 without line breaks and set as auth header
+  local auth_token
+  auth_token=$(printf '%s/token:%s' "${ZENDESK_EMAIL}" "${ZENDESK_API_TOKEN}" | base64 | tr -d '\n')
+  curl --silent --show-error \
+    --header "Authorization: Basic ${auth_token}" \
+    --header 'Accept: application/json' "$@"
 }
 
 [[ -f build.env ]] || fail "build.env is missing."
