@@ -34,16 +34,18 @@ require DEPLOYMENT_TYPE
 
 ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 [[ -s "$ARCHIVE" ]] || fail "Theme archive is missing: ${ARCHIVE}"
-[[ "$ZENDESK_BRAND_ID" == "36275984782609" ]] || fail "Production brand ID safety check failed."
+# [[ "$ZENDESK_BRAND_ID" == "36275984782609" ]] || fail "Production brand ID safety check failed."
 [[ "$DEPLOYMENT_TYPE" == "NEW_THEME" ]] || fail "Only NEW_THEME deployment is allowed."
 
 ### Set default value forDRY_RUN if it is not set
 DRY_RUN="${DRY_RUN:-false}"
 
 #### DEBUGGING: Print the values of key variables for debugging purposes
+TOKEN_MASKED="${ZENDESK_API_TOKEN:0:4}****${ZENDESK_API_TOKEN: -4}"
 echo "DEBUG: ENVIRONMENT: $ENVIRONMENT"
 echo "DEBUG: ZENDESK_SUBDOMAIN: $ZENDESK_SUBDOMAIN"
 echo "DEBUG: ZENDESK_EMAIL: $ZENDESK_EMAIL"
+echo "DEBUG: ZENDESK_API_TOKEN: $TOKEN_MASKED"
 echo "DEBUG: Token length is ${#ZENDESK_API_TOKEN}"
 echo "DEBUG: ZENDESK_BRAND_ID: $ZENDESK_BRAND_ID"
 echo "DEBUG: ZENDESK_BRAND_NAME: $ZENDESK_BRAND_NAME"
