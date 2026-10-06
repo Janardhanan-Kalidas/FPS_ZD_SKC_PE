@@ -4,8 +4,12 @@
 set -Eeuo pipefail
 
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
-[[ -f build.env ]] || fail "build.env is missing."
-set -a; source build.env; set +a
+
+### file 'build.env' is not passing physically, but env variables from dotenv file are being passed to the script, so we can validate them here
+# [[ -f build.env ]] || fail "build.env is missing."
+# set -a; source build.env; set +a
+require RELEASE_VERSION
+require THEME_NAME
 
 SOURCE_DIR="${THEME_SOURCE_DIR:-.}"
 ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
