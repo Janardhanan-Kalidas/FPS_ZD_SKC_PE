@@ -61,20 +61,30 @@
     if (doc.getElementById(STYLE_ID)) return;
     var style = doc.createElement("style");
     style.id = STYLE_ID;
+    // Centered white pop-up modal styled like the language-selector modal
+    // (.hilti-lang-modal / .hilti-lang-close): dimmed backdrop, white (#fff)
+    // modal box with a top-right close (X) button, image centered inside.
     style.textContent =
       ".hilti-lb-backdrop{position:fixed;inset:0;top:0;left:0;right:0;bottom:0;" +
-      "width:100%;height:100%;background:rgba(0,0,0,.85);z-index:2147483000;" +
+      "width:100%;height:100%;background:rgba(0,0,0,.5);z-index:2147483000;" +
       "display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}" +
-      ".hilti-lb-img{max-width:92%;max-height:82%;object-fit:contain;" +
-      "box-shadow:0 4px 32px rgba(0,0,0,.5);background:#fff}" +
-      ".hilti-lb-caption{position:absolute;left:0;right:0;bottom:16px;margin:0 auto;" +
-      "max-width:90%;color:#fff;text-align:center;font-size:14px;line-height:1.4}" +
-      ".hilti-lb-close,.hilti-lb-nav{position:absolute;background:transparent;border:0;" +
-      "color:#fff;cursor:pointer;line-height:1;padding:12px}" +
-      ".hilti-lb-close{top:8px;right:12px;font-size:34px}" +
-      ".hilti-lb-nav{top:50%;transform:translateY(-50%);font-size:44px}" +
-      ".hilti-lb-prev{left:8px}.hilti-lb-next{right:8px}" +
-      ".hilti-lb-close:focus,.hilti-lb-nav:focus{outline:2px solid #fff;outline-offset:2px}";
+      ".hilti-lb-modal{position:relative;display:flex;flex-direction:column;" +
+      "background:#fff;border-radius:2px;box-shadow:0 12px 40px rgba(0,0,0,.2);" +
+      "max-width:90%;max-height:90%;box-sizing:border-box}" +
+      ".hilti-lb-modal-header{display:flex;align-items:center;justify-content:flex-end;" +
+      "padding:12px 12px 8px;flex:0 0 auto}" +
+      ".hilti-lb-body{position:relative;display:flex;align-items:center;justify-content:center;" +
+      "padding:0 24px 24px;overflow:auto;min-height:0}" +
+      ".hilti-lb-img{display:block;max-width:100%;max-height:72vh;object-fit:contain;background:#fff}" +
+      ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
+      "font-size:14px;line-height:1.4;flex:0 0 auto}" +
+      ".hilti-lb-close{background:none;border:0;cursor:pointer;padding:6px;border-radius:0;" +
+      "color:#524f53;line-height:0;transition:color .2s}" +
+      ".hilti-lb-close:hover{color:#D2051E}" +
+      ".hilti-lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:transparent;" +
+      "border:0;color:#524f53;cursor:pointer;line-height:1;padding:12px;font-size:44px}" +
+      ".hilti-lb-prev{left:4px}.hilti-lb-next{right:4px}" +
+      ".hilti-lb-close:focus,.hilti-lb-nav:focus{outline:2px solid #524f53;outline-offset:2px}";
     (doc.head || doc.documentElement).appendChild(style);
   }
 
@@ -99,10 +109,20 @@
       index = 0;
     }
 
+    // Dimmed backdrop (click-to-close target) hosting a centered white modal.
     var backdrop = doc.createElement("div");
     backdrop.className = "hilti-lb-backdrop";
-    backdrop.setAttribute("role", "dialog");
-    backdrop.setAttribute("aria-modal", "true");
+
+    var modal = doc.createElement("div");
+    modal.className = "hilti-lb-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+
+    var header = doc.createElement("div");
+    header.className = "hilti-lb-modal-header";
+
+    var body = doc.createElement("div");
+    body.className = "hilti-lb-body";
 
     var image = doc.createElement("img");
     image.className = "hilti-lb-img";
@@ -111,11 +131,16 @@
     var caption = doc.createElement("div");
     caption.className = "hilti-lb-caption";
 
+    // Close (X) button reuses the lang-selector modal's icon + style
+    // (.hilti-lang-close path "M15 5L5 15M5 5L15 15").
     var closeBtn = doc.createElement("button");
     closeBtn.className = "hilti-lb-close";
     closeBtn.setAttribute("type", "button");
     closeBtn.setAttribute("aria-label", "Close");
-    closeBtn.textContent = "\u00d7";
+    closeBtn.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">' +
+      '<path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>' +
+      "</svg>";
 
     var prevBtn = doc.createElement("button");
     prevBtn.className = "hilti-lb-nav hilti-lb-prev";
@@ -129,13 +154,18 @@
     nextBtn.setAttribute("aria-label", "Next image");
     nextBtn.textContent = "\u203a";
 
-    backdrop.appendChild(image);
-    backdrop.appendChild(caption);
-    backdrop.appendChild(closeBtn);
+    header.appendChild(closeBtn);
     if (group.length > 1) {
-      backdrop.appendChild(prevBtn);
-      backdrop.appendChild(nextBtn);
+      body.appendChild(prevBtn);
     }
+    body.appendChild(image);
+    if (group.length > 1) {
+      body.appendChild(nextBtn);
+    }
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(caption);
+    backdrop.appendChild(modal);
 
     var timer = null;
     var destroyed = false;
