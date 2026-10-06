@@ -225,6 +225,7 @@
   }
 
   function closePanel(state) {
+    cancelScheduledPosition(state);
     state.panel.hidden = true;
     state.list.innerHTML = '';
     state.options = [];
@@ -260,6 +261,26 @@
     state.panel.style.top = (rect.bottom + 4) + 'px';
     state.panel.style.left = left + 'px';
     state.panel.style.width = Math.min(width, maxWidth) + 'px';
+  }
+
+  function schedulePosition(state) {
+    if (!state || state.panel.hidden) return;
+    if (typeof window.requestAnimationFrame !== 'function') {
+      positionPanel(state);
+      return;
+    }
+    if (state.rafId) return;
+    state.rafId = window.requestAnimationFrame(function () {
+      state.rafId = 0;
+      if (!state.panel.hidden) positionPanel(state);
+    });
+  }
+
+  function cancelScheduledPosition(state) {
+    if (state && state.rafId) {
+      if (typeof window.cancelAnimationFrame === 'function') window.cancelAnimationFrame(state.rafId);
+      state.rafId = 0;
+    }
   }
 
   function createState(wrapper, index) {
@@ -302,7 +323,8 @@
       abortController: null,
       requestId: 0,
       lastQuery: '',
-      interactionMode: 'pointer'
+      interactionMode: 'pointer',
+      rafId: 0
     };
   }
 
@@ -418,11 +440,11 @@
     });
 
     window.addEventListener('resize', function () {
-      if (!state.panel.hidden) positionPanel(state);
+      schedulePosition(state);
     });
 
     window.addEventListener('scroll', function () {
-      if (!state.panel.hidden) positionPanel(state);
+      schedulePosition(state);
     }, true);
 
     document.addEventListener('click', function (event) {
