@@ -4,22 +4,56 @@
 set -Eeuo pipefail
 
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+require() { [[ -n "${!1:-}" ]] || fail "Required GitLab variable $1 is not set."; }
 api() {
   curl --fail-with-body --silent --show-error     --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}"     --header 'Accept: application/json' "$@"
 }
 
-[[ -f build.env ]] || fail "build.env is missing."
-set -a; source build.env; set +a
+require ZENDESK_EMAIL
+require ZENDESK_API_TOKEN
+require THEME_NAME
+require THEME_ARCHIVE
+require ZENDESK_SUBDOMAIN
+require ZENDESK_BRAND_ID
+require ZENDESK_BRAND_NAME
+require DEPLOYMENT_TYPE
+
 ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 [[ -s "$ARCHIVE" ]] || fail "Theme archive is missing: ${ARCHIVE}"
 [[ "$ZENDESK_BRAND_ID" == "36275984782609" ]] || fail "Production brand ID safety check failed."
 [[ "$DEPLOYMENT_TYPE" == "NEW_THEME" ]] || fail "Only NEW_THEME deployment is allowed."
+
+### Set default value forDRY_RUN if it is not set
+DRY_RUN="${DRY_RUN:-false}"
 
 BASE_URL="https://${ZENDESK_SUBDOMAIN}.zendesk.com"
 BRAND_RESPONSE="$(api "${BASE_URL}/api/v2/brands/${ZENDESK_BRAND_ID}.json")"
 ACTUAL_BRAND="$(jq -er '.brand.name' <<<"$BRAND_RESPONSE")" || fail "Unable to read Zendesk brand response."
 [[ "$ACTUAL_BRAND" == "$ZENDESK_BRAND_NAME" ]] || fail "Brand mismatch. Expected '${ZENDESK_BRAND_NAME}', received '${ACTUAL_BRAND}'."
 printf 'Validated Zendesk brand: %s (%s)\n' "$ACTUAL_BRAND" "$ZENDESK_BRAND_ID"
+
+# CHECK DRY_RUN: 
+if [[ "$DRY_RUN" == "true" ]]; then
+  echo "=================================================="
+  echo "📢 DRY_RUN is active. Skipping actual deployment."
+  echo "=================================================="
+  echo "Target Subdomain : ${ZENDESK_SUBDOMAIN}"
+  echo "Base URL         : ${BASE_URL}"
+  echo "Brand ID         : ${ZENDESK_BRAND_ID}"
+  echo "Brand Name       : ${ACTUAL_BRAND}"
+  echo "Deployment Type  : ${DEPLOYMENT_TYPE}"
+  echo "Theme Name       : ${THEME_NAME:-Not set (will use archive defaults)}"
+  echo "Archive Path     : ${ARCHIVE}"
+  echo "Archive Size     : $(wc -c < "$ARCHIVE" | tr -d ' ') bytes"
+  echo "=================================================="
+  exit 0
+fi
+
+### Temporary exit for debugging
+echo "====== DEBUG ======"
+echo "= Deploy emulated ="
+echo "==================="
+exit 0
 
 IMPORT_RESPONSE="$(api   --request POST   --header 'Content-Type: application/json'   --data "{\"job\":{\"attributes\":{\"brand_id\":\"${ZENDESK_BRAND_ID}\",\"format\":\"zip\"}}}"   "${BASE_URL}/api/v2/guide/theming/jobs/themes/imports")"
 
