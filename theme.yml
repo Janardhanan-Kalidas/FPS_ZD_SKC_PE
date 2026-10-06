@@ -32,7 +32,10 @@ image:
 # Used to target PROD environment using Linux docker runner
 .env_prod_anchor: &env_prod
   variables:
-    ENVIRONMENT: "prod"
+    ENVIRONMENT: "PROD"
+    ZENDESK_API_TOKEN: "${ZENDESK_API_TOKEN_PROD}"
+    ZENDESK_EMAIL: "${ZENDESK_EMAIL_PROD}"
+    ZENDESK_SUBDOMAIN: "${ZENDESK_SUBDOMAIN_PROD}"
   environment:
     name: production
   tags: [aws, type-docker, environment-dev]
@@ -40,7 +43,10 @@ image:
 # Used to target SANDBOX environment using Linux docker runner
 .env_sandbox_anchor: &env_sandbox
   variables:
-    ENVIRONMENT: "sandbox"
+    ENVIRONMENT: "SANDBOX"
+    ZENDESK_API_TOKEN: "${ZENDESK_API_TOKEN_SANDBOX}"
+    ZENDESK_EMAIL: "${ZENDESK_EMAIL_SANDBOX}"
+    ZENDESK_SUBDOMAIN: "${ZENDESK_SUBDOMAIN_SANDBOX}"
   environment:
     name: sandbox
   tags: [aws, type-docker, environment-dev]

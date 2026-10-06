@@ -40,6 +40,19 @@ ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 ### Set default value forDRY_RUN if it is not set
 DRY_RUN="${DRY_RUN:-false}"
 
+#### DEBUGGING: Print the values of key variables for debugging purposes
+echo "DEBUG: ZENDESK_SUBDOMAIN: $ZENDESK_SUBDOMAIN"
+echo "DEBUG: ZENDESK_EMAIL: $ZENDESK_EMAIL"
+echo "DEBUG: Token length is ${#ZENDESK_API_TOKEN}"
+echo "DEBUG: ZENDESK_BRAND_ID: $ZENDESK_BRAND_ID"
+echo "DEBUG: ZENDESK_BRAND_NAME: $ZENDESK_BRAND_NAME"
+echo "DEBUG: DEPLOYMENT_TYPE: $DEPLOYMENT_TYPE"
+echo "DEBUG: DRY_RUN: $DRY_RUN"
+echo "DEBUG: THEME_NAME: $THEME_NAME"
+echo "DEBUG: THEME_ARCHIVE: $THEME_ARCHIVE"
+echo "DEBUG: Archive size: $(wc -c < "$ARCHIVE" | tr -d ' ') bytes"
+e
+
 BASE_URL="https://${ZENDESK_SUBDOMAIN}.zendesk.com"
 BRAND_RESPONSE="$(api "${BASE_URL}/api/v2/brands/${ZENDESK_BRAND_ID}.json")"
 
