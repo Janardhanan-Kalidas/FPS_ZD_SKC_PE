@@ -5,8 +5,11 @@ set -Eeuo pipefail
 
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 require() { [[ -n "${!1:-}" ]] || fail "Required GitLab variable $1 is not set."; }
+# api() {
+#   curl --fail-with-body --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
+# }
 api() {
-  curl --fail-with-body --silent --show-error     --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}"     --header 'Accept: application/json' "$@"
+  curl --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
 }
 
 [[ -f build.env ]] || fail "build.env is missing."
