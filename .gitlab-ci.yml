@@ -7,13 +7,13 @@ include:
 
 variables:
   APPROVE_FOR_PROJECT: "fps_skc_pe"
-  DEPLOYMENT_TYPE: "NEW_THEME"
-  JOB_POLL_INTERVAL_SECONDS: "5"
-  JOB_POLL_TIMEOUT_SECONDS: "600"
-  THEME_ARCHIVE: "dist/theme.zip"
-  THEME_NAME_PREFIX: "Hilti [SKC] - PE_Theme"
-  THEME_SOURCE_DIR: "."
-  ZENDESK_BRAND_ID: "36275984782609"
-  ZENDESK_BRAND_NAME: "Hilti PROFIS Engineering"
+  # DEPLOYMENT_TYPE: "NEW_THEME"
+  # JOB_POLL_INTERVAL_SECONDS: "5"
+  # JOB_POLL_TIMEOUT_SECONDS: "600"
+  # THEME_ARCHIVE: "dist/theme.zip"
+  # THEME_NAME_PREFIX: "Hilti [SKC] - PE_Theme"
+  # THEME_SOURCE_DIR: "."
+  # ZENDESK_BRAND_ID: "36275984782609"
+  # ZENDESK_BRAND_NAME: "Hilti PROFIS Engineering"
   ### Temporary during debugging
   DRY_RUN: "true"

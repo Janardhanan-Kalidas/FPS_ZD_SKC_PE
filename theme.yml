@@ -1,10 +1,18 @@
 variables:
+  ### GateKeeper approval variables
   APPROVE_PACKAGE_FILE: "approval.txt"
-  CICD_SCRIPTS_PATH: "./tooling/scripts/cicd"
-
+  ### Pipeline image variables
   PIPELINE_IMAGE: "hiltidevelopment/pipeline-image-kitchen"
   PIPELINE_IMAGE_TAG: "latest"
   PIPELINE_IMAGE_ENTRYPOINT: "/usr/bin/kitchen_ci"
+  ### Zendesk theme deployment variables
+  CICD_SCRIPTS_PATH: "./tooling/scripts/cicd"
+  DEPLOYMENT_TYPE: "NEW_THEME"
+  JOB_POLL_INTERVAL_SECONDS: "5"
+  JOB_POLL_TIMEOUT_SECONDS: "600"
+  THEME_ARCHIVE: "dist/theme.zip"
+  THEME_NAME_PREFIX: "Hilti [SKC] - PE_Theme"
+  THEME_SOURCE_DIR: "."
 
 stages:
   - validate
@@ -34,6 +42,8 @@ image:
   variables:
     ENVIRONMENT: "PROD"
     ZENDESK_API_TOKEN: "${ZENDESK_API_TOKEN_PROD}"
+    ZENDESK_BRAND_ID: "${ZENDESK_BRAND_ID_PROD}"
+    ZENDESK_BRAND_NAME: "${ZENDESK_BRAND_NAME_PROD}"
     ZENDESK_EMAIL: "${ZENDESK_EMAIL_PROD}"
     ZENDESK_SUBDOMAIN: "${ZENDESK_SUBDOMAIN_PROD}"
   environment:
@@ -45,6 +55,8 @@ image:
   variables:
     ENVIRONMENT: "SANDBOX"
     ZENDESK_API_TOKEN: "${ZENDESK_API_TOKEN_SANDBOX}"
+    ZENDESK_BRAND_ID: "${ZENDESK_BRAND_ID_SANDBOX}"
+    ZENDESK_BRAND_NAME: "${ZENDESK_BRAND_NAME_SANDBOX}"
     ZENDESK_EMAIL: "${ZENDESK_EMAIL_SANDBOX}"
     ZENDESK_SUBDOMAIN: "${ZENDESK_SUBDOMAIN_SANDBOX}"
   environment:
@@ -146,8 +158,6 @@ production_deploy:
     - job: package_theme
       artifacts: true
   resource_group: zendesk-pe-production-theme
-  # variables:
-  #   GIT_STRATEGY: none
   script:
     # - *check_approval
     - $CICD_SCRIPTS_PATH/deploy.sh
@@ -158,15 +168,13 @@ production_deploy:
       - stuck_or_timeout_failure
   when: manual
 
-.sandbox_deploy:
+sandbox_deploy:
   stage: deploy
   <<: *env_sandbox
   needs:
     - job: package_theme
       artifacts: true
   resource_group: zendesk-pe-sandbox-theme
-  # variables:
-  #   GIT_STRATEGY: none
   script:
     - $CICD_SCRIPTS_PATH/deploy.sh
   retry:
@@ -174,3 +182,4 @@ production_deploy:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  when: on_success
