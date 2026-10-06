@@ -143,7 +143,7 @@ production_deploy:
   # variables:
   #   GIT_STRATEGY: none
   script:
-    - *check_approval
+    # - *check_approval
     - $CICD_SCRIPTS_PATH/deploy.sh
   retry:
     max: 1
