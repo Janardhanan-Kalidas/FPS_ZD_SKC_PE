@@ -5,26 +5,58 @@ set -Eeuo pipefail
 
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 require() { [[ -n "${!1:-}" ]] || fail "Required GitLab variable $1 is not set."; }
-# api() {
-#   curl --fail-with-body --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
-# }
+
+# ---------------------------------------------------------------------------
+# Authentication: Zendesk OAuth client-credentials grant.
+#
+# The pipeline supplies OAuth client credentials (confidential client), not an
+# API token. We mint a short-lived OAuth access token at runtime and send it as
+# a Bearer token on every API call.
+#
+# Verified Zendesk contract (developer.zendesk.com, OAuth Tokens for Grant Types):
+#   POST https://{subdomain}.zendesk.com/oauth/tokens      (note: NO /api/v2 prefix)
+#   Content-Type: application/json
+#   Body: {"grant_type":"client_credentials","client_id":"<id>",
+#          "client_secret":"<secret>","scope":"themes:write brands:read",
+#          "expires_in":<seconds>}
+#   Success: 201 Created -> { "access_token": "...", "token_type": "bearer", ... }
+#   The client credentials grant requires a confidential client and needs no
+#   user authorization. Scope "themes:write" covers Guide theme imports;
+#   "brands:read" covers the brand validation GET below.
+# ---------------------------------------------------------------------------
+
+# ACCESS_TOKEN is populated by mint_access_token() before any api() call.
+ACCESS_TOKEN=""
+
+# api(): authenticated Zendesk API call using the minted OAuth Bearer token.
 api() {
-   curl --silent --show-error --user "${ZENDESK_EMAIL}/token:${ZENDESK_API_TOKEN}" --header 'Accept: application/json' "$@"
+  curl --fail-with-body --silent --show-error \
+    --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+    --header 'Accept: application/json' "$@"
 }
-# api() {
-#   # encode "email/token:token_value" in Base64 without line breaks and set as auth header
-#   local auth_token
-#   auth_token=$(printf '%s/token:%s' "${ZENDESK_EMAIL}" "${ZENDESK_API_TOKEN}" | base64 | tr -d '\n')
-#   curl --silent --show-error \
-#     --header "Authorization: Basic ${auth_token}" \
-#     --header 'Accept: application/json' "$@"
-# }
 
 [[ -f build.env ]] || fail "build.env is missing."
 set -a; source build.env; set +a
 
-require ZENDESK_EMAIL
-require ZENDESK_API_TOKEN
+# ---------------------------------------------------------------------------
+# Per-environment OAuth client credential selection.
+# ENVIRONMENT selects which GitLab CI variables hold the client credentials:
+#   PROD    -> ZENDESK_OAUTH_CLIENT_ID_PROD    / ZENDESK_OAUTH_CLIENT_SECRET_PROD
+#   SANDBOX -> ZENDESK_OAUTH_CLIENT_ID_SANDBOX / ZENDESK_OAUTH_CLIENT_SECRET_SANDBOX
+# ---------------------------------------------------------------------------
+require ENVIRONMENT
+case "$ENVIRONMENT" in
+  PROD)    CLIENT_ID_VAR="ZENDESK_OAUTH_CLIENT_ID_PROD";    CLIENT_SECRET_VAR="ZENDESK_OAUTH_CLIENT_SECRET_PROD" ;;
+  SANDBOX) CLIENT_ID_VAR="ZENDESK_OAUTH_CLIENT_ID_SANDBOX"; CLIENT_SECRET_VAR="ZENDESK_OAUTH_CLIENT_SECRET_SANDBOX" ;;
+  *)       fail "Unknown ENVIRONMENT '${ENVIRONMENT}'. Expected 'PROD' or 'SANDBOX'." ;;
+esac
+
+# Resolve the selected credentials via indirect expansion (set -u safe).
+ZENDESK_OAUTH_CLIENT_ID="${!CLIENT_ID_VAR:-}"
+ZENDESK_OAUTH_CLIENT_SECRET="${!CLIENT_SECRET_VAR:-}"
+[[ -n "$ZENDESK_OAUTH_CLIENT_ID" ]]     || fail "Required GitLab variable ${CLIENT_ID_VAR} is not set."
+[[ -n "$ZENDESK_OAUTH_CLIENT_SECRET" ]] || fail "Required GitLab variable ${CLIENT_SECRET_VAR} is not set."
+
 require THEME_NAME
 require THEME_ARCHIVE
 require ZENDESK_SUBDOMAIN
@@ -41,12 +73,13 @@ ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 DRY_RUN="${DRY_RUN:-false}"
 
 #### DEBUGGING: Print the values of key variables for debugging purposes
-TOKEN_MASKED="${ZENDESK_API_TOKEN:0:4}****${ZENDESK_API_TOKEN: -4}"
+# Mask the client id/secret: show only first4****last4, never the full value.
+CLIENT_ID_MASKED="${ZENDESK_OAUTH_CLIENT_ID:0:4}****${ZENDESK_OAUTH_CLIENT_ID: -4}"
 echo "DEBUG: ENVIRONMENT: $ENVIRONMENT"
 echo "DEBUG: ZENDESK_SUBDOMAIN: $ZENDESK_SUBDOMAIN"
-echo "DEBUG: ZENDESK_EMAIL: $ZENDESK_EMAIL"
-echo "DEBUG: ZENDESK_API_TOKEN: $TOKEN_MASKED"
-echo "DEBUG: Token length is ${#ZENDESK_API_TOKEN}"
+echo "DEBUG: OAuth client id var: $CLIENT_ID_VAR"
+echo "DEBUG: OAuth client id: $CLIENT_ID_MASKED"
+echo "DEBUG: OAuth client secret length: ${#ZENDESK_OAUTH_CLIENT_SECRET}"
 echo "DEBUG: ZENDESK_BRAND_ID: $ZENDESK_BRAND_ID"
 echo "DEBUG: ZENDESK_BRAND_NAME: $ZENDESK_BRAND_NAME"
 echo "DEBUG: DEPLOYMENT_TYPE: $DEPLOYMENT_TYPE"
@@ -56,6 +89,47 @@ echo "DEBUG: THEME_ARCHIVE: $THEME_ARCHIVE"
 echo "DEBUG: Archive size: $(wc -c < "$ARCHIVE" | tr -d ' ') bytes"
 
 BASE_URL="https://${ZENDESK_SUBDOMAIN}.zendesk.com"
+
+# ---------------------------------------------------------------------------
+# mint_access_token(): exchange the OAuth client credentials for a short-lived
+# Bearer access token via the client_credentials grant. Fails hard (no silent
+# fallback) if minting fails or the client is not permitted to use this grant.
+# Never prints the client secret or the resulting access token.
+# ---------------------------------------------------------------------------
+mint_access_token() {
+  local scope="themes:write brands:read"
+  local expires_in=1800
+  local payload
+  payload="$(jq -n \
+    --arg gt "client_credentials" \
+    --arg id "$ZENDESK_OAUTH_CLIENT_ID" \
+    --arg secret "$ZENDESK_OAUTH_CLIENT_SECRET" \
+    --arg scope "$scope" \
+    --argjson expires_in "$expires_in" \
+    '{grant_type:$gt, client_id:$id, client_secret:$secret, scope:$scope, expires_in:$expires_in}')"
+
+  local response
+  # Do not use --fail-with-body here so we can surface Zendesk's JSON error body.
+  response="$(curl --silent --show-error \
+    --request POST \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/json' \
+    --data "$payload" \
+    "${BASE_URL}/oauth/tokens")" || fail "Token request to Zendesk failed (network/curl error)."
+
+  ACCESS_TOKEN="$(jq -er '.access_token' <<<"$response" 2>/dev/null || true)"
+  if [[ -z "$ACCESS_TOKEN" || "$ACCESS_TOKEN" == "null" ]]; then
+    local err
+    err="$(jq -c '{error: (.error // "unknown"), description: (.error_description // .description // "")}' <<<"$response" 2>/dev/null || printf '%s' "$response")"
+    fail "OAuth client_credentials token minting failed: ${err}"
+  fi
+
+  local token_masked="${ACCESS_TOKEN:0:4}****${ACCESS_TOKEN: -4}"
+  printf 'Obtained OAuth access token: %s (expires in %ss)\n' "$token_masked" "$expires_in"
+}
+
+mint_access_token
+
 BRAND_RESPONSE="$(api "${BASE_URL}/api/v2/brands/${ZENDESK_BRAND_ID}.json")"
 
 ### DEBUGGING: Print the brand response for debugging purposes
