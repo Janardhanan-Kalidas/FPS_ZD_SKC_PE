@@ -1,9 +1,9 @@
 ### use pipeline template from Gitlab
 include:
   ## Use local template file during debugging.
-  - local: '/theme.yml'
-  # - project: "bu-f-ps/infra/pipeline-templates"
-  #   file: "/zendesk/theme.yml"
+  # - local: '/theme.yml'
+  - project: "bu-f-ps/infra/pipeline-templates"
+    file: "/zendesk/theme.yml"
 
 variables:
   APPROVE_FOR_PROJECT: "fps_skc_pe"
