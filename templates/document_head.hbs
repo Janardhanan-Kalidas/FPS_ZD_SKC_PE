@@ -73,8 +73,17 @@
 
   // ----- Single click listener drives BOTH visuals on internal navigation -----
   document.addEventListener('click', function(e) {
+    // Guard: never treat a non-navigating click as navigation. In-page overlays
+    // (e.g. the image lightbox) call preventDefault() to open instead of
+    // navigating; if we showed the spinner here it would never clear because no
+    // 'load' event ever fires. e.defaultPrevented is the general safety net for
+    // any current/future JS that opens an overlay via preventDefault(); the
+    // explicit data-hilti-lightbox check is a belt-and-braces guard in case the
+    // lightbox handler runs after this listener on some target.
+    if (e.defaultPrevented) return;
     var link = e.target.closest ? e.target.closest('a[href]') : null;
     if (!link) return;
+    if (link.hasAttribute('data-hilti-lightbox') || (link.closest && link.closest('[data-hilti-lightbox]'))) return;
     var href = link.getAttribute('href');
     if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
     // External-protocol links (mailto:, tel:, sms:, etc.) hand off to the OS
@@ -92,6 +101,20 @@
 
     // Progress bar: always start a fresh animating bar before navigation
     createBar();
+
+    // Safety net: if navigation stalls and 'load' never fires (e.g. a blocked
+    // or cancelled request), auto-clear the overlays after 8s so the spinner is
+    // never permanent. Mirrors the lightbox's own 5s fallback philosophy.
+    setTimeout(function() {
+      var l = document.getElementById('hiltiPageLoader');
+      if (l) { l.classList.add('is-hidden'); setTimeout(function() { if (l.parentNode) l.remove(); }, 400); }
+      var bars = document.querySelectorAll('.hilti-page-loading-bar');
+      for (var k = 0; k < bars.length; k++) {
+        bars[k].classList.remove('is-animating');
+        bars[k].classList.add('is-complete');
+        (function(b) { setTimeout(function() { if (b.parentNode) b.remove(); }, 700); })(bars[k]);
+      }
+    }, 8000);
   });
 })();
 </script>

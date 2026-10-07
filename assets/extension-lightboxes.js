@@ -262,7 +262,13 @@
     var anchor = target && target.closest ? target.closest("[" + ATTR + "]") : null;
     if (!anchor) return;
     // Build the overlay first, then suppress the native navigation.
+    // stopPropagation + stopImmediatePropagation prevent the click from bubbling
+    // to the document-level page-loading-indicator listener in document_head.hbs,
+    // which would otherwise treat this anchor as a real navigation and show a
+    // full-screen spinner/progress bar that never clears (no navigation occurs).
     e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
     openLightbox(anchor.ownerDocument || document, anchor);
   }
 

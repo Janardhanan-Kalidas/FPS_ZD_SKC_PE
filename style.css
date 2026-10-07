@@ -189,11 +189,11 @@ h1 {
 }
 
 .hc-autocomplete-panel .hc-autocomplete-mark {
-  /* Issue 5: highlight the matched substring with a soft yellow background
-     (clean/accessible on white) instead of red text, matching the generic
-     mark/.search-keyword-highlight rule (#fff3cd). */
-  background-color: #fff3cd;
-  color: inherit;
+  /* Issue 2: the matched substring must read as Hilti-red bold text on a clearly
+     visible yellow highlight (both at once). #ffe680 keeps red-bold text legible
+     where the former faint #fff3cd washed it out. */
+  background-color: #ffe680;
+  color: #d2051e;
   font-style: normal;
   font-weight: 700;
   padding: 0;
@@ -18781,7 +18781,9 @@ header.d-flex h1 {
   margin: 2rem auto;
   padding: 0 2rem;   /* Match header container padding */
   width: 100%;
-  max-width: 1280px; /* Match header container max-width */
+  /* Issue 1: cap at the canonical 1520 content column so the search-results page
+     content aligns with the header logo and footer edges like every other page. */
+  max-width: var(--hc-content-max);
   margin-right: auto;
   margin-left: auto;
 }
@@ -20570,10 +20572,17 @@ body.downvote-feedback-open {
   --hc-bp-desktop: 1024px;
   --hc-bp-large: 1440px;
   --hc-bp-ultrawide: 2560px;
+  /* Issue 1 (Figma 48ft6mS1YyRef02eRW3S1o, node 8-3937): the single canonical
+     content-column width. Header content, every body .container, and the footer
+     content all cap at this width and center via margin-inline:auto, so the HILTI
+     logo (left), body content, and footer logo share identical left/right edges.
+     1520 centered on a 1920 canvas yields the design's ~200px side gutters; below
+     1520 + gutters the column stays fluid with the 16/24/32/40 gutter ladder. */
+  --hc-content-max: 1520px;
 }
 
 .hc-container {
-  max-width: 1440px;
+  max-width: var(--hc-content-max);
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -20789,7 +20798,7 @@ body.downvote-feedback-open {
 /* --- Request/Form Page Layout --- */
 
 .new-request-page #page-container {
-  max-width: 1440px;
+  max-width: var(--hc-content-max);
   margin-left: auto;
   margin-right: auto;
   padding-left: 16px;
@@ -20823,85 +20832,99 @@ body.downvote-feedback-open {
 }
 
 /* --- Header & Footer Internal Alignment --- */
+/* Issue 1: the header nav wrapper and the footer wrapper cap at the SAME 1520
+   content column as the body, centered, at ALL widths — only the gutter padding
+   steps through the 16/24/32/40 ladder by breakpoint. Applying the max-width cap
+   unconditionally (not just >=1440px) keeps the header logo and footer edges
+   aligned with body content between 1280px and 1520px viewports too, where the
+   generic .container would otherwise pull them back to its 1280px cap. */
 
-@media (min-width: 1440px) {
-  .header .navbar {
-    max-width: 1440px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 40px;
-    padding-right: 40px;
-  }
+.header .navbar {
+  max-width: var(--hc-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
-@media (max-width: 1439px) and (min-width: 1024px) {
-  .header .navbar {
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-}
-
-@media (max-width: 1023px) and (min-width: 768px) {
+@media (min-width: 768px) {
   .header .navbar {
     padding-left: 24px;
     padding-right: 24px;
   }
 }
 
-@media (max-width: 767px) {
+@media (min-width: 1024px) {
   .header .navbar {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
-
-@media (min-width: 1440px) {
-  .kc-footer {
-    max-width: 1440px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 40px;
-    padding-right: 40px;
-  }
-}
-
-@media (max-width: 1439px) and (min-width: 1024px) {
-  .kc-footer {
     padding-left: 32px;
     padding-right: 32px;
   }
 }
 
-@media (max-width: 1023px) and (min-width: 768px) {
+@media (min-width: 1440px) {
+  .header .navbar {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+.kc-footer {
+  max-width: var(--hc-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
   .kc-footer {
     padding-left: 24px;
     padding-right: 24px;
   }
 }
 
-@media (max-width: 767px) {
+@media (min-width: 1024px) {
   .kc-footer {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 32px;
+    padding-right: 32px;
   }
 }
 
-/* --- Home Page Body + Footer Copyright Alignment (Issue 1) ---
-   The header .navbar and .kc-footer cap at 1440px with a 40/32/24/16
-   responsive gutter ladder, but the home-page body content uses the
-   generic .container (1280px / 2rem) and the footer copyright strip is
-   a bare .container too — so their left/right edges sit ~160px inside the
-   header/footer edges. Re-align the home body content and the copyright
-   strip onto the SAME 1440 + 40/32/24/16 system so logo, body, and footer
-   share identical left/right edges. Scoped to .home-page so other pages
-   keep their own container rules. */
+@media (min-width: 1440px) {
+  .kc-footer {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+/* Footer inner containers fill the already-constrained .kc-footer (Issue 1):
+   .kc-footer caps at the 1520 column with gutters, so its inner .container
+   children (.custom-footer-layout logo/columns, .kc-footer-bottom-text
+   copyright) must NOT re-apply the generic .container 1280px cap + 2rem padding,
+   or the footer logo/copyright would sit inset from the body content and header
+   logo. Let them span the full width of .kc-footer so all left/right edges line
+   up. */
+.kc-footer > .custom-footer-layout,
+.kc-footer > .kc-footer-bottom-text {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* --- Home Page Body Alignment (Issue 1) ---
+   The header .navbar and .kc-footer cap at --hc-content-max (1520px) with a
+   40/32/24/16 responsive gutter ladder, but the home-page body sections use the
+   generic .container (1280px / 2rem) — so their left/right edges sit inside the
+   header/footer edges. Re-align the home body sections onto the SAME 1520 +
+   40/32/24/16 system so logo, body, and footer share identical left/right edges.
+   Scoped to .home-page so other pages keep their own container rules. (The footer
+   copyright .kc-footer-bottom-text aligns via the .kc-footer fill rule above.) */
 
 .home-page #page-container > .content-blocks > .container,
 .home-page #page-container > .promoted-articles > .container,
 .home-page #page-container > .video-library > .container,
-.home-page #page-container > .recent-activity > .container,
-.kc-footer-bottom-text {
-  max-width: 1440px;
+.home-page #page-container > .recent-activity > .container {
+  max-width: var(--hc-content-max);
   margin-left: auto;
   margin-right: auto;
   padding-left: 16px;
@@ -20912,8 +20935,7 @@ body.downvote-feedback-open {
   .home-page #page-container > .content-blocks > .container,
   .home-page #page-container > .promoted-articles > .container,
   .home-page #page-container > .video-library > .container,
-  .home-page #page-container > .recent-activity > .container,
-  .kc-footer-bottom-text {
+  .home-page #page-container > .recent-activity > .container {
     padding-left: 24px;
     padding-right: 24px;
   }
@@ -20923,8 +20945,7 @@ body.downvote-feedback-open {
   .home-page #page-container > .content-blocks > .container,
   .home-page #page-container > .promoted-articles > .container,
   .home-page #page-container > .video-library > .container,
-  .home-page #page-container > .recent-activity > .container,
-  .kc-footer-bottom-text {
+  .home-page #page-container > .recent-activity > .container {
     padding-left: 32px;
     padding-right: 32px;
   }
@@ -20934,8 +20955,7 @@ body.downvote-feedback-open {
   .home-page #page-container > .content-blocks > .container,
   .home-page #page-container > .promoted-articles > .container,
   .home-page #page-container > .video-library > .container,
-  .home-page #page-container > .recent-activity > .container,
-  .kc-footer-bottom-text {
+  .home-page #page-container > .recent-activity > .container {
     padding-left: 40px;
     padding-right: 40px;
   }
@@ -20945,7 +20965,7 @@ body.downvote-feedback-open {
 
 /* Category page container */
 .category-page #page-container {
-  max-width: 1440px;
+  max-width: var(--hc-content-max);
   margin-left: auto;
   margin-right: auto;
   padding-left: 16px;
@@ -20964,7 +20984,7 @@ body.downvote-feedback-open {
 
 /* Section page container */
 .section-page #page-container {
-  max-width: 1440px;
+  max-width: var(--hc-content-max);
   margin-left: auto;
   margin-right: auto;
   padding-left: 16px;
@@ -20979,6 +20999,44 @@ body.downvote-feedback-open {
 }
 @media (min-width: 1440px) {
   .section-page #page-container { padding-left: 40px; padding-right: 40px; }
+}
+
+/* Breadcrumb strip + search-bar alignment (Issue 1): the full-bleed .bg-gray-100
+   band and the search-bar band stay edge-to-edge, but their inner .container must
+   share the SAME 1520 content column + gutter ladder as #page-container so the
+   breadcrumb/search-bar left edge lines up with the body content and header logo
+   on category/section/search pages (the generic .container otherwise caps at
+   1280px). The search page carries no page class on <html>, so its breadcrumb
+   strip is matched structurally as the .bg-gray-100 immediately preceding the
+   .search-results-search-bar band. */
+.category-page .bg-gray-100 > .container,
+.section-page .bg-gray-100 > .container,
+.bg-gray-100:has(+ .search-results-search-bar) > .container,
+.search-results-search-bar > .container {
+  max-width: var(--hc-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
+  .category-page .bg-gray-100 > .container,
+  .section-page .bg-gray-100 > .container,
+  .bg-gray-100:has(+ .search-results-search-bar) > .container,
+  .search-results-search-bar > .container { padding-left: 24px; padding-right: 24px; }
+}
+@media (min-width: 1024px) {
+  .category-page .bg-gray-100 > .container,
+  .section-page .bg-gray-100 > .container,
+  .bg-gray-100:has(+ .search-results-search-bar) > .container,
+  .search-results-search-bar > .container { padding-left: 32px; padding-right: 32px; }
+}
+@media (min-width: 1440px) {
+  .category-page .bg-gray-100 > .container,
+  .section-page .bg-gray-100 > .container,
+  .bg-gray-100:has(+ .search-results-search-bar) > .container,
+  .search-results-search-bar > .container { padding-left: 40px; padding-right: 40px; }
 }
 
 /* Sidebar layout for category/section pages */
