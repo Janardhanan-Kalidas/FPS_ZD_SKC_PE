@@ -86,6 +86,12 @@
     if (link.hasAttribute('data-hilti-lightbox') || (link.closest && link.closest('[data-hilti-lightbox]'))) return;
     var href = link.getAttribute('href');
     if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    // Image-file links (the lightbox's targets) never cause a page navigation, so the
+    // spinner would never clear. Skip them even if the lightbox did not manage to wire
+    // the anchor (e.g. article content that rendered after lightbox init). This is the
+    // belt to the lightbox's braces: clicking an in-article image is never a page load.
+    if (/\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:[?#].*)?$/i.test(href) ||
+        (link.querySelector && link.querySelector('img'))) return;
     // External-protocol links (mailto:, tel:, sms:, etc.) hand off to the OS
     // and never trigger a page load, so the spinner would never clear. Skip them.
     if (/^(mailto:|tel:|sms:|callto:|facetime:|skype:)/i.test(href)) return;

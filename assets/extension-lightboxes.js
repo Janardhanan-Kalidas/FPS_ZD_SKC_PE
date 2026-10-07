@@ -295,9 +295,40 @@
     show(index);
   }
 
+  // Lazily wire an eligible image anchor that `wire()` never marked (e.g. article
+  // content rendered after init, such as an article opened from search results).
+  // Returns the wired anchor, or null if the click is not on a lightbox-eligible image.
+  function resolveAnchor(target) {
+    if (!target || !target.closest) return null;
+    var anchor = target.closest("[" + ATTR + "]");
+    if (anchor) return anchor;
+    // Not yet wired: is this a click on a .content image (optionally inside an anchor)?
+    var img = target.closest(".content img");
+    if (!img) return null;
+    var a = img.closest ? img.closest("a") : null;
+    var doc = img.ownerDocument || document;
+    if (a) {
+      if (!isSafeHref(a.getAttribute("href"))) return null;
+      a.setAttribute(ATTR, "");
+      if (!a.hasAttribute(CAPTION_ATTR) && img.getAttribute("alt")) {
+        a.setAttribute(CAPTION_ATTR, img.getAttribute("alt"));
+      }
+      return a;
+    }
+    var src = img.getAttribute("src");
+    if (!isSafeHref(src)) return null;
+    var wrap = doc.createElement("a");
+    wrap.setAttribute("href", src);
+    wrap.setAttribute(ATTR, "");
+    if (img.getAttribute("alt")) wrap.setAttribute(CAPTION_ATTR, img.getAttribute("alt"));
+    img.insertAdjacentElement("afterend", wrap);
+    wrap.appendChild(img);
+    return wrap;
+  }
+
   function onClick(e) {
     var target = e.target;
-    var anchor = target && target.closest ? target.closest("[" + ATTR + "]") : null;
+    var anchor = resolveAnchor(target);
     if (!anchor) return;
     // Build the overlay first, then suppress the native navigation.
     // stopPropagation + stopImmediatePropagation prevent the click from bubbling
