@@ -29,8 +29,15 @@ require() { [[ -n "${!1:-}" ]] || fail "Required GitLab variable $1 is not set."
 ACCESS_TOKEN=""
 
 # api(): authenticated Zendesk API call using the minted OAuth Bearer token.
+### --fail-with-body is not supported in the current curl version in runtime image used.
+# api() {
+#   curl --fail-with-body --silent --show-error \
+#     --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+#     --header 'Accept: application/json' "$@"
+# }
+
 api() {
-  curl --fail-with-body --silent --show-error \
+  curl --silent --show-error \
     --header "Authorization: Bearer ${ACCESS_TOKEN}" \
     --header 'Accept: application/json' "$@"
 }
@@ -44,25 +51,30 @@ set -a; source build.env; set +a
 #   PROD    -> ZENDESK_OAUTH_CLIENT_ID_PROD    / ZENDESK_OAUTH_CLIENT_SECRET_PROD
 #   SANDBOX -> ZENDESK_OAUTH_CLIENT_ID_SANDBOX / ZENDESK_OAUTH_CLIENT_SECRET_SANDBOX
 # ---------------------------------------------------------------------------
-require ENVIRONMENT
-case "$ENVIRONMENT" in
-  PROD)    CLIENT_ID_VAR="ZENDESK_OAUTH_CLIENT_ID_PROD";    CLIENT_SECRET_VAR="ZENDESK_OAUTH_CLIENT_SECRET_PROD" ;;
-  SANDBOX) CLIENT_ID_VAR="ZENDESK_OAUTH_CLIENT_ID_SANDBOX"; CLIENT_SECRET_VAR="ZENDESK_OAUTH_CLIENT_SECRET_SANDBOX" ;;
-  *)       fail "Unknown ENVIRONMENT '${ENVIRONMENT}'. Expected 'PROD' or 'SANDBOX'." ;;
-esac
 
-# Resolve the selected credentials via indirect expansion (set -u safe).
-ZENDESK_OAUTH_CLIENT_ID="${!CLIENT_ID_VAR:-}"
-ZENDESK_OAUTH_CLIENT_SECRET="${!CLIENT_SECRET_VAR:-}"
-[[ -n "$ZENDESK_OAUTH_CLIENT_ID" ]]     || fail "Required GitLab variable ${CLIENT_ID_VAR} is not set."
-[[ -n "$ZENDESK_OAUTH_CLIENT_SECRET" ]] || fail "Required GitLab variable ${CLIENT_SECRET_VAR} is not set."
+### Will do it in the pipeline template.
+# require ENVIRONMENT
+# case "$ENVIRONMENT" in
+#   PROD)    CLIENT_ID_VAR="ZENDESK_OAUTH_CLIENT_ID_PROD";    CLIENT_SECRET_VAR="ZENDESK_OAUTH_CLIENT_SECRET_PROD" ;;
+#   SANDBOX) CLIENT_ID_VAR="ZENDESK_OAUTH_CLIENT_ID_SANDBOX"; CLIENT_SECRET_VAR="ZENDESK_OAUTH_CLIENT_SECRET_SANDBOX" ;;
+#   *)       fail "Unknown ENVIRONMENT '${ENVIRONMENT}'. Expected 'PROD' or 'SANDBOX'." ;;
+# esac
 
+# # Resolve the selected credentials via indirect expansion (set -u safe).
+# ZENDESK_OAUTH_CLIENT_ID="${!CLIENT_ID_VAR:-}"
+# ZENDESK_OAUTH_CLIENT_SECRET="${!CLIENT_SECRET_VAR:-}"
+# [[ -n "$ZENDESK_OAUTH_CLIENT_ID" ]]     || fail "Required GitLab variable ${CLIENT_ID_VAR} is not set."
+# [[ -n "$ZENDESK_OAUTH_CLIENT_SECRET" ]] || fail "Required GitLab variable ${CLIENT_SECRET_VAR} is not set."
+
+require DEPLOYMENT_TYPE
 require THEME_NAME
 require THEME_ARCHIVE
-require ZENDESK_SUBDOMAIN
 require ZENDESK_BRAND_ID
 require ZENDESK_BRAND_NAME
-require DEPLOYMENT_TYPE
+require ZENDESK_OAUTH_CLIENT_ID
+require ZENDESK_OAUTH_CLIENT_SECRET
+require ZENDESK_SUBDOMAIN
+
 
 ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 [[ -s "$ARCHIVE" ]] || fail "Theme archive is missing: ${ARCHIVE}"
@@ -77,7 +89,7 @@ DRY_RUN="${DRY_RUN:-false}"
 CLIENT_ID_MASKED="${ZENDESK_OAUTH_CLIENT_ID:0:4}****${ZENDESK_OAUTH_CLIENT_ID: -4}"
 echo "DEBUG: ENVIRONMENT: $ENVIRONMENT"
 echo "DEBUG: ZENDESK_SUBDOMAIN: $ZENDESK_SUBDOMAIN"
-echo "DEBUG: OAuth client id var: $CLIENT_ID_VAR"
+#echo "DEBUG: OAuth client id var: $CLIENT_ID_VAR"
 echo "DEBUG: OAuth client id: $CLIENT_ID_MASKED"
 echo "DEBUG: OAuth client secret length: ${#ZENDESK_OAUTH_CLIENT_SECRET}"
 echo "DEBUG: ZENDESK_BRAND_ID: $ZENDESK_BRAND_ID"
