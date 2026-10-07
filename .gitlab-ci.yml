@@ -16,4 +16,4 @@ variables:
   # ZENDESK_BRAND_ID: "36275984782609"
   # ZENDESK_BRAND_NAME: "Hilti PROFIS Engineering"
   ### Temporary during debugging
-  DRY_RUN: "true"
+  # DRY_RUN: "true"
