@@ -71,16 +71,20 @@
       ".hilti-lb-modal{position:relative;display:flex;flex-direction:column;" +
       "background:#fff;border-radius:2px;box-shadow:0 12px 40px rgba(0,0,0,.2);" +
       "max-width:92%;max-height:90%;box-sizing:border-box}" +
+      // Header matches the lang-selector modal header: bottom divider + same padding,
+      // close button aligned to the right within it.
       ".hilti-lb-modal-header{display:flex;align-items:center;justify-content:flex-end;" +
-      "padding:12px 12px 8px;flex:0 0 auto}" +
+      "padding:20px 24px 16px;border-bottom:1px solid #E5E7EB;flex:0 0 auto}" +
       // Body is a row: [prev] [stage] [next]. The nav chevrons live INSIDE the modal
       // in their own column, so the modal widens to accommodate them and they never
       // overlap the image.
       ".hilti-lb-body{position:relative;display:flex;align-items:center;justify-content:center;" +
-      "gap:8px;padding:0 16px 24px;overflow:auto;min-height:0}" +
-      // Light-grey stage: 8px grey padding visible on all sides directly around the image.
+      "gap:8px;padding:20px 24px 24px;overflow:auto;min-height:0}" +
+      // Light-grey stage: 8px grey padding visible on all sides directly around the
+      // image, with a thin border so it reads as a clean framed box.
       ".hilti-lb-stage{display:flex;align-items:center;justify-content:center;" +
-      "background:#f7f5f2;padding:8px;border-radius:2px;box-sizing:border-box;min-width:0}" +
+      "background:#f7f5f2;padding:8px;border:1px solid #E5E7EB;border-radius:2px;" +
+      "box-sizing:border-box;min-width:0}" +
       ".hilti-lb-img{display:block;max-width:100%;max-height:72vh;object-fit:contain}" +
       ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
       "font-size:14px;line-height:1.4;flex:0 0 auto}" +
