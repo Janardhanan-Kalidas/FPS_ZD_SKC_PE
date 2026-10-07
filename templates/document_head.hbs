@@ -45,18 +45,47 @@
     return bar;
   }
 
+  // ----- Idempotent hide for the full-screen overlay -----
+  // Hides and removes a given full-screen overlay element exactly once. Safe to
+  // call repeatedly (DOMContentLoaded + load may both fire) — it no-ops once the
+  // element is already hidden or detached, so no path can double-remove.
+  function hideLoader(el) {
+    if (!el || el.classList.contains('is-hidden')) return;
+    el.classList.add('is-hidden');
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 400);
+  }
+
   // ----- Initial render on first page load -----
-  var loader = createLoader();
+  // Only the thin top progress bar is shown on first load. The opaque full-screen
+  // overlay is NOT created at parse time, so server-rendered HTML paints
+  // immediately instead of being hidden behind a white screen until all resources
+  // finish. The overlay (createLoader) is still used for in-site navigation via
+  // the click handler below.
   var bar = createBar();
   bar.id = 'hiltiPageLoadBar';
 
-  // ----- Complete both on window load -----
+  // ----- Hide any full-screen overlay as soon as the DOM is interactive -----
+  // Defensive: if an overlay exists by the time the DOM is interactive (e.g. the
+  // click handler created one on the previous page and bfcache was not used),
+  // clear it immediately rather than waiting for window 'load' (which blocks on
+  // the slowest resource). Runs now if the DOM is already interactive/complete.
+  function hideOverlayWhenReady() {
+    hideLoader(document.getElementById('hiltiPageLoader'));
+  }
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    hideOverlayWhenReady();
+  } else {
+    document.addEventListener('DOMContentLoaded', hideOverlayWhenReady);
+  }
+
+  // ----- Complete the top bar (and clear any overlay) on window load -----
   window.addEventListener('load', function() {
-    loader.classList.add('is-hidden');
-    setTimeout(function() { if (loader.parentNode) loader.remove(); }, 400);
-    bar.classList.remove('is-animating');
-    bar.classList.add('is-complete');
-    setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+    hideLoader(document.getElementById('hiltiPageLoader'));
+    if (bar.parentNode) {
+      bar.classList.remove('is-animating');
+      bar.classList.add('is-complete');
+      setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+    }
   });
 
   // ----- Clear lingering overlays on back/forward (bfcache) restore -----

@@ -3288,7 +3288,7 @@ html[dir="rtl"] .notification-left-aligned {
   background-color: #f9f9f9;
 }
 
-.skeleton::before, .skeleton.notification-inline.notification-error::before {
+.skeleton::before {
   position: absolute;
   top: 0;
   width: 1000px;
