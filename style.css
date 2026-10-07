@@ -19451,17 +19451,13 @@ button.hc-page-btn {
   padding-bottom: 3rem;
 }
 
+/* NOTE: the canonical .article-3col-layout grid (220px 1fr 220px, with its
+   responsive breakpoints) is defined once in the "Article Page 3-Column Layout"
+   block further below. The earlier duplicate here was removed to avoid two
+   conflicting definitions; keep alignment on the single source of truth. */
 .article-3col-layout {
-  display: grid;
-  grid-template-columns: 220px 1fr 200px;
-  gap: 8px;
   align-items: start;
   align-content: start;
-}
-
-/* 2-column fallback when left sidebar is absent */
-.article-3col-layout:not(:has(.article-left-sidebar)) {
-  grid-template-columns: 1fr 200px;
 }
 
 /* ----------------------------------------------------------
