@@ -80,12 +80,16 @@
       // overlap the image.
       ".hilti-lb-body{position:relative;display:flex;align-items:center;justify-content:center;" +
       "gap:8px;padding:20px 24px 24px;overflow:auto;min-height:0}" +
-      // Light-grey stage: 8px grey padding visible on all sides directly around the
-      // image, with a thin border so it reads as a clean framed box.
+      // Light-grey stage: a visible grey (#f7f5f2) container framing the image, with
+      // a thin border. Generous padding keeps a clear grey margin on all sides and the
+      // image stays centered within the container.
       ".hilti-lb-stage{display:flex;align-items:center;justify-content:center;" +
-      "background:#f7f5f2;padding:8px;border:1px solid #E5E7EB;border-radius:2px;" +
+      "background:#f7f5f2;padding:16px;border:1px solid #E5E7EB;border-radius:2px;" +
       "box-sizing:border-box;min-width:0}" +
-      ".hilti-lb-img{display:block;max-width:100%;max-height:72vh;object-fit:contain}" +
+      // Image is centered in the stage and never fills it edge-to-edge, so the grey
+      // frame around it stays visible.
+      ".hilti-lb-img{display:block;margin:0 auto;max-width:calc(100% - 8px);" +
+      "max-height:68vh;object-fit:contain}" +
       ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
       "font-size:14px;line-height:1.4;flex:0 0 auto}" +
       ".hilti-lb-close{display:inline-flex;align-items:center;justify-content:center;" +
@@ -99,9 +103,10 @@
       "padding:4px;transition:color .2s}" +
       ".hilti-lb-nav svg{width:44px;height:44px;display:block}" +
       ".hilti-lb-nav:hover{color:#D2051E}" +
-      // Only show the focus ring for keyboard users; a programmatic focus() on open
-      // must NOT paint an outline box around the close button.
-      ".hilti-lb-close:focus-visible,.hilti-lb-nav:focus-visible{outline:2px solid #524f53;outline-offset:2px}";
+      // Nav buttons never show an outline box (no focus ring). The close button keeps
+      // a keyboard-only focus ring for accessibility.
+      ".hilti-lb-nav:focus,.hilti-lb-nav:focus-visible{outline:none}" +
+      ".hilti-lb-close:focus-visible{outline:2px solid #524f53;outline-offset:2px}";
     (doc.head || doc.documentElement).appendChild(style);
   }
 
