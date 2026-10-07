@@ -168,12 +168,6 @@ if [[ "$DRY_RUN" == "true" ]]; then
   exit 0
 fi
 
-### Temporary exit for debugging
-echo "====== DEBUG ======"
-echo "= Deploy emulated ="
-echo "==================="
-exit 0
-
 IMPORT_RESPONSE="$(api   --request POST   --header 'Content-Type: application/json'   --data "{\"job\":{\"attributes\":{\"brand_id\":\"${ZENDESK_BRAND_ID}\",\"format\":\"zip\"}}}"   "${BASE_URL}/api/v2/guide/theming/jobs/themes/imports")"
 
 JOB_ID="$(jq -er '.job.id' <<<"$IMPORT_RESPONSE")" || fail "Import response has no job ID."

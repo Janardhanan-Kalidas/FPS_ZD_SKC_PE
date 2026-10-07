@@ -163,7 +163,7 @@ production_deploy:
       artifacts: true
   resource_group: zendesk-pe-production-theme
   script:
-    # - *check_approval
+    - *check_approval
     - $CICD_SCRIPTS_PATH/deploy.sh
   retry:
     max: 1
