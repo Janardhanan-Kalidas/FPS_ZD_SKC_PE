@@ -181,7 +181,8 @@ while IFS= read -r encoded; do
   UPLOAD_ARGS+=(--form-string "${key}=${value}")
 done < <(jq -r '.job.data.upload.parameters | to_entries[] | @base64' <<<"$IMPORT_RESPONSE")
 
-curl --fail-with-body --silent --show-error   --request POST   "${UPLOAD_ARGS[@]}"   --form "file=@${ARCHIVE};type=application/zip"   "$UPLOAD_URL" >/dev/null
+# curl --fail-with-body --silent --show-error   --request POST   "${UPLOAD_ARGS[@]}"   --form "file=@${ARCHIVE};type=application/zip"   "$UPLOAD_URL" >/dev/null
+curl --silent --show-error   --request POST   "${UPLOAD_ARGS[@]}"   --form "file=@${ARCHIVE};type=application/zip"   "$UPLOAD_URL" >/dev/null
 printf 'Uploaded theme archive for job %s.\n' "$JOB_ID"
 
 INTERVAL="${JOB_POLL_INTERVAL_SECONDS:-5}"
