@@ -343,7 +343,13 @@
 
   function init(doc) {
     wire(doc);
-    doc.addEventListener("click", onClick);
+    // CAPTURE phase: this listener must run BEFORE the page-loading-indicator's
+    // bubble-phase click listener in document_head.hbs (which is registered first,
+    // in the <head>). Registering in capture lets the lightbox call preventDefault +
+    // stopPropagation before the loader ever sees the click, so an image click never
+    // triggers the full-screen spinner — regardless of listener registration order or
+    // whether the anchor was pre-wired.
+    doc.addEventListener("click", onClick, true);
   }
 
   if (document.readyState === "loading") {

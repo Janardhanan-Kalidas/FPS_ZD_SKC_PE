@@ -45,8 +45,10 @@
     var terms = String(query || '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
     if (!terms.length) return safeText;
 
+    // Whole-word match: wrap each term in \b boundaries so "test" highlights the
+    // word "test" but NOT "testing". Terms are regex-escaped first.
     var pattern = new RegExp('(' + terms.map(function (term) {
-      return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return '\\b' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b';
     }).join('|') + ')', 'gi');
 
     return safeText.replace(pattern, '<mark class="hc-autocomplete-mark">$1</mark>');
@@ -2312,8 +2314,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (cleanedQuery) {
       var keywords = cleanedQuery.split(/\s+/).filter(function(k) { return k.length > 2; });
       if (keywords.length) {
+        // Whole-word match (\b…\b) so "test" highlights "test" but not "testing".
         var pattern = new RegExp('(' + keywords.map(function(k) {
-          return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          return '\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b';
         }).join('|') + ')', 'gi');
         
         document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
@@ -2491,7 +2494,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!cleanedQuery) return;
       var kw = cleanedQuery.split(/\s+/).filter(function(k){ return k.length > 2; });
       if (!kw.length) return;
-      var pat = new RegExp('(' + kw.map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }).join('|') + ')', 'gi');
+      // Whole-word match (\b…\b) so "test" highlights "test" but not "testing".
+      var pat = new RegExp('(' + kw.map(function(k){ return '\\b' + k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b'; }).join('|') + ')', 'gi');
       // Target the <a> inside the title (not the <h2>) so the href attribute is never touched.
       // The snippet is a plain <p> with no child elements, so it is safe to replace directly.
       document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
