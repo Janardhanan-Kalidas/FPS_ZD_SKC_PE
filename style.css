@@ -16567,7 +16567,9 @@ a:hover .icon-circle {
 
 .kc-footer-bottom-text {
   text-align: left;
-  padding-left: 20px;
+  /* Left edge is set by the 1520 content-column gutter ladder in the footer
+     alignment block (Issue B); the former fixed 20px inset is removed so the
+     copyright lines up flush with the footer logo/link columns. */
   font-size: 0.75rem; /* Jana - 12px for the copyright */
   color:  #524f53bf; /* Jana - Hilti Steel with 75% Opacity */
   margin: 1.25rem 0;
@@ -20911,6 +20913,33 @@ body.downvote-feedback-open {
   padding-right: 0;
 }
 
+/* Footer copyright alignment (Issue B): the .kc-footer-bottom-text copyright is
+   rendered as a SIBLING after </footer> (not a child of .kc-footer), so the fill
+   rule above never matches it and it falls back to the generic .container
+   (1280px / 2rem) + the fixed 20px inset — leaving it offset from the footer logo
+   and link columns. Give it the SAME 1520 content column + 16/24/32/40 gutter
+   ladder as .kc-footer so its left edge is flush with the footer HILTI logo and
+   link-column left edge (the 1520 content-column left edge) at every breakpoint. */
+.container.kc-footer-bottom-text {
+  max-width: var(--hc-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
+  .container.kc-footer-bottom-text { padding-left: 24px; padding-right: 24px; }
+}
+@media (min-width: 1024px) {
+  .container.kc-footer-bottom-text { padding-left: 32px; padding-right: 32px; }
+}
+@media (min-width: 1440px) {
+  .container.kc-footer-bottom-text { padding-left: 40px; padding-right: 40px; }
+}
+
 /* --- Home Page Body Alignment (Issue 1) ---
    The header .navbar and .kc-footer cap at --hc-content-max (1520px) with a
    40/32/24/16 responsive gutter ladder, but the home-page body sections use the
@@ -21008,9 +21037,14 @@ body.downvote-feedback-open {
    on category/section/search pages (the generic .container otherwise caps at
    1280px). The search page carries no page class on <html>, so its breadcrumb
    strip is matched structurally as the .bg-gray-100 immediately preceding the
-   .search-results-search-bar band. */
+   .search-results-search-bar band. The ARTICLE page breadcrumb strip carries no
+   page class on <html> and is not followed by a search bar, so it is matched
+   structurally as the .container that directly holds a .breadcrumbs-wrapper —
+   this also covers category/section pages (same markup), aligning the article
+   breadcrumb left edge with the article title and header logo. */
 .category-page .bg-gray-100 > .container,
 .section-page .bg-gray-100 > .container,
+.bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
 .bg-gray-100:has(+ .search-results-search-bar) > .container,
 .search-results-search-bar > .container {
   max-width: var(--hc-content-max);
@@ -21023,18 +21057,21 @@ body.downvote-feedback-open {
 @media (min-width: 768px) {
   .category-page .bg-gray-100 > .container,
   .section-page .bg-gray-100 > .container,
+  .bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
   .bg-gray-100:has(+ .search-results-search-bar) > .container,
   .search-results-search-bar > .container { padding-left: 24px; padding-right: 24px; }
 }
 @media (min-width: 1024px) {
   .category-page .bg-gray-100 > .container,
   .section-page .bg-gray-100 > .container,
+  .bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
   .bg-gray-100:has(+ .search-results-search-bar) > .container,
   .search-results-search-bar > .container { padding-left: 32px; padding-right: 32px; }
 }
 @media (min-width: 1440px) {
   .category-page .bg-gray-100 > .container,
   .section-page .bg-gray-100 > .container,
+  .bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
   .bg-gray-100:has(+ .search-results-search-bar) > .container,
   .search-results-search-bar > .container { padding-left: 40px; padding-right: 40px; }
 }

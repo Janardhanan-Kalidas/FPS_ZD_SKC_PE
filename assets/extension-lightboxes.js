@@ -78,12 +78,15 @@
       ".hilti-lb-img{display:block;max-width:100%;max-height:72vh;object-fit:contain;background:#fff}" +
       ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
       "font-size:14px;line-height:1.4;flex:0 0 auto}" +
-      ".hilti-lb-close{background:none;border:0;cursor:pointer;padding:6px;border-radius:0;" +
-      "color:#524f53;line-height:0;transition:color .2s}" +
-      ".hilti-lb-close:hover{color:#D2051E}" +
+      ".hilti-lb-close{display:inline-flex;align-items:center;justify-content:center;" +
+      "width:32px;height:32px;background:none;border:1px solid #524f53;cursor:pointer;" +
+      "padding:0;border-radius:0;color:#524f53;line-height:0;transition:color .2s,border-color .2s}" +
+      ".hilti-lb-close:hover{color:#D2051E;border-color:#D2051E}" +
       ".hilti-lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:transparent;" +
-      "border:0;color:#524f53;cursor:pointer;line-height:1;padding:12px;font-size:44px}" +
-      ".hilti-lb-prev{left:4px}.hilti-lb-next{right:4px}" +
+      "border:0;color:#524f53;cursor:pointer;line-height:0;padding:12px;transition:color .2s}" +
+      ".hilti-lb-nav svg{width:24px;height:24px;display:block}" +
+      ".hilti-lb-nav:hover{color:#D2051E}" +
+      ".hilti-lb-prev{left:-8px}.hilti-lb-next{right:-8px}" +
       ".hilti-lb-close:focus,.hilti-lb-nav:focus{outline:2px solid #524f53;outline-offset:2px}";
     (doc.head || doc.documentElement).appendChild(style);
   }
@@ -146,13 +149,20 @@
     prevBtn.className = "hilti-lb-nav hilti-lb-prev";
     prevBtn.setAttribute("type", "button");
     prevBtn.setAttribute("aria-label", "Previous image");
-    prevBtn.textContent = "\u2039";
+    // Exact Figma chevron (24x24, fill:currentColor so CSS controls the color).
+    prevBtn.innerHTML =
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path fill-rule="evenodd" clip-rule="evenodd" d="M14.3863 5.45926L16.154 7.22703L11.382 11.9993L16.154 16.773L14.3863 18.5407L7.84596 11.9996L14.3863 5.45926Z" fill="currentColor"/>' +
+      "</svg>";
 
     var nextBtn = doc.createElement("button");
     nextBtn.className = "hilti-lb-nav hilti-lb-next";
     nextBtn.setAttribute("type", "button");
     nextBtn.setAttribute("aria-label", "Next image");
-    nextBtn.textContent = "\u203a";
+    nextBtn.innerHTML =
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path fill-rule="evenodd" clip-rule="evenodd" d="M9.61373 18.5407L7.84596 16.773L12.618 12.0007L7.84596 7.22703L9.61373 5.45926L14.3863 10.2327L16.154 12.0004L9.61373 18.5407Z" fill="currentColor"/>' +
+      "</svg>";
 
     header.appendChild(closeBtn);
     if (group.length > 1) {
