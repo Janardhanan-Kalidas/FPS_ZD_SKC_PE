@@ -2311,6 +2311,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set by buildFilters(); lets sort changes re-render filtered results from source data.
     var rerenderFilteredResults = null;
 
+    // Strip Zendesk's server-side search highlighting from a results snippet/title.
+    //
+    // The search_results.hbs template renders the snippet via `{{text}}`, whose
+    // Zendesk helper wraps the matched search term in <em>…</em> — but it wraps the
+    // ENTIRE matched WORD (query "test" yields "<em>testing</em>"). The theme styles
+    // every <em> bold-red-on-yellow (style.css `em` + `.content em`), so the whole
+    // word renders highlighted regardless of the theme's own <mark> highlighter.
+    //
+    // In the results snippet/title scope <em> is produced ONLY by this server
+    // highlighter — article authors use <i> for italic emphasis (see the `.content em`
+    // comment in style.css) — so removing the <em> wrappers here is safe and lets the
+    // theme's substring <mark> highlighter be the single source of highlighting.
+    function stripServerEmphasis(html) {
+      return html.replace(/<\/?em>/gi, '');
+    }
+
     // 2. Highlight search keywords in results
     if (cleanedQuery) {
       var keywords = cleanedQuery.split(/\s+/).filter(Boolean);
@@ -2323,7 +2339,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join('|') + ')', 'gi');
         
         document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
-          var html = el.innerHTML;
+          // Remove Zendesk's whole-word <em> wrapping first, then re-apply the
+          // substring highlighter so only the matched substring is marked.
+          var html = stripServerEmphasis(el.innerHTML);
           el.innerHTML = html.replace(pattern, '<mark class="hc-highlight">$1</mark>');
         });
       }
@@ -2504,7 +2522,9 @@ document.addEventListener('DOMContentLoaded', function () {
       // Target the <a> inside the title (not the <h2>) so the href attribute is never touched.
       // The snippet is a plain <p> with no child elements, so it is safe to replace directly.
       document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
-        el.innerHTML = el.innerHTML.replace(pat, '<mark class="hc-highlight">$1</mark>');
+        // Remove Zendesk's whole-word <em> wrapping first (server-side highlighting),
+        // then re-apply the substring highlighter so only the matched substring is marked.
+        el.innerHTML = stripServerEmphasis(el.innerHTML).replace(pat, '<mark class="hc-highlight">$1</mark>');
       });
     }
 
