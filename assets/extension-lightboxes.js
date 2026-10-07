@@ -70,24 +70,32 @@
       "display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}" +
       ".hilti-lb-modal{position:relative;display:flex;flex-direction:column;" +
       "background:#fff;border-radius:2px;box-shadow:0 12px 40px rgba(0,0,0,.2);" +
-      "max-width:90%;max-height:90%;box-sizing:border-box}" +
+      "max-width:80%;max-height:90%;box-sizing:border-box}" +
       ".hilti-lb-modal-header{display:flex;align-items:center;justify-content:flex-end;" +
       "padding:12px 12px 8px;flex:0 0 auto}" +
       ".hilti-lb-body{position:relative;display:flex;align-items:center;justify-content:center;" +
       "padding:0 24px 24px;overflow:auto;min-height:0}" +
-      ".hilti-lb-img{display:block;max-width:100%;max-height:72vh;object-fit:contain;background:#fff}" +
+      // Light-grey stage frames the image so it reads clearly against the white modal;
+      // the nav chevrons live OUTSIDE this stage (on the backdrop) so they never overlap it.
+      ".hilti-lb-stage{display:flex;align-items:center;justify-content:center;" +
+      "background:#f7f5f2;padding:16px;border-radius:2px;box-sizing:border-box;max-width:100%}" +
+      ".hilti-lb-img{display:block;max-width:100%;max-height:72vh;object-fit:contain}" +
       ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
       "font-size:14px;line-height:1.4;flex:0 0 auto}" +
       ".hilti-lb-close{display:inline-flex;align-items:center;justify-content:center;" +
       "background:none;border:0;cursor:pointer;" +
       "padding:4px;border-radius:0;color:#524f53;line-height:0;transition:color .2s}" +
       ".hilti-lb-close:hover{color:#D2051E}" +
-      ".hilti-lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:transparent;" +
-      "border:0;color:#524f53;cursor:pointer;line-height:0;padding:12px;transition:color .2s}" +
+      // Nav chevrons sit on the backdrop, flanking the modal at the viewport edges —
+      // outside the image stage so they do not nudge or overlap the image.
+      ".hilti-lb-nav{position:fixed;top:50%;transform:translateY(-50%);background:transparent;" +
+      "border:0;color:#fff;cursor:pointer;line-height:0;padding:12px;transition:color .2s;z-index:2147483001}" +
       ".hilti-lb-nav svg{width:44px;height:44px;display:block}" +
       ".hilti-lb-nav:hover{color:#D2051E}" +
-      ".hilti-lb-prev{left:-12px}.hilti-lb-next{right:-12px}" +
-      ".hilti-lb-close:focus,.hilti-lb-nav:focus{outline:2px solid #524f53;outline-offset:2px}";
+      ".hilti-lb-prev{left:16px}.hilti-lb-next{right:16px}" +
+      // Only show the focus ring for keyboard users; a programmatic focus() on open
+      // must NOT paint an outline box around the close button.
+      ".hilti-lb-close:focus-visible,.hilti-lb-nav:focus-visible{outline:2px solid #fff;outline-offset:2px}";
     (doc.head || doc.documentElement).appendChild(style);
   }
 
@@ -127,6 +135,10 @@
     var body = doc.createElement("div");
     body.className = "hilti-lb-body";
 
+    // Light-grey stage wrapping the image, inside the body.
+    var stage = doc.createElement("div");
+    stage.className = "hilti-lb-stage";
+
     var image = doc.createElement("img");
     image.className = "hilti-lb-img";
     image.setAttribute("alt", "");
@@ -165,17 +177,19 @@
       "</svg>";
 
     header.appendChild(closeBtn);
-    if (group.length > 1) {
-      body.appendChild(prevBtn);
-    }
-    body.appendChild(image);
-    if (group.length > 1) {
-      body.appendChild(nextBtn);
-    }
+    // Image goes inside the light-grey stage; the stage inside the body.
+    stage.appendChild(image);
+    body.appendChild(stage);
     modal.appendChild(header);
     modal.appendChild(body);
     modal.appendChild(caption);
     backdrop.appendChild(modal);
+    // Nav chevrons attach to the BACKDROP (not the body), so they flank the
+    // modal at the viewport edges and never overlap the image stage.
+    if (group.length > 1) {
+      backdrop.appendChild(prevBtn);
+      backdrop.appendChild(nextBtn);
+    }
 
     var timer = null;
     var destroyed = false;
