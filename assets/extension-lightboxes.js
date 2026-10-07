@@ -80,16 +80,18 @@
       // overlap the image.
       ".hilti-lb-body{position:relative;display:flex;align-items:center;justify-content:center;" +
       "gap:8px;padding:20px 24px 24px;overflow:auto;min-height:0}" +
-      // Light-grey stage: a visible grey (#f7f5f2) container framing the image, with
-      // a thin border. Generous padding keeps a clear grey margin on all sides and the
-      // image stays centered within the container.
+      // Light-grey stage: a visible grey (#f7f5f2) container framing the image. A fixed
+      // 24px pad on all sides is the grey frame; the image sits centered inside it and is
+      // sized to leave that pad intact (the pad is subtracted from the image's max box),
+      // so the grey always shows regardless of the image's own background.
       ".hilti-lb-stage{display:flex;align-items:center;justify-content:center;" +
-      "background:#f7f5f2;padding:16px;border:1px solid #E5E7EB;border-radius:2px;" +
+      "background:#f7f5f2;padding:24px;border:1px solid #E5E7EB;border-radius:2px;" +
       "box-sizing:border-box;min-width:0}" +
-      // Image is centered in the stage and never fills it edge-to-edge, so the grey
-      // frame around it stays visible.
-      ".hilti-lb-img{display:block;margin:0 auto;max-width:calc(100% - 8px);" +
-      "max-height:68vh;object-fit:contain}" +
+      // White backing + hairline border on the image gives a clear edge against the grey
+      // stage, so the frame reads even when the image's own content is light-coloured.
+      ".hilti-lb-img{display:block;margin:0 auto;max-width:100%;" +
+      "max-height:64vh;object-fit:contain;background:#fff;" +
+      "box-shadow:0 0 0 1px rgba(82,79,83,.12)}" +
       ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
       "font-size:14px;line-height:1.4;flex:0 0 auto}" +
       ".hilti-lb-close{display:inline-flex;align-items:center;justify-content:center;" +
@@ -101,7 +103,7 @@
       ".hilti-lb-nav{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;" +
       "background:transparent;border:0;color:#524f53;cursor:pointer;line-height:0;" +
       "padding:4px;transition:color .2s}" +
-      ".hilti-lb-nav svg{width:44px;height:44px;display:block}" +
+      ".hilti-lb-nav svg{width:28px;height:28px;display:block}" +
       ".hilti-lb-nav:hover{color:#D2051E}" +
       // Nav buttons never show an outline box (no focus ring). The close button keeps
       // a keyboard-only focus ring for accessibility.
