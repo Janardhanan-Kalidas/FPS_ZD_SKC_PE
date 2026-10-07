@@ -19705,7 +19705,7 @@ button.hc-page-btn {
   color: #c0bec0;
 }
 
-/* Row 3: Views | Likes | Share */
+/* Row 3: Likes | Share */
 .article-actions-row {
   display: flex !important;
   align-items: center;
@@ -19735,7 +19735,6 @@ button.hc-page-btn {
   font-weight: 500;
 }
 
-.article-action-views img,
 .article-action-likes img {
   flex-shrink: 0;
   vertical-align: middle;

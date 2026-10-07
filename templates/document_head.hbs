@@ -81,6 +81,17 @@
     // explicit data-hilti-lightbox check is a belt-and-braces guard in case the
     // lightbox handler runs after this listener on some target.
     if (e.defaultPrevented) return;
+    // Image/lightbox bail — runs BEFORE the anchor lookup so it holds even for a
+    // bare <img> with no wrapping anchor, and regardless of whether the lightbox
+    // tagged the anchor. Clicking any such image opens an overlay or does nothing
+    // and NEVER navigates, so the loader would stick forever. Mirror the lightbox's
+    // own eligibility rule (`.content img` / `[data-hilti-lightbox]`) and extend it
+    // to result-listing images so the head guard and the lightbox always agree.
+    if (e.target.closest && (
+          e.target.closest('[data-hilti-lightbox]') ||
+          e.target.closest('.content img') ||
+          e.target.closest('.hc-result-snippet img, .hc-result-card img, .hc-results-list img')
+        )) return;
     var link = e.target.closest ? e.target.closest('a[href]') : null;
     if (!link) return;
     if (link.hasAttribute('data-hilti-lightbox') || (link.closest && link.closest('[data-hilti-lightbox]'))) return;
@@ -90,7 +101,15 @@
     // spinner would never clear. Skip them even if the lightbox did not manage to wire
     // the anchor (e.g. article content that rendered after lightbox init). This is the
     // belt to the lightbox's braces: clicking an in-article image is never a page load.
+    // ROOT CAUSE of the stuck loader: Zendesk wraps article-body/attachment images in
+    // anchors pointing at EXTENSION-LESS attachment URLs (e.g. /hc/article_attachments/
+    // <id>, /system/photos/<id>, /attachments/token/.../?name=foo.png), so the file-
+    // extension regex alone never matches. Treat those attachment paths as image
+    // targets too, and treat ANY anchor that itself wraps an <img> as a non-navigating
+    // image target. A normal title/nav link (no img child, non-attachment href) still
+    // falls through to show the loader and navigate.
     if (/\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:[?#].*)?$/i.test(href) ||
+        /(?:\/article_attachments\/|\/system\/photos\/|\/attachments\/token\/)/i.test(href) ||
         (link.querySelector && link.querySelector('img'))) return;
     // External-protocol links (mailto:, tel:, sms:, etc.) hand off to the OS
     // and never trigger a page load, so the spinner would never clear. Skip them.

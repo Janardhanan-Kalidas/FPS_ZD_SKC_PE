@@ -3,6 +3,24 @@
 > **Single source of truth** for the `fps_zd_skc_pe` repository.
 > Structured with Confluence page markers (`<!-- CONFLUENCE PAGE: ... -->`) — each major section can be copy-pasted as a standalone Confluence page.
 > The Table of Contents serves as the **parent page** linking to all child pages.
+>
+> **Diagrams:** This document uses [Mermaid](https://mermaid.js.org/) diagrams (fenced `mermaid` code blocks). They render natively in GitLab, Confluence (with the Mermaid macro), and VS Code (with a Mermaid preview extension). If a diagram shows as raw text, your viewer lacks a Mermaid renderer.
+
+---
+
+> ### 📣 What's New (version `0.19.69`)
+>
+> If you are onboarding, read this box first — it is the fast map of the most recent round of theme work (the **theme performance & security hardening** effort plus the Figma visual alignment pass). Each item links to its full section.
+>
+> | Area | Change | Section |
+> |---|---|---|
+> | 🖼️ Lightbox | Fancybox + jQuery replaced with a **native, zero-dependency** image lightbox | [§27](#27-feature-native-image-lightbox-no-jquery) |
+> | 🔒 Security | **Subresource Integrity (SRI)** on every CDN `<script>`/`<link>`; combined jsDelivr bundle split into individually-hashed tags | [§28](#28-security-subresource-integrity-sri-on-cdn-assets) |
+> | ⚡ Performance | Autocomplete panel positioning now **rAF-throttled**; jQuery removed from `<head>` (loads deferred, only when needed) | [§29](#29-performance-hardening) |
+> | 🎨 Styling | `!important` reduced to **<20 non-utility** declarations; cascade-based overrides | [§29](#29-performance-hardening) |
+> | 🔄 Page load | Consolidated **spinner + progress bar**, bfcache-safe, lightbox-safe (no stuck loader) | [§30](#30-feature-page-load-indicator-spinner--progress-bar) |
+> | 📐 Layout | Header/body/footer aligned to the **Figma 1520px content column**, 16px title gaps, section columns | [§31](#31-figma-visual-alignment) |
+> | 🔍 Search | Matched terms rendered **red-bold + yellow highlight** | [§31](#31-figma-visual-alignment) |
 
 ---
 
@@ -38,6 +56,12 @@
 | 24 | [Testing](#24-testing) | Property-based tests |
 | 25 | [Troubleshooting](#25-troubleshooting) | Common issues |
 | 26 | [Governance](#26-governance-and-handover-boundaries) | Repo boundaries |
+| 27 | [Feature: Native Image Lightbox](#27-feature-native-image-lightbox-no-jquery) | 🆕 No-jQuery lightbox |
+| 28 | [Security: Subresource Integrity](#28-security-subresource-integrity-sri-on-cdn-assets) | 🆕 SRI on CDN assets |
+| 29 | [Performance Hardening](#29-performance-hardening) | 🆕 rAF throttle, jQuery removal, CSS cleanup |
+| 30 | [Feature: Page Load Indicator](#30-feature-page-load-indicator-spinner--progress-bar) | 🆕 Spinner + progress bar |
+| 31 | [Figma Visual Alignment](#31-figma-visual-alignment) | 🆕 Layout + search highlight |
+| 32 | [System Flow Diagrams](#32-system-flow-diagrams) | 🆕 Visual reference for all connects |
 
 ---
 
@@ -92,6 +116,45 @@ Zendesk renders pages **server-side** using Handlebars templates. There is no lo
 - `script.js` → `<script src="...">`
 - `assets/*` → CDN URLs via `{{asset 'filename'}}`
 
+#### How the pieces connect (render pipeline)
+
+```mermaid
+flowchart TD
+    subgraph Repo["Git repo (fps_zd_skc_pe)"]
+        M[manifest.json<br/>settings schema + defaults]
+        T["templates/*.hbs<br/>Handlebars"]
+        TR["translations/*.json"]
+        CSS[style.css]
+        JS["script.js → assets/script.js"]
+        A["assets/*<br/>svg · woff · js · jpg"]
+    end
+
+    subgraph Admin["Zendesk Theme Editor"]
+        S[Admin settings values]
+    end
+
+    subgraph ZD["Zendesk Rendering Engine (server-side)"]
+        R{{"Handlebars render<br/>settings + helpers"}}
+    end
+
+    M -->|defines| S
+    S -->|"{{settings.*}}"| R
+    T --> R
+    TR -->|"{{t}} / {{dc}}"| R
+    A -->|"{{asset 'file'}} → CDN URL"| R
+
+    R --> HTML["Rendered HTML page"]
+    CSS -->|link| HTML
+    JS -->|script src| HTML
+    HTML --> B[["Visitor browser"]]
+
+    B -->|runs| JS2[script.js features<br/>autocomplete · banners · lightbox · lang]
+    B -->|loads| CDN[(CDN: Font Awesome ·<br/>Alpine · jQuery* · Fancybox* ·<br/>Swiper* · Plyr*)]
+    CDN -. SRI verified .-> B
+```
+
+> `*` = conditional CDN resources, loaded only when the matching setting is enabled. See [§28](#28-security-subresource-integrity-sri-on-cdn-assets).
+
 ### Tech stack
 
 | Layer | Technology |
@@ -100,9 +163,13 @@ Zendesk renders pages **server-side** using Handlebars templates. There is no lo
 | Styling | Plain CSS (~21,000 lines, no preprocessor) |
 | JavaScript | Vanilla ES5 IIFEs, no bundler |
 | Fonts | Hilti brand (self-hosted .woff via assets) |
-| External deps | jQuery 3.6.0, Font Awesome 6.4.0, Alpine.js |
+| External deps | Font Awesome 6.4.0, Alpine.js 3.13.0 (always) · jQuery 3.6.0, Fancybox 3.5.7, Swiper 7.0.9 (only with `promoted_video_ids`) · Plyr 3.6.4 (only with `enable_video_player`) |
+| Lightbox | **Native, zero-dependency** JS lightbox (`assets/extension-lightboxes.js`) — replaced Fancybox/jQuery |
+| CDN integrity | **SRI (SHA-384) + `crossorigin="anonymous"`** on every external script/style |
 | Testing | Node.js test runner + fast-check + jsdom |
 | CI/CD | GitLab CI + zcli (Zendesk CLI) |
+
+> **Important dependency change:** jQuery is **no longer loaded in `<head>`** and is no longer a render-blocking resource. It ships `defer` in the footer **only** when `promoted_video_ids` is set (the single remaining jQuery consumer — the promoted-video Fancybox overlay). The image lightbox needs no jQuery. See [§27](#27-feature-native-image-lightbox-no-jquery) and [§29](#29-performance-hardening).
 
 ### CI/CD pipeline
 
@@ -282,12 +349,16 @@ fps_zd_skc_pe/
 
 ### Render order
 
+```mermaid
+flowchart LR
+    DH["document_head.hbs<br/>&lt;head&gt;: meta · fonts · loading bar ·<br/>consent · icon map · fingerprint · SRI links"]
+    H["header.hbs<br/>nav · logo · search · language modal"]
+    P["[page template]<br/>home / article / category /<br/>section / search / request / community"]
+    F["footer.hbs<br/>footer · social · back-to-top ·<br/>deferred CDN + extension scripts"]
+    DH --> H --> P --> F
 ```
-1. document_head.hbs → <head>
-2. header.hbs        → top of <body>
-3. [page template]   → main content
-4. footer.hbs        → bottom of <body>
-```
+
+Every page is composed from the same three wrappers (`document_head`, `header`, `footer`) with exactly one page template slotted in the middle.
 
 ### Key Handlebars helpers
 
@@ -325,7 +396,17 @@ fps_zd_skc_pe/
 | 10 | Announcement Banners | Dismiss with fingerprint + sessionStorage | DOMContentLoaded |
 | 11 | Language Switcher Modal | Country/language picker + API check | Click on trigger |
 | 12 | Settings Fingerprint Refresh | Auto-reload on settings change | 60s interval |
-| 13 | Search Results Enhancements | Filters, sorting, keyword highlight | DOMContentLoaded (search page) |
+| 13 | Search Results Enhancements | Filters, sorting, red-bold+yellow keyword highlight | DOMContentLoaded (search page) |
+
+> **Autocomplete positioning is now rAF-throttled** (feature 1). Scroll/resize events coalesce into at most one `positionPanel()` layout read per animation frame, and the pending callback is cancelled when the panel hides. See [§29](#29-performance-hardening).
+
+### Related assets (loaded separately, not in `script.js`)
+
+| Asset | Purpose |
+|---|---|
+| `assets/extension-lightboxes.js` / `.min.js` | 🆕 Native no-jQuery image lightbox for `.content img` (self-contained IIFE). Gated on `enable_lightboxes`. See [§27](#27-feature-native-image-lightbox-no-jquery) |
+| `assets/extension-video-library.min.js` | Promoted-video overlay (the only remaining jQuery/Fancybox consumer). Gated on `promoted_video_ids` |
+| `templates/document_head.hbs` (inline) | Page-load spinner + progress bar. See [§30](#30-feature-page-load-indicator-spinner--progress-bar) |
 
 ### Conventions
 
@@ -1082,12 +1163,371 @@ cp script.js assets/script.js
 
 ---
 
+<!-- CONFLUENCE PAGE: 27. Feature: Native Image Lightbox (no jQuery) -->
+
+## 27. Feature: Native Image Lightbox (no jQuery)
+
+> 🆕 Added in the perf/security hardening round. Replaces the old jQuery + Fancybox lightbox.
+
+### What it does
+
+Clicking an image (or image link) inside article content opens it in a centered, full-screen overlay modal — styled to match the language-selector modal. Zero third-party dependencies: no jQuery, no Fancybox.
+
+### Why it changed
+
+The old lightbox loaded **jQuery (~90 KB, render-blocking in `<head>`) + Fancybox** on every page, even pages with no images. The native replacement is a self-contained IIFE in `assets/extension-lightboxes.js` that:
+
+- Needs **no jQuery** and **no CDN library**
+- Injects its own overlay CSS from JS via a one-time `<style>` element (never touches `style.css`)
+- Loads `defer`, and only when the `enable_lightboxes` setting is on
+- Weighs **≤15 KB gzipped** (acceptance target)
+
+### User interactions
+
+| Action | Result |
+|---|---|
+| Click an article-body image / image link | Opens lightbox overlay |
+| Click backdrop | Closes |
+| Press `Escape` | Closes |
+| `←` / `→` arrow keys | Navigate images in the same article (gallery group) |
+
+### Safety and fallbacks
+
+- **Safe-URL guard:** only `http(s)`, protocol-relative, and relative image URLs are wired. `javascript:`, `data:`, and other schemes are rejected (`isSafeHref()`).
+- **5-second load fallback (AC 3.5):** if the full image neither loads nor errors within 5s, the browser navigates directly to the full-size image URL instead of showing a broken overlay.
+- **No stuck loader:** lightbox-trigger links carry `data-hilti-lightbox` and call `preventDefault()`. The page-load indicator ([§30](#30-feature-page-load-indicator-spinner--progress-bar)) checks `e.defaultPrevented` and the `data-hilti-lightbox` attribute, so opening the lightbox never shows the page spinner (which would otherwise never clear because no page `load` fires).
+
+### Flow
+
+```mermaid
+sequenceDiagram
+    participant U as Visitor
+    participant IMG as .content img / anchor
+    participant LB as extension-lightboxes.js
+    participant OV as Overlay (injected)
+
+    Note over LB: On load, wire() scans .content img<br/>and tags safe targets with data-hilti-lightbox
+    U->>IMG: click
+    IMG->>LB: click handler (preventDefault)
+    LB->>LB: isSafeHref(href)?
+    alt safe URL
+        LB->>OV: build + show overlay, load full image
+        alt image load > 5s (no load/error)
+            LB->>U: navigate to full image URL (fallback)
+        else loads OK
+            OV-->>U: centered modal with caption
+            U->>OV: Escape / backdrop → close
+            U->>OV: ← / → → prev/next in gallery group
+        end
+    else unsafe URL
+        LB-->>IMG: ignore (no wiring)
+    end
+```
+
+### Files
+
+| File | Content |
+|---|---|
+| `assets/extension-lightboxes.js` / `.min.js` | Native lightbox IIFE |
+| `templates/footer.hbs` | `defer` loads `.min.js` when `enable_lightboxes` is on |
+| `templates/document_head.hbs` | Page-loader guard for `data-hilti-lightbox` |
+| `manifest.json` | `enable_lightboxes` setting |
+
+---
+
+<!-- CONFLUENCE PAGE: 28. Security: Subresource Integrity (SRI) on CDN Assets -->
+
+## 28. Security: Subresource Integrity (SRI) on CDN Assets
+
+> 🆕 Added in the perf/security hardening round.
+
+### What it does
+
+Every externally-loaded `<script>` and `<link>` (anything not served from the Zendesk Help Center origin) now carries an `integrity="sha384-..."` hash plus `crossorigin="anonymous"`. The browser verifies each file against its hash **before executing it** — a tampered or swapped CDN file simply won't run.
+
+### Why it matters
+
+Without SRI, a compromised CDN edge node could serve malicious JavaScript that runs with full page privileges (supply-chain attack). SRI makes CDN content tamper-evident and fail-closed.
+
+### What is covered
+
+| Resource | Where | Loaded when |
+|---|---|---|
+| Font Awesome 6.4.0 CSS | `document_head.hbs` | always |
+| Alpine.js 3.13.0 JS | `footer.hbs` | always (`defer`) |
+| Fancybox 3.5.7 CSS/JS | head + footer | `promoted_video_ids` set |
+| Swiper 7.0.9 CSS/JS | head + footer | `promoted_video_ids` set |
+| jQuery 3.6.0 JS | `footer.hbs` | `promoted_video_ids` set |
+| Plyr 3.6.4 JS | `footer.hbs` | `enable_video_player` set |
+
+### Key implementation decisions
+
+- **Bundle split:** the former jsDelivr `/combine/` bundle did not support per-resource SRI, so it was split into **individual `<script>` tags, each with its own hash**, with the original load order preserved (Alpine → jQuery → Fancybox → Plyr → Swiper) and `defer` on each.
+- **Content-addressable paths:** resources moved to npm-based jsDelivr paths (`/npm/pkg@version/...`) rather than GitHub raw paths, so the hash stays valid across CDN edge nodes.
+- **Conditional resources still hashed:** when a Handlebars guard (e.g. `promoted_video_ids`) renders a CDN tag, that tag always includes `integrity` + `crossorigin`.
+
+### SRI verification flow
+
+```mermaid
+flowchart TD
+    P["Page requests CDN resource<br/>(integrity=sha384-… crossorigin=anonymous)"] --> F[CDN returns file]
+    F --> H{Browser computes SHA-384<br/>== integrity hash?}
+    H -->|match| OK["Execute resource ✅"]
+    H -->|mismatch / tampered| BLOCK["Block execution ⛔<br/>(fail-closed)"]
+    BLOCK --> FB["Dependent feature degrades gracefully<br/>e.g. image link navigates to full image"]
+```
+
+### ⚠️ Maintenance rule: upgrading a CDN version
+
+When you bump a CDN dependency version, the old integrity hash will **no longer match** and the browser will block the file. You MUST regenerate the hash:
+
+```bash
+# Compute SHA-384 SRI hash for the exact file at the new version URL
+curl -s https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js \
+  | openssl dgst -sha384 -binary \
+  | openssl base64 -A
+# → paste result as integrity="sha384-<result>"
+```
+
+Then update both the URL and the `integrity` value in `document_head.hbs` and/or `footer.hbs`.
+
+### Files
+
+- `templates/document_head.hbs` (Font Awesome, conditional Fancybox/Swiper CSS)
+- `templates/footer.hbs` (Alpine, conditional jQuery/Fancybox/Plyr/Swiper JS)
+
+---
+
+<!-- CONFLUENCE PAGE: 29. Performance Hardening -->
+
+## 29. Performance Hardening
+
+> 🆕 Added in the perf/security hardening round. Full spec: `.kiro/specs/theme-perf-hardening/`.
+
+Four improvements, each independently verifiable.
+
+### 29.1 rAF-throttled autocomplete positioning
+
+**Problem:** scroll/resize fired `positionPanel()` on every event, each call reading `getBoundingClientRect()` — forced synchronous layout (layout thrash) and visible jank.
+
+**Fix:** scroll/resize now schedule a single `positionPanel()` per animation frame via `requestAnimationFrame`.
+
+```mermaid
+flowchart LR
+    E["scroll / resize events<br/>(many per frame)"] --> C{panel visible?}
+    C -->|no| X[do nothing]
+    C -->|yes| R{rAF already<br/>pending?}
+    R -->|yes| D[drop — coalesced]
+    R -->|no| S["schedule 1 rAF →<br/>positionPanel() next frame"]
+    S --> P[one layout read per frame]
+```
+
+- At most one layout read per frame (~30 calls per 500 ms at 60 fps vs. hundreds before).
+- Panel stays within 1px of the input's left edge.
+- Pending rAF is **cancelled** when the panel hides (`cancelAnimationFrame`).
+- Falls back to a direct call if `requestAnimationFrame` is unavailable (no exception).
+- Code: `script.js` around `positionPanel()` / `state.rafId`.
+
+### 29.2 jQuery removed from the critical path
+
+- jQuery is **gone from `<head>`** — no longer render-blocking.
+- It loads `defer` in the footer **only** when `promoted_video_ids` is set (its one remaining consumer).
+- If lightboxes are off and no promoted videos are configured, **no jQuery or lightbox library ships at all**.
+
+### 29.3 Reduced `!important` usage
+
+- **Non-utility** `!important` declarations reduced to **fewer than 20** (overrides now rely on selector specificity + source order).
+- Responsive display utilities (`.hidden`, `.block`, `.flex`, breakpoint variants) keep `!important` by design — that is excluded from the count.
+- Any retained `!important` carries a CSS comment naming the external style it overrides (e.g. a Zendesk runtime inline style).
+- Custom theme rules are placed **after** `@import`, CDN stylesheets, and Zendesk Copenhagen base styles so the cascade does the work.
+
+> Note: a raw `grep -c '!important' style.css` counts ~100 because it includes the intentional display-utility classes. The <20 target is specifically **non-utility** declarations.
+
+### 29.4 Native lightbox (dependency weight)
+
+Covered in [§27](#27-feature-native-image-lightbox-no-jquery) — replacing Fancybox/jQuery removed the single largest render-blocking dependency.
+
+---
+
+<!-- CONFLUENCE PAGE: 30. Feature: Page Load Indicator (Spinner + Progress Bar) -->
+
+## 30. Feature: Page Load Indicator (Spinner + Progress Bar)
+
+> 🆕 Consolidated and hardened in the recent round (was previously two separate scripts; the "stuck loader" bug is fixed).
+
+### What it does
+
+Two visuals signal page loading, driven by a **single** consolidated script in `document_head.hbs`:
+
+1. **Full-screen spinner** (`hilti-page-loader`) — 4 slanted Hilti-palette bars blinking in sequence.
+2. **Top progress bar** (`hilti-page-loading-bar`) — a 3px red bar that animates to 85% then fills to 100% on load.
+
+Both appear on first load and on internal link navigation.
+
+### How it works
+
+```mermaid
+stateDiagram-v2
+    [*] --> Showing: page starts loading<br/>(spinner + bar created)
+    Showing --> Complete: window 'load' fires<br/>bar → 100%, spinner fades, both removed
+    Complete --> [*]
+
+    Showing --> ClickNav: internal link click<br/>(not prevented, not lightbox,<br/>not _blank / modifier / hash / external-protocol)
+    ClickNav --> Showing: reuse/create spinner + fresh bar
+    ClickNav --> AutoClear: navigation stalls 8s<br/>(safety net clears overlays)
+
+    Complete --> BfCache: back/forward restore<br/>('pageshow' persisted)
+    BfCache --> Cleared: remove any lingering overlays<br/>('load' does NOT fire on bfcache)
+    Cleared --> [*]
+```
+
+### Why it was hardened (bugs fixed)
+
+| Bug | Fix |
+|---|---|
+| Loader stuck forever after opening the image lightbox | Click handler skips `e.defaultPrevented` and `data-hilti-lightbox` links (lightbox opens via `preventDefault()`, so no page `load` ever fires) |
+| Loader stuck on back/forward navigation | `pageshow` (`persisted`) handler removes lingering overlays — `load` does not fire on bfcache restore |
+| Loader stuck on `mailto:` / `tel:` and other OS-handoff links | Click handler skips `mailto:`, `tel:`, `sms:`, `callto:`, `facetime:`, `skype:` |
+| Two scripts each registering their own document click listener | Merged into one IIFE with a single click listener |
+| Navigation blocked/cancelled → permanent spinner | 8-second safety-net timeout force-clears overlays |
+
+### Excluded from triggering the loader
+
+Hash links · `javascript:` links · `target="_blank"` · modifier-key clicks (Ctrl/Cmd/Shift) · external-protocol links · `data-hilti-lightbox` links · any click where `defaultPrevented` is true.
+
+### Files
+
+- `templates/document_head.hbs` (inline `<style>` + consolidated IIFE)
+- `style.css` (fallback rules)
+
+---
+
+<!-- CONFLUENCE PAGE: 31. Figma Visual Alignment -->
+
+## 31. Figma Visual Alignment
+
+> 🆕 Visual polish round aligning the live theme to the Figma design spec.
+
+### What changed
+
+| Area | Change |
+|---|---|
+| Content column | Header, body, and footer aligned to the **Figma 1520px content column** so all three share one consistent max-width/edge |
+| Home page edges | Home sections aligned to the same left/right edges (no mismatched gutters) |
+| Title spacing | Standardized **16px gap** below section/category titles |
+| Section columns | Category/section grids use consistent column counts matching the design |
+| Search highlight | Matched search terms rendered **red + bold with a yellow highlight** background (`<mark>` styling) for scannability |
+| Lightbox styling | Centered white modal styled to match the language-selector modal (see [§27](#27-feature-native-image-lightbox-no-jquery)) |
+
+### Search term highlighting
+
+Search results and autocomplete wrap matched query terms in `<mark>` elements. CSS (`style.css`, `mark { ... }` and `.hc-autocomplete-mark`) renders them red-bold on a yellow background. This is purely presentational — the match logic lives in the Search Results and Autocomplete features ([§14](#14-feature-custom-autocomplete-search), [§20](#20-feature-search-results-page)).
+
+### Files
+
+- `style.css` (layout widths, `mark` highlight, section columns, title gaps)
+- `templates/header.hbs`, `templates/footer.hbs`, `templates/home_page.hbs` (column alignment)
+
+---
+
+<!-- CONFLUENCE PAGE: 32. System Flow Diagrams -->
+
+## 32. System Flow Diagrams
+
+A single-page visual reference for how the major parts connect. Use this as the onboarding "map"; each diagram links back to its detailed section.
+
+### 32.1 Where a change goes (decision map)
+
+```mermaid
+flowchart TD
+    START([I want to change…]) --> Q1{What kind of change?}
+    Q1 -->|Page layout / structure| TPL["templates/*.hbs"]
+    Q1 -->|Client-side behavior| JS["script.js<br/>⚠ copy to assets/script.js"]
+    Q1 -->|Colors / spacing / fonts| CSS[style.css]
+    Q1 -->|Admin setting| MAN["manifest.json<br/>→ {{settings.*}}"]
+    Q1 -->|New image / icon| AS["assets/ + {{asset 'file'}}"]
+    Q1 -->|Deployment| CI[".gitlab-ci.yml / tooling/"]
+    Q1 -->|Translations| TR["translations/*.json"]
+    JS --> SYNC["cp script.js assets/script.js"]
+```
+
+### 32.2 CDN loading & SRI (what loads, when, verified how)
+
+```mermaid
+flowchart TD
+    HEAD[document_head.hbs] -->|always, SRI| FA[Font Awesome CSS]
+    HEAD -->|if promoted_video_ids, SRI| FBC[Fancybox CSS]
+    HEAD -->|if promoted_video_ids, SRI| SWC[Swiper CSS]
+
+    FOOT[footer.hbs] -->|always, defer+SRI| AL[Alpine.js]
+    FOOT -->|if promoted_video_ids, defer+SRI| JQ[jQuery 3.6.0]
+    FOOT -->|if promoted_video_ids, defer+SRI| FBJ[Fancybox JS]
+    FOOT -->|if promoted_video_ids, defer+SRI| SWJ[Swiper JS]
+    FOOT -->|if enable_video_player, defer+SRI| PLYR[Plyr JS]
+    FOOT -->|if enable_lightboxes, defer| LBX["extension-lightboxes.js<br/>(local, no jQuery)"]
+
+    JQ --> VID[promoted-video overlay<br/>only jQuery consumer]
+    FBJ --> VID
+    SWJ --> VID
+```
+
+### 32.3 CI/CD pipeline (release → backup → deploy)
+
+```mermaid
+flowchart LR
+    subgraph Default["Default branch"]
+        VR[theme_version_release<br/>manual] --> BK[theme_backup_production<br/>manual]
+        BK --> DP[theme_deploy_production<br/>manual + DEPLOY_CONFIRM]
+        BK -.rollback.-> RB[theme_rollback_production<br/>manual + ROLLBACK_CONFIRM]
+    end
+    subgraph Feature["Feature branch"]
+        FB[theme_deploy_branch<br/>preview]
+    end
+    note1["Production deploy requires a backup<br/>in the SAME pipeline (enforced)"]
+    BK --- note1
+```
+
+### 32.4 Daily developer workflow
+
+```mermaid
+flowchart LR
+    A[git pull main] --> B[branch FPSKB-XXX-desc]
+    B --> C[edit templates/css/js]
+    C --> D{changed script.js?}
+    D -->|yes| E[cp script.js assets/script.js]
+    D -->|no| F
+    E --> F[zcli themes:preview]
+    F --> G[conventional commit<br/>feat/fix/chore]
+    G --> H[push + open MR]
+    H --> I[CI pipeline runs]
+    I --> J[review → squash-merge]
+```
+
+### 32.5 Language selector (article-aware)
+
+```mermaid
+flowchart TD
+    T[Click language trigger] --> M[Modal opens]
+    M --> C[Select country] --> L[Select language] --> S[Save]
+    S --> Q{On an article page?}
+    Q -->|no| R1[Redirect to locale URL]
+    Q -->|yes| API["GET /api/v2/.../articles/{id}/translations/{locale}"]
+    API --> AV{Translation available?}
+    AV -->|yes| R2[Redirect to translated article]
+    AV -->|no| ERR["Inline error in modal:<br/>'not available in this region'"]
+```
+
+---
+
 ## Maintenance Notes
 
 - Update this file whenever theme behavior, settings, scripts, or CI jobs change
 - Include documentation updates in the same merge request as feature work
 - Each Confluence page section is marked with `<!-- CONFLUENCE PAGE: ... -->` for easy extraction
+- **When bumping a CDN dependency, regenerate its SRI hash** — see [§28](#28-security-subresource-integrity-sri-on-cdn-assets)
+- **After editing `script.js`, copy it to `assets/script.js`** — Zendesk loads from `assets/`
+- Diagrams are Mermaid; keep them in sync with the code they describe
 
 ---
 
-*Last updated: 2026-07-12*
+*Last updated: 2026-10-07 · Theme version `0.19.69`*
