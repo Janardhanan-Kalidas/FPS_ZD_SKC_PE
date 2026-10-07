@@ -79,14 +79,14 @@
       ".hilti-lb-caption{margin:0;padding:0 24px 20px;color:#524f53;text-align:center;" +
       "font-size:14px;line-height:1.4;flex:0 0 auto}" +
       ".hilti-lb-close{display:inline-flex;align-items:center;justify-content:center;" +
-      "width:32px;height:32px;background:none;border:1px solid #524f53;cursor:pointer;" +
-      "padding:0;border-radius:0;color:#524f53;line-height:0;transition:color .2s,border-color .2s}" +
-      ".hilti-lb-close:hover{color:#D2051E;border-color:#D2051E}" +
+      "background:none;border:0;cursor:pointer;" +
+      "padding:4px;border-radius:0;color:#524f53;line-height:0;transition:color .2s}" +
+      ".hilti-lb-close:hover{color:#D2051E}" +
       ".hilti-lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:transparent;" +
       "border:0;color:#524f53;cursor:pointer;line-height:0;padding:12px;transition:color .2s}" +
-      ".hilti-lb-nav svg{width:24px;height:24px;display:block}" +
+      ".hilti-lb-nav svg{width:44px;height:44px;display:block}" +
       ".hilti-lb-nav:hover{color:#D2051E}" +
-      ".hilti-lb-prev{left:-8px}.hilti-lb-next{right:-8px}" +
+      ".hilti-lb-prev{left:-12px}.hilti-lb-next{right:-12px}" +
       ".hilti-lb-close:focus,.hilti-lb-nav:focus{outline:2px solid #524f53;outline-offset:2px}";
     (doc.head || doc.documentElement).appendChild(style);
   }

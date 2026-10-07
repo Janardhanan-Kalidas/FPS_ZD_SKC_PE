@@ -21037,14 +21037,14 @@ body.downvote-feedback-open {
    on category/section/search pages (the generic .container otherwise caps at
    1280px). The search page carries no page class on <html>, so its breadcrumb
    strip is matched structurally as the .bg-gray-100 immediately preceding the
-   .search-results-search-bar band. The ARTICLE page breadcrumb strip carries no
-   page class on <html> and is not followed by a search bar, so it is matched
-   structurally as the .container that directly holds a .breadcrumbs-wrapper —
-   this also covers category/section pages (same markup), aligning the article
+   .search-results-search-bar band. The ARTICLE page carries an .article-page
+   class on <html> (added by the article_page.hbs inline script, the same
+   pattern that backs .category-page/.section-page), so its breadcrumb strip is
+   matched by .article-page .bg-gray-100 > .container — aligning the article
    breadcrumb left edge with the article title and header logo. */
 .category-page .bg-gray-100 > .container,
 .section-page .bg-gray-100 > .container,
-.bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
+.article-page .bg-gray-100 > .container,
 .bg-gray-100:has(+ .search-results-search-bar) > .container,
 .search-results-search-bar > .container {
   max-width: var(--hc-content-max);
@@ -21057,21 +21057,21 @@ body.downvote-feedback-open {
 @media (min-width: 768px) {
   .category-page .bg-gray-100 > .container,
   .section-page .bg-gray-100 > .container,
-  .bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
+  .article-page .bg-gray-100 > .container,
   .bg-gray-100:has(+ .search-results-search-bar) > .container,
   .search-results-search-bar > .container { padding-left: 24px; padding-right: 24px; }
 }
 @media (min-width: 1024px) {
   .category-page .bg-gray-100 > .container,
   .section-page .bg-gray-100 > .container,
-  .bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
+  .article-page .bg-gray-100 > .container,
   .bg-gray-100:has(+ .search-results-search-bar) > .container,
   .search-results-search-bar > .container { padding-left: 32px; padding-right: 32px; }
 }
 @media (min-width: 1440px) {
   .category-page .bg-gray-100 > .container,
   .section-page .bg-gray-100 > .container,
-  .bg-gray-100 > .container:has(> .breadcrumbs-wrapper),
+  .article-page .bg-gray-100 > .container,
   .bg-gray-100:has(+ .search-results-search-bar) > .container,
   .search-results-search-bar > .container { padding-left: 40px; padding-right: 40px; }
 }
