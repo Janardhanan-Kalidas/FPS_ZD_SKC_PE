@@ -56,19 +56,22 @@
   }
 
   // ----- Initial render on first page load -----
-  // Only the thin top progress bar is shown on first load. The opaque full-screen
-  // overlay is NOT created at parse time, so server-rendered HTML paints
-  // immediately instead of being hidden behind a white screen until all resources
-  // finish. The overlay (createLoader) is still used for in-site navigation via
-  // the click handler below.
+  // Show the full-screen Hilti center overlay (blinking slant bars) AND the thin
+  // top progress bar on first load, exactly as before. The only behavior change
+  // vs. the original is the HIDE TIMING (see below): the overlay is cleared as
+  // soon as the DOM is interactive instead of waiting for window 'load', so
+  // server-rendered content is no longer trapped behind the white screen until
+  // the slowest resource finishes.
+  var loader = createLoader();
   var bar = createBar();
   bar.id = 'hiltiPageLoadBar';
 
-  // ----- Hide any full-screen overlay as soon as the DOM is interactive -----
-  // Defensive: if an overlay exists by the time the DOM is interactive (e.g. the
-  // click handler created one on the previous page and bfcache was not used),
-  // clear it immediately rather than waiting for window 'load' (which blocks on
-  // the slowest resource). Runs now if the DOM is already interactive/complete.
+  // ----- Hide the full-screen overlay as soon as the DOM is interactive -----
+  // Previously the overlay was only removed on window 'load', which waits for the
+  // slowest blocking resource. Removing it at DOMContentLoaded lets the Hilti
+  // loader show briefly and then clear once content is parseable. hideLoader is
+  // idempotent, so the later 'load' handler cannot double-remove. Runs now if the
+  // DOM is already interactive/complete.
   function hideOverlayWhenReady() {
     hideLoader(document.getElementById('hiltiPageLoader'));
   }
@@ -78,7 +81,9 @@
     document.addEventListener('DOMContentLoaded', hideOverlayWhenReady);
   }
 
-  // ----- Complete the top bar (and clear any overlay) on window load -----
+  // ----- Complete the top bar (and clear any lingering overlay) on window load -----
+  // The overlay is normally already gone by DOMContentLoaded; this re-queries it
+  // (idempotent) as a safety net and completes the thin top bar.
   window.addEventListener('load', function() {
     hideLoader(document.getElementById('hiltiPageLoader'));
     if (bar.parentNode) {
