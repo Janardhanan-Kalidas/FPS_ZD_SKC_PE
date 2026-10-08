@@ -19613,20 +19613,38 @@ button.hc-page-btn {
   margin-left: 0;
   margin-right: 0;
   align-items: flex-start; /* top-align both columns so the labels line up regardless of title length */
-  justify-content: space-between;
 }
 
+/* Fixed 50/50 split so the right column's left edge is exactly the container
+   midpoint — the same midpoint the Related/Recently-viewed footer row uses.
+   Left-align BOTH columns (Next article no longer right-aligned) so the
+   "Next article" label/link start at the midpoint, aligning vertically with
+   the "Recently viewed articles" column below it. */
 [data-element="article-navigation"] .row > .sm\:col {
+  flex: 0 0 50%;
+  max-width: 50%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
   padding-left: 0;
   padding-right: 0;
 }
 
+/* Right (Next article) column: left edge exactly at the midpoint (no left pad),
+   left-aligned — identical to the Recently-viewed footer column, so the two
+   line up vertically. */
 [data-element="article-navigation"] .row > .sm\:col.text-right {
-  align-items: flex-end;
-  text-align: right;
+  align-items: flex-start;
+  text-align: left;
+  padding-left: 0;
+}
+
+/* Inter-column gutter on the LEFT (Previous article) column only, matching the
+   footer's left-column gutter, so neither right column's left edge shifts. */
+[data-element="article-navigation"] .row > .sm\:col:first-child {
+  padding-right: 2rem;
 }
 
 [data-element="article-navigation"] h4 {
