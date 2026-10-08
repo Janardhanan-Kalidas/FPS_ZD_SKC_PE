@@ -1,0 +1,122 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Zendesk: Login",
+      "type": "shell",
+      "command": "zcli",
+      "args": [
+        "login",
+        "-i"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Preview Theme (Choose Environment)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/preview-theme-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: List Themes (Choose Environment)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/list-themes-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Deploy Any Branch (Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/deploy-any-branch-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Deploy Current Branch (Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/deploy-current-branch-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Refresh Sandbox OAuth Token",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/refresh-sandbox-token.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Zendesk: Trigger GitLab Branch Deploy (Interactive)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tooling/scripts/trigger-gitlab-branch-deploy-interactive.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

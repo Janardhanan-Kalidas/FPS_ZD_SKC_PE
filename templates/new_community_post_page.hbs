@@ -7,18 +7,18 @@
     </div>
     {{~#is settings.header_search_style 'none'}}
       <div class="md:col-4">
-        <div class="search mb-4">
+        <div class="search mb-4" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
           <h2 class="sr-only">{{t 'search' }}</h2>
           {{~#if settings.search_placeholder}}
             {{#if settings.use_translations}}
-              {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_community_search submit=false placeholder=(dc settings.search_placeholder)}}
+              {{search class='form-field mb-0' scoped=settings.scoped_community_search submit=false placeholder=(dc settings.search_placeholder)}}
             {{else}}
-              {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_community_search submit=false placeholder=settings.search_placeholder}}
+              {{search class='form-field mb-0' scoped=settings.scoped_community_search submit=false placeholder=settings.search_placeholder}}
             {{/if}}
           {{else}}
-            {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_community_search submit=false}}
+            {{search class='form-field mb-0' scoped=settings.scoped_community_search submit=false}}
           {{/if~}}
-          <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+          <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
             <use xlink:href="#icon-search" />
           </svg>
         </div>

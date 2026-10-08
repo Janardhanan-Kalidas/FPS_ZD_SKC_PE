@@ -1,0 +1,43 @@
+# Local environment
+.env.local
+.env.*.local
+.envrc
+
+# Dependencies
+node_modules/
+
+# Local Python environment
+.venv/
+venv/
+
+# Local reports / generated artifacts
+tooling/reports/
+
+# Local backup of assets/styles (not part of Zendesk theme)
+.img-backup/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Editor/temp files
+*.swp
+*.swo
+*~
+.playwright-mcp/
+.env
+
+# Dev/test tooling (not part of Zendesk theme)
+tests/
+.kiro/
+
+# Agent task artifacts (local only — not part of Zendesk theme)
+.agents/
+
+# Migration scripts (contain credentials — NEVER commit)
+tooling/migrate-*
+
+# Build output / release artifacts (generated locally and in CI — not source)
+.theme-build/
+dist/
+build.env

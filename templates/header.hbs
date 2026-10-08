@@ -41,7 +41,7 @@
 
       {{! Logo }}
       <a href="{{page_path 'help_center'}}" class="navbar-brand m{{#is current_locale.direction 'ltr'}}r{{else}}l{{/is}}-auto">
-        <img class="block img-fluid{{~#is settings.nav_style 'standard'}} z-100{{/is}}" id="logo" src="{{settings.logo}}" alt="{{t 'home_page' name=help_center.name}}"> {{!Updated the code with logo+text- Jana}}
+        <img class="block img-fluid{{~#is settings.nav_style 'standard'}} z-100{{/is}}" id="logo" src="{{settings.logo}}" alt="{{t 'home_page' name='PROFIS Engineering Software Knowledge Center'}}"> {{!Updated the code with logo+text- Jana}}
         {{~#if settings.tagline}}
           <span class="navbar-tagline mx-3 white-space-no-wrap">
             {{~#if settings.use_translations}}
@@ -95,8 +95,11 @@
         x-transition:leave-end="{{~#is settings.nav_style 'slide-in'}}translate-x-full{{else}}opacity-0{{/is}} text-header">
 
        {{! Mobile search bar }}
-       <!-- {{~#isnt settings.header_search_style 'none'}}
-          <div class="search flex text-base mx-4 mb-4 flex-first {{settings.nav_breakpoint}}:max-w-13 {{settings.nav_breakpoint}}:flex-1 {{settings.nav_breakpoint}}:mx-5 {{settings.nav_breakpoint}}:mb-0{{#isnt settings.header_search_style 'inline'}} {{settings.nav_breakpoint}}:hidden{{/isnt}}" x-data="Widgets.search">
+       {{~#isnt settings.header_search_style 'none'}}
+          <div class="search flex text-base mx-4 mb-4 flex-first {{settings.nav_breakpoint}}:max-w-13 {{settings.nav_breakpoint}}:flex-1 {{settings.nav_breakpoint}}:mx-5 {{settings.nav_breakpoint}}:mb-0{{#isnt settings.header_search_style 'inline'}} {{settings.nav_breakpoint}}:hidden{{/isnt}}"
+            data-custom-autocomplete="articles"
+            data-autocomplete-min-chars="2"
+            x-data="Widgets.search">
             {{~#if settings.search_placeholder}}
               {{#if settings.use_translations}}
             		{{search class='form-field flex-1 mb-0' submit=false placeholder=(dc settings.search_placeholder)}}
@@ -106,11 +109,11 @@
             {{else}}
               {{search class='form-field flex-1 mb-0' submit=false}}
             {{/if~}}
-            <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+            <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
               <use xlink:href="#icon-search" />
             </svg>
           </div>
-        {{/isnt}} -->
+        {{/isnt}}
  
         {{! Custom links }}
         {{~#if settings.header_link_1_text}}
@@ -134,9 +137,6 @@
             {{/if~}}
           </a>
         {{/if~}}
-        <li class="new-request-link" style="display: none;">
-          {{link 'new_request' class='submit-a-request'}}
-        </li>
         {{~#if settings.header_link_3_text}}
           <a class="nav-link header-link" href="{{#if settings.use_translations}}{{dc settings.header_link_3_url}}{{else}}{{settings.header_link_3_url}}{{/if}}" x-data="link">
             {{~#if settings.use_translations}}
@@ -161,22 +161,7 @@
             data-template="category-dropdown">
           </div>
         {{/isnt~}}
-<!--
-        {{! Submit a Request link }}
-        {{~#if settings.show_submit_a_request_link}}
-          {{link 'new_request' class='nav-link header-link'}}
-        {{/if~}}
 
-        {{! Header search }}
-        {{~#isnt settings.header_search_style 'none'}}
-          {{#isnt settings.header_search_style 'inline'}}
-            <div
-              data-element="template"
-              data-template="header-search">
-            </div>
-          {{/isnt}}
-        {{/isnt}}
--->
 {{!        
 <!-- Jana 02/03/26 - Change Region Link — INSERTED HERE -->
 <!-- Change Region Dropdown -->
@@ -195,6 +180,14 @@
 </div>
 }}
         
+        {{! Language switcher icon – opens modal }}
+        {{~#if alternative_locales}}
+          <button class="nav-link not-a-button hilti-lang-trigger" id="hiltiLangTrigger" type="button" aria-label="Change language">
+            <img class="hilti-lang-icon" src="{{asset 'language.svg'}}" alt="" aria-hidden="true">
+            <span class="hilti-lang-label">{{help_center.locale}}</span>
+          </button>
+        {{/if~}}
+
         {{! User menu }}
         {{~#if signed_in}}
           <div class="user-menu relative mb-2 flex-first {{settings.nav_breakpoint}}:order-inherit {{settings.nav_breakpoint}}:border-bottom-0 {{settings.nav_breakpoint}}:mb-0 {{settings.nav_breakpoint}}:pb-0
@@ -214,19 +207,61 @@
             </button>
             <div class="z-dropdown mt-2 bg-white {{settings.nav_breakpoint}}:absolute {{settings.nav_breakpoint}}:border {{settings.nav_breakpoint}}:border-radius {{settings.nav_breakpoint}}:shadow-md {{settings.nav_breakpoint}}:min-w-dropdown" x-ref="menu" x-cloak x-show="isExpanded">
               <div class="py-2 {{settings.nav_breakpoint}}:font-size-sm {{settings.nav_breakpoint}}:text-left">
-                {{#my_profile class='dropdown-item'}}{{t 'profile'}}{{/my_profile}}
-                {{link "requests" class='dropdown-item'}}
-                {{#link "contributions" class='dropdown-item'}}{{t "activities"}}{{/link}}
-                {{contact_details class='dropdown-item line-height-normal cursor-pointer'}}
-                {{change_password class='dropdown-item line-height-normal cursor-pointer'}}
-                {{link "sign_out" class='dropdown-item'}}
+                {{#my_profile class='dropdown-item js-my-profile-link'}}{{t 'profile'}}{{/my_profile}}
+                {{link "sign_out" class='dropdown-item js-sign-out-link'}}
               </div>
             </div>
           </div>
+
+          <script type="text/javascript">
+            (function() {
+              function toggleProfileMenuItem() {
+                var isProfilePage = /\/hc\/[^/]+\/profiles\//.test(window.location.pathname);
+                var myProfileLink = document.querySelector('.js-my-profile-link');
+                if (!myProfileLink) return;
+                myProfileLink.style.display = isProfilePage ? 'none' : '';
+              }
+
+              function ensureSignOutMenuItem() {
+                var menu = document.querySelector('.user-menu .z-dropdown .py-2');
+                if (!menu) return;
+
+                var signOutLink = menu.querySelector('.js-sign-out-link');
+                var hasText = signOutLink && signOutLink.textContent && signOutLink.textContent.trim().length > 0;
+                if (hasText) return;
+
+                if (signOutLink) signOutLink.remove();
+
+                var fallback = document.createElement('a');
+                fallback.className = 'dropdown-item js-sign-out-link';
+                fallback.href = '/access/logout';
+                fallback.textContent = 'Sign out';
+
+                var myProfileLink = menu.querySelector('.js-my-profile-link');
+                if (myProfileLink && myProfileLink.nextSibling) {
+                  myProfileLink.parentNode.insertBefore(fallback, myProfileLink.nextSibling);
+                } else {
+                  menu.appendChild(fallback);
+                }
+              }
+
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  ensureSignOutMenuItem();
+                  toggleProfileMenuItem();
+                }, { once: true });
+              } else {
+                ensureSignOutMenuItem();
+                toggleProfileMenuItem();
+              }
+            })();
+          </script>
         {{else}}
-          {{#link "sign_in" class='nav-link'}}
-            {{t 'sign_in'}}
-          {{/link}}
+          {{#unless settings.hide_sign_in_link}}
+            {{#link "sign_in" class='nav-link'}}
+              {{t 'sign_in'}}
+            {{/link}}
+          {{/unless}}
         {{/if~}}
 
       </div>
@@ -234,6 +269,61 @@
     </nav>
     
   </header> {{! .layout is closed in the footer.hbs template }}
+
+{{! ================================================================
+    LANGUAGE SWITCHER MODAL
+    - Triggered by #hiltiLangTrigger in header
+    - Hilti branded (red accent, clean grid)
+    - Accessible: focus-trap, ESC close, aria attributes
+    ================================================================ }}
+{{~#if alternative_locales}}
+<div class="hilti-lang-overlay" id="hiltiLangOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="hiltiLangTitle">
+  <div class="hilti-lang-modal">
+    <div class="hilti-lang-modal-header">
+      <h2 id="hiltiLangTitle" class="hilti-lang-modal-title">
+        <img class="hilti-lang-modal-icon" src="{{asset 'language.svg'}}" alt="" aria-hidden="true" width="22" height="22">
+        Choose Country and Language
+      </h2>
+      <button class="hilti-lang-close" id="hiltiLangClose" type="button" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="hilti-lang-modal-body">
+      <div class="hilti-lang-form" id="hiltiLangForm">
+        <div class="hilti-lang-form-row">
+          <div class="hilti-lang-field">
+            <label class="hilti-lang-field-label" for="hiltiCountrySelect">Country <span aria-hidden="true">*</span></label>
+            <select id="hiltiCountrySelect" class="hilti-lang-select" aria-required="true">
+              <option value="">Select Country</option>
+            </select>
+          </div>
+
+          <div class="hilti-lang-field">
+            <label class="hilti-lang-field-label" for="hiltiLanguageSelect">Language <span aria-hidden="true">*</span></label>
+            <select id="hiltiLanguageSelect" class="hilti-lang-select" aria-required="true" disabled>
+              <option value="">Select Language</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="hiltiLangError" class="hilti-lang-error" role="alert" aria-live="assertive" hidden>
+          <svg class="hilti-lang-error-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <span id="hiltiLangErrorText">This article is not available in the selected region.</span>
+        </div>
+
+        <div class="hilti-lang-actions">
+          <button type="button" class="hilti-lang-btn hilti-lang-btn-secondary" id="hiltiLangCancel">Cancel</button>
+          <button type="button" class="hilti-lang-btn hilti-lang-btn-primary" id="hiltiLangSave" disabled>Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{/if~}}
 
 {{!---------------
    Micro-templates
@@ -279,7 +369,7 @@
           {{else}}
             {{search class='form-field mb-0' submit=false}}
           {{/if~}}
-          <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+          <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
             <use xlink:href="#icon-search" />
           </svg>
         </div>
@@ -313,7 +403,7 @@
               {{else}}
                 {{search class='form-field mb-0' submit=false}}
               {{/if~}}
-              <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+              <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                 <use xlink:href="#icon-search" />
               </svg>
             </div>

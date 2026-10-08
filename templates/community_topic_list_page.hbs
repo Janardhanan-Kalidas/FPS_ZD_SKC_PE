@@ -1,45 +1,26 @@
 {{! Hero element }}
-<section class="hero relative overflow-hidden{{#is settings.community_image_style 'standard'}} bg-community bg-cover bg-center{{/is}}">
+<section class="hero relative overflow-hidden" style="background-image: url('{{asset 'community_background_image.jpg'}}')">
 
   {{! Hero element content }}
   <div class="container z-30 py-8"{{#if settings.fixed_header}} style="margin-top: {{settings.header_height}};"{{/if}}>
 
     {{! Hero element search bar }}
-    <div class="search text-base max-w-md my-4 mx-auto">
+    <div class="search text-base max-w-md my-4 mx-auto" data-custom-autocomplete="articles" data-autocomplete-min-chars="2">
       <h2 class="sr-only">{{ t 'search' }}</h2>
       {{~#if settings.search_placeholder}}
         {{#if settings.use_translations}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_community_search submit=false placeholder=(dc settings.search_placeholder)}}
+          {{search class='form-field mb-0' scoped=settings.scoped_community_search submit=false placeholder=(dc settings.search_placeholder)}}
         {{else}}
-          {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_community_search submit=false placeholder=settings.search_placeholder}}
+          {{search class='form-field mb-0' scoped=settings.scoped_community_search submit=false placeholder=settings.search_placeholder}}
         {{/if}}
       {{else}}
-        {{search class='form-field mb-0' instant=settings.instant_search scoped=settings.scoped_community_search submit=false}}
+        {{search class='form-field mb-0' scoped=settings.scoped_community_search submit=false}}
       {{/if~}}
-      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
         <use xlink:href="#icon-search" />
       </svg>
     </div>
   </div>
-
-  {{! Hero background image (overlay) }}
-  {{#isnt settings.community_image_style 'standard'}}
-    {{#isnt settings.community_image_style 'parallax'}}
-      <div class="absolute z-20 top-0 left-0 h-full w-full bg-community{{#is settings.community_image_style 'overlay'}} bg-cover bg-center{{/is}}{{#is settings.community_image_style 'overlay-pattern'}} bg-contain bg-repeat{{/is}}"></div>
-    {{/isnt}}
-  {{/isnt}}
-
-  {{! Hero background color }}
-  <div class="absolute z-10 top-0 left-0 h-full w-full bg-hero"></div>
-
-  {{! Hero background image (parallax) }}
-  {{#is settings.community_image_style 'parallax'}}
-    <div class="absolute z-0 top-0 left-0 w-full h-full">
-      <div class="relative w-full h-full overflow-hidden">
-        <div class="absolute top-0 left-0 w-full bg-community bg-cover bg-center" x-data="Widgets.parallaxImage" style="height: 150%"></div>
-      </div>
-    </div>
-  {{/is}}
 
 </section>
 

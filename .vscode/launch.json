@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Zendesk: Preview Theme",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "zcli themes:preview",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Zendesk: Login",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "zcli login -i",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Zendesk: List Themes",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "zcli themes:list",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
