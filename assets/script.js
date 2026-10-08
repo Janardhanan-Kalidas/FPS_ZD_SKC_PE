@@ -720,6 +720,7 @@
   var TEXT_MORE     = 'View more';
   var TEXT_LESS     = 'View less';
   var TRANSITION_MS = 900;
+
   var reduceMotion  = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || false;
 
   function onReady(fn) {
@@ -860,13 +861,104 @@
           expanded = false;
         }
 
-        btn.addEventListener('click', function () { if (expanded) collapse(); else expand(); });
+        // Tracks a deliberate user expand (via the button) vs. an auto-expand
+        // forced by the wide-screen responsive state.
+        var userExpanded = false;
+
+        btn.addEventListener('click', function () {
+          if (expanded) { userExpanded = false; collapse(); }
+          else { userExpanded = true; expand(); }
+        });
 
         wrapper.addEventListener('transitionend', function (e) {
           if (e && e.propertyName === 'max-height' && expanded && !reduceMotion) {
             wrapper.style.maxHeight = 'none';
           }
         });
+
+        // --- Adaptive behavior for the home page "Browse by categories" grid ---
+        // Decision uses two signals so it holds across all standard devices:
+        //   1) MEASURE the real layout (tiles-per-row x ROWS_TO_SHOW). If every
+        //      tile already fits in that many rows, there is nothing to hide.
+        //   2) WIDE_MIN_PX: a CSS-viewport-width floor above which we always
+        //      show the whole grid. Keys off the CSS width the browser reports,
+        //      NOT the panel's physical pixels (HiDPI scaling / non-maximized
+        //      windows make a 2560px monitor report well under 2560 CSS px).
+        //
+        // WIDE_MIN_PX = 1800 is derived from standard LAPTOP CSS viewport
+        // widths — it sits just above the widest standard laptop, so every
+        // standard laptop keeps the "View more" button and anything wider
+        // (desktop monitors) shows all categories:
+        //     1280 x 800  .. 13" / older laptops
+        //     1366 x 768  .. most common Windows laptop
+        //     1440 x 900  .. 13"-14" laptops
+        //     1512 x 982  .. 14" MacBook (default scaled)
+        //     1536 x 864  .. common HiDPI Windows laptop (1080p @125%)
+        //     1680 x 1050 .. 15" laptops
+        //     1728 x 1117 .. 16" MacBook (default scaled)  <-- widest standard
+        //   => 1800 is above 1728, so all of the above keep the button.
+        // Show all (hide button) when EITHER signal says so.
+        var isHomeGrid   = !!(ul.closest && ul.closest('.content-blocks'));
+        var ROWS_TO_SHOW = 2;
+        var WIDE_MIN_PX  = 1800;
+
+        // How many tiles sit in the first visual row (reads the real layout,
+        // so it is correct whether the grid renders 4, 2, or 1 columns).
+        function tilesPerRow() {
+          var items = getItems();
+          if (!items.length) return 0;
+          var firstTop = items[0].offsetTop;
+          var n = 0;
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].offsetTop === firstTop) n++;
+            else break;
+          }
+          return n || items.length;
+        }
+
+        // Number of tiles that fit within the rows we allow before collapsing.
+        function visibleBudget() {
+          var perRow = tilesPerRow();
+          return perRow > 0 ? perRow * ROWS_TO_SHOW : MAX_VISIBLE;
+        }
+
+        function applyResponsiveState() {
+          if (!isHomeGrid) return;
+          var total   = getItems().length;
+          var budget  = visibleBudget();
+          var isWide  = (window.innerWidth || document.documentElement.clientWidth || 0) >= WIDE_MIN_PX;
+
+          if (total <= budget || isWide) {
+            // Fits in the allowed rows, or the viewport is wide -> show all, no button.
+            ul.classList.remove('is-collapsed');
+            wrapper.style.maxHeight = 'none';
+            btn.style.display = 'none';
+            btn.setAttribute('aria-expanded', 'true');
+            expanded = true;
+          } else {
+            // More tiles than fit -> show the button.
+            btn.style.display = '';
+            if (!userExpanded) {
+              ul.classList.add('is-collapsed');
+              wrapper.style.maxHeight = '';
+              btn.textContent = TEXT_MORE;
+              btn.setAttribute('aria-expanded', 'false');
+              expanded = false;
+            }
+          }
+        }
+
+        if (isHomeGrid) {
+          // Re-measure on viewport changes (debounced via rAF).
+          var raf = null;
+          var reflow = function () {
+            if (raf) return;
+            raf = requestAnimationFrame(function () { raf = null; applyResponsiveState(); });
+          };
+          window.addEventListener('resize', reflow);
+          window.addEventListener('orientationchange', reflow);
+          applyResponsiveState();
+        }
 
         window.addEventListener('resize', function () {
           if (expanded) wrapper.style.maxHeight = 'none';
@@ -883,6 +975,8 @@
             btn.style.display = '';
             if (!expanded) ul.classList.add('is-collapsed');
           }
+          // Keep the wide-screen "show all, no button" state authoritative.
+          applyResponsiveState();
         });
         itemsObserver.observe(ul, { childList: true });
 
