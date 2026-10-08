@@ -31,5 +31,8 @@ Thumbs.db
 tests/
 .kiro/
 
+# Agent task artifacts (local only — not part of Zendesk theme)
+.agents/
+
 # Migration scripts (contain credentials — NEVER commit)
 tooling/migrate-*

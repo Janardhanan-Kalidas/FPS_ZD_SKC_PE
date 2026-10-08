@@ -45,6 +45,9 @@
     var terms = String(query || '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
     if (!terms.length) return safeText;
 
+    // Substring match: highlight each query term wherever it appears, even inside
+    // a larger word (so "test" highlights "test" AND "testing"), case-insensitive.
+    // Terms are regex-escaped first; no \b boundary so partial-word matches show.
     var pattern = new RegExp('(' + terms.map(function (term) {
       return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }).join('|') + ')', 'gi');
@@ -225,6 +228,7 @@
   }
 
   function closePanel(state) {
+    cancelScheduledPosition(state);
     state.panel.hidden = true;
     state.list.innerHTML = '';
     state.options = [];
@@ -260,6 +264,26 @@
     state.panel.style.top = (rect.bottom + 4) + 'px';
     state.panel.style.left = left + 'px';
     state.panel.style.width = Math.min(width, maxWidth) + 'px';
+  }
+
+  function schedulePosition(state) {
+    if (!state || state.panel.hidden) return;
+    if (typeof window.requestAnimationFrame !== 'function') {
+      positionPanel(state);
+      return;
+    }
+    if (state.rafId) return;
+    state.rafId = window.requestAnimationFrame(function () {
+      state.rafId = 0;
+      if (!state.panel.hidden) positionPanel(state);
+    });
+  }
+
+  function cancelScheduledPosition(state) {
+    if (state && state.rafId) {
+      if (typeof window.cancelAnimationFrame === 'function') window.cancelAnimationFrame(state.rafId);
+      state.rafId = 0;
+    }
   }
 
   function createState(wrapper, index) {
@@ -302,7 +326,8 @@
       abortController: null,
       requestId: 0,
       lastQuery: '',
-      interactionMode: 'pointer'
+      interactionMode: 'pointer',
+      rafId: 0
     };
   }
 
@@ -418,11 +443,11 @@
     });
 
     window.addEventListener('resize', function () {
-      if (!state.panel.hidden) positionPanel(state);
+      schedulePosition(state);
     });
 
     window.addEventListener('scroll', function () {
-      if (!state.panel.hidden) positionPanel(state);
+      schedulePosition(state);
     }, true);
 
     document.addEventListener('click', function (event) {
@@ -2286,16 +2311,37 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set by buildFilters(); lets sort changes re-render filtered results from source data.
     var rerenderFilteredResults = null;
 
+    // Strip Zendesk's server-side search highlighting from a results snippet/title.
+    //
+    // The search_results.hbs template renders the snippet via `{{text}}`, whose
+    // Zendesk helper wraps the matched search term in <em>…</em> — but it wraps the
+    // ENTIRE matched WORD (query "test" yields "<em>testing</em>"). The theme styles
+    // every <em> bold-red-on-yellow (style.css `em` + `.content em`), so the whole
+    // word renders highlighted regardless of the theme's own <mark> highlighter.
+    //
+    // In the results snippet/title scope <em> is produced ONLY by this server
+    // highlighter — article authors use <i> for italic emphasis (see the `.content em`
+    // comment in style.css) — so removing the <em> wrappers here is safe and lets the
+    // theme's substring <mark> highlighter be the single source of highlighting.
+    function stripServerEmphasis(html) {
+      return html.replace(/<\/?em>/gi, '');
+    }
+
     // 2. Highlight search keywords in results
     if (cleanedQuery) {
-      var keywords = cleanedQuery.split(/\s+/).filter(function(k) { return k.length > 2; });
+      var keywords = cleanedQuery.split(/\s+/).filter(Boolean);
       if (keywords.length) {
+        // Substring match (no \b, no length filter) so each query term highlights
+        // wherever it appears — including inside a larger word ("test" in "testing")
+        // and short 1-2 char terms — case-insensitive. Terms are regex-escaped.
         var pattern = new RegExp('(' + keywords.map(function(k) {
           return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }).join('|') + ')', 'gi');
         
         document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
-          var html = el.innerHTML;
+          // Remove Zendesk's whole-word <em> wrapping first, then re-apply the
+          // substring highlighter so only the matched substring is marked.
+          var html = stripServerEmphasis(el.innerHTML);
           el.innerHTML = html.replace(pattern, '<mark class="hc-highlight">$1</mark>');
         });
       }
@@ -2467,13 +2513,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Re-apply keyword highlight marks after dynamic HTML injection
     function applyHighlights() {
       if (!cleanedQuery) return;
-      var kw = cleanedQuery.split(/\s+/).filter(function(k){ return k.length > 2; });
+      var kw = cleanedQuery.split(/\s+/).filter(Boolean);
       if (!kw.length) return;
+      // Substring match (no \b, no length filter) so each query term highlights
+      // wherever it appears — including inside a larger word and short terms —
+      // case-insensitive. Terms are regex-escaped. Mirrors the first-render rule.
       var pat = new RegExp('(' + kw.map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }).join('|') + ')', 'gi');
       // Target the <a> inside the title (not the <h2>) so the href attribute is never touched.
       // The snippet is a plain <p> with no child elements, so it is safe to replace directly.
       document.querySelectorAll('.hc-result-title a, .hc-result-snippet').forEach(function(el) {
-        el.innerHTML = el.innerHTML.replace(pat, '<mark class="hc-highlight">$1</mark>');
+        // Remove Zendesk's whole-word <em> wrapping first (server-side highlighting),
+        // then re-apply the substring highlighter so only the matched substring is marked.
+        el.innerHTML = stripServerEmphasis(el.innerHTML).replace(pat, '<mark class="hc-highlight">$1</mark>');
       });
     }
 
@@ -3822,30 +3873,6 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     init();
   }
-})();
-
-/* === Article View Count === */
-(function() {
-  var el = document.getElementById('article-view-count');
-  if (!el) return;
-  var id = el.getAttribute('data-article-id');
-  if (!id) return;
-  var controller = new AbortController();
-  var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
-  fetch('/api/v2/help_center/articles/' + id + '.json', { signal: controller.signal })
-    .then(function(r) {
-      if (!r.ok) throw new Error();
-      return r.json();
-    })
-    .then(function(d) {
-      if (d && d.article && Number.isFinite(d.article.view_count)) {
-        el.textContent = d.article.view_count;
-      } else {
-        el.textContent = '0';
-      }
-    })
-    .catch(function() { el.textContent = '0'; })
-    .finally(function() { clearTimeout(timeoutId); });
 })();
 
 /* === Reading Progress Bar === */

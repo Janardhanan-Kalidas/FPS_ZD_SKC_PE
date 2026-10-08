@@ -8,7 +8,7 @@
 
 {{! Page-loading spinner — 4 slanted bars blinking sequentially, Hilti palette }}
 <style>
-.hilti-page-loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999998;transition:opacity .3s ease}
+.hilti-page-loader{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;z-index:9999998;transition:opacity .3s ease}
 .hilti-page-loader.is-hidden{opacity:0;pointer-events:none}
 .hilti-slant-bars{display:flex;gap:6px;align-items:center}
 .hilti-slant-bar{width:18px;height:60px;transform:skewX(-26deg);opacity:0;animation:hilti-blink 0.8s infinite}
@@ -45,18 +45,52 @@
     return bar;
   }
 
+  // ----- Idempotent hide for the full-screen overlay -----
+  // Hides and removes a given full-screen overlay element exactly once. Safe to
+  // call repeatedly (DOMContentLoaded + load may both fire) — it no-ops once the
+  // element is already hidden or detached, so no path can double-remove.
+  function hideLoader(el) {
+    if (!el || el.classList.contains('is-hidden')) return;
+    el.classList.add('is-hidden');
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 400);
+  }
+
   // ----- Initial render on first page load -----
+  // Show the full-screen Hilti center overlay (blinking slant bars) AND the thin
+  // top progress bar on first load, exactly as before. The only behavior change
+  // vs. the original is the HIDE TIMING (see below): the overlay is cleared as
+  // soon as the DOM is interactive instead of waiting for window 'load', so
+  // server-rendered content is no longer trapped behind the white screen until
+  // the slowest resource finishes.
   var loader = createLoader();
   var bar = createBar();
   bar.id = 'hiltiPageLoadBar';
 
-  // ----- Complete both on window load -----
+  // ----- Hide the full-screen overlay as soon as the DOM is interactive -----
+  // Previously the overlay was only removed on window 'load', which waits for the
+  // slowest blocking resource. Removing it at DOMContentLoaded lets the Hilti
+  // loader show briefly and then clear once content is parseable. hideLoader is
+  // idempotent, so the later 'load' handler cannot double-remove. Runs now if the
+  // DOM is already interactive/complete.
+  function hideOverlayWhenReady() {
+    hideLoader(document.getElementById('hiltiPageLoader'));
+  }
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    hideOverlayWhenReady();
+  } else {
+    document.addEventListener('DOMContentLoaded', hideOverlayWhenReady);
+  }
+
+  // ----- Complete the top bar (and clear any lingering overlay) on window load -----
+  // The overlay is normally already gone by DOMContentLoaded; this re-queries it
+  // (idempotent) as a safety net and completes the thin top bar.
   window.addEventListener('load', function() {
-    loader.classList.add('is-hidden');
-    setTimeout(function() { if (loader.parentNode) loader.remove(); }, 400);
-    bar.classList.remove('is-animating');
-    bar.classList.add('is-complete');
-    setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+    hideLoader(document.getElementById('hiltiPageLoader'));
+    if (bar.parentNode) {
+      bar.classList.remove('is-animating');
+      bar.classList.add('is-complete');
+      setTimeout(function() { if (bar.parentNode) bar.remove(); }, 700);
+    }
   });
 
   // ----- Clear lingering overlays on back/forward (bfcache) restore -----
@@ -73,10 +107,44 @@
 
   // ----- Single click listener drives BOTH visuals on internal navigation -----
   document.addEventListener('click', function(e) {
+    // Guard: never treat a non-navigating click as navigation. In-page overlays
+    // (e.g. the image lightbox) call preventDefault() to open instead of
+    // navigating; if we showed the spinner here it would never clear because no
+    // 'load' event ever fires. e.defaultPrevented is the general safety net for
+    // any current/future JS that opens an overlay via preventDefault(); the
+    // explicit data-hilti-lightbox check is a belt-and-braces guard in case the
+    // lightbox handler runs after this listener on some target.
+    if (e.defaultPrevented) return;
+    // Image/lightbox bail — runs BEFORE the anchor lookup so it holds even for a
+    // bare <img> with no wrapping anchor, and regardless of whether the lightbox
+    // tagged the anchor. Clicking any such image opens an overlay or does nothing
+    // and NEVER navigates, so the loader would stick forever. Mirror the lightbox's
+    // own eligibility rule (`.content img` / `[data-hilti-lightbox]`) and extend it
+    // to result-listing images so the head guard and the lightbox always agree.
+    if (e.target.closest && (
+          e.target.closest('[data-hilti-lightbox]') ||
+          e.target.closest('.content img') ||
+          e.target.closest('.hc-result-snippet img, .hc-result-card img, .hc-results-list img')
+        )) return;
     var link = e.target.closest ? e.target.closest('a[href]') : null;
     if (!link) return;
+    if (link.hasAttribute('data-hilti-lightbox') || (link.closest && link.closest('[data-hilti-lightbox]'))) return;
     var href = link.getAttribute('href');
     if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    // Image-file links (the lightbox's targets) never cause a page navigation, so the
+    // spinner would never clear. Skip them even if the lightbox did not manage to wire
+    // the anchor (e.g. article content that rendered after lightbox init). This is the
+    // belt to the lightbox's braces: clicking an in-article image is never a page load.
+    // ROOT CAUSE of the stuck loader: Zendesk wraps article-body/attachment images in
+    // anchors pointing at EXTENSION-LESS attachment URLs (e.g. /hc/article_attachments/
+    // <id>, /system/photos/<id>, /attachments/token/.../?name=foo.png), so the file-
+    // extension regex alone never matches. Treat those attachment paths as image
+    // targets too, and treat ANY anchor that itself wraps an <img> as a non-navigating
+    // image target. A normal title/nav link (no img child, non-attachment href) still
+    // falls through to show the loader and navigate.
+    if (/\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:[?#].*)?$/i.test(href) ||
+        /(?:\/article_attachments\/|\/system\/photos\/|\/attachments\/token\/)/i.test(href) ||
+        (link.querySelector && link.querySelector('img'))) return;
     // External-protocol links (mailto:, tel:, sms:, etc.) hand off to the OS
     // and never trigger a page load, so the spinner would never clear. Skip them.
     if (/^(mailto:|tel:|sms:|callto:|facetime:|skype:)/i.test(href)) return;
@@ -92,6 +160,20 @@
 
     // Progress bar: always start a fresh animating bar before navigation
     createBar();
+
+    // Safety net: if navigation stalls and 'load' never fires (e.g. a blocked
+    // or cancelled request), auto-clear the overlays after 8s so the spinner is
+    // never permanent. Mirrors the lightbox's own 5s fallback philosophy.
+    setTimeout(function() {
+      var l = document.getElementById('hiltiPageLoader');
+      if (l) { l.classList.add('is-hidden'); setTimeout(function() { if (l.parentNode) l.remove(); }, 400); }
+      var bars = document.querySelectorAll('.hilti-page-loading-bar');
+      for (var k = 0; k < bars.length; k++) {
+        bars[k].classList.remove('is-animating');
+        bars[k].classList.add('is-complete');
+        (function(b) { setTimeout(function() { if (b.parentNode) b.remove(); }, 700); })(bars[k]);
+      }
+    }, 8000);
   });
 })();
 </script>
@@ -180,14 +262,16 @@ try {
 <link rel="stylesheet" href="{{asset 'extension-animations.min.css'}}">
 <link rel="stylesheet" href="{{asset 'extension-transitions.min.css'}}">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
-{{! jQuery is otherwise bundled (once) in the footer combine URL, but only when lightboxes or }}
-{{! promoted videos are enabled. Load it here ONLY when the footer would not, so every page has }}
-{{! jQuery exactly once and we avoid the previous render-blocking double-load. }}
-{{~#unless settings.enable_lightboxes}}{{~#unless settings.promoted_video_ids}}<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous" defer></script>{{/unless~}}{{/unless~}}
+{{! jQuery is no longer loaded in the head. The native no-jQuery lightbox needs none, and the }}
+{{! sole remaining jQuery consumer (the promoted-video Fancybox overlay in }}
+{{! extension-video-library.js) now loads jQuery + Fancybox deferred in the footer under }}
+{{! promoted_video_ids. So jQuery ships exactly once per page, only when actually needed. }}
 
 {{~#if settings.enable_video_player}}<link rel="stylesheet" href="{{asset 'extension-video.min.css'}}">{{/if~}}
-{{~#if settings.enable_lightboxes}}<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha384-Q8BgkilbsFGYNNiDqJm69hvDS7NCJWOodvfK/cwTyQD4VQA0qKzuPpvqNER1UC0F" crossorigin="anonymous">
-{{else}}{{~#if settings.promoted_video_ids}}<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha384-Q8BgkilbsFGYNNiDqJm69hvDS7NCJWOodvfK/cwTyQD4VQA0qKzuPpvqNER1UC0F" crossorigin="anonymous">{{/if~}}{{/if~}}
+{{! Fancybox CSS is required only by the promoted-video overlay; moved to the npm }}
+{{! content-addressable path and gated on promoted_video_ids alone (the native lightbox }}
+{{! injects its own overlay CSS from JS and needs no Fancybox). }}
+{{~#if settings.promoted_video_ids}}<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha384-Q8BgkilbsFGYNNiDqJm69hvDS7NCJWOodvfK/cwTyQD4VQA0qKzuPpvqNER1UC0F" crossorigin="anonymous">{{/if~}}
 {{~#if settings.promoted_video_ids}}<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@7.0.9/swiper-bundle.min.css" integrity="sha384-HUXJxzkMpCxEdXkgl8BSjN5SUcUODepsOLIYIWOtKva+Qo2teMmV1mh6ZVwnthaV" crossorigin="anonymous">{{~/if}}
 
 {{! Settings-based styles }}

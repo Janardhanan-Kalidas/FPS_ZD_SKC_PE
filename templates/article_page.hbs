@@ -142,13 +142,8 @@
           </ul>
         {{/if}}
 
-        {{! Row 3: Views | Likes | Share }}
+        {{! Row 3: Likes | Share }}
         <div class="article-actions-row">
-          {{! Views — populated via API }}
-          <span class="article-action-item article-action-views" title="Article views">
-            <img src="{{asset 'views.svg'}}" width="16" height="16" alt="" aria-hidden="true">
-            <span class="article-action-count" id="article-view-count" data-article-id="{{article.id}}">0</span>
-          </span>
           {{#if settings.show_article_voting}}
           {{! Likes }}
           <span class="article-action-item article-action-likes" title="Helpful votes">
@@ -546,30 +541,6 @@
 {{/isnt~}}
 
 <script type="text/javascript">document.documentElement.classList.add('article-page', 'article-' + {{article.id}})</script>
-<script>
-(function() {
-  var el = document.getElementById('article-view-count');
-  if (!el) return;
-  var id = el.getAttribute('data-article-id');
-  if (!id) return;
-  var controller = new AbortController();
-  var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
-  fetch('/api/v2/help_center/articles/' + id + '.json', { signal: controller.signal })
-    .then(function(r) {
-      if (!r.ok) throw new Error();
-      return r.json();
-    })
-    .then(function(d) {
-      if (d && d.article && Number.isFinite(d.article.view_count)) {
-        el.textContent = d.article.view_count;
-      } else {
-        el.textContent = '0';
-      }
-    })
-    .catch(function() { el.textContent = '0'; })
-    .finally(function() { clearTimeout(timeoutId); });
-})();
-</script>
 <script>
 (function() {
   var dateEls = document.querySelectorAll('.article-meta-date[data-created-at]');
