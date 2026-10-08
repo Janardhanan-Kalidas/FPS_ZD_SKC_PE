@@ -75,6 +75,7 @@ require ZENDESK_OAUTH_CLIENT_ID
 require ZENDESK_OAUTH_CLIENT_SECRET
 require ZENDESK_SUBDOMAIN
 
+THEME_NAME="${THEME_NAME}_${CI_JOB_ID}"
 
 ARCHIVE="${THEME_ARCHIVE:-dist/theme.zip}"
 [[ -s "$ARCHIVE" ]] || fail "Theme archive is missing: ${ARCHIVE}"
