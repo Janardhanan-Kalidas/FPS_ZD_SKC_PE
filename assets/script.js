@@ -3463,7 +3463,18 @@ document.addEventListener('DOMContentLoaded', function () {
         secList.addEventListener('change', boundSecChange);
       }
 
-      // Apply any restored selections immediately
+      // Apply any restored selections immediately.
+      //
+      // On an upgrade rebuild this is the critical re-render: the lists above were torn down and
+      // re-created from the FULL API dataset, re-checking the merged (live + stored) selections, so
+      // this call runs updateDependentLists against THIS closure's `rows` (the full ~110-row set).
+      // That recomputes `matching` (14 for the example), rewrites the heading count/scope, re-renders
+      // the cards, and rebuilds the client-side pager from the full matching set — replacing the
+      // stale instant-build (25-row) render that showed only the on-current-page match. All of the
+      // active filter/sort entry points (boundCatChange, boundSecChange, rerenderFilteredResults)
+      // were just re-bound to this same closure, so no stale 25-row closure can serve a later
+      // interaction. If a filter is active, savedBeforeFilter is still non-null here, so
+      // renderFilteredPage repaints heading + cards + pager from the full `rows`.
       updateDependentLists();
     } // end buildFilters
 
@@ -3472,6 +3483,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function buildPaginationUI() {
       var wrapper = document.querySelector('.hc-pagination-wrapper');
       if (!wrapper) return;
+
+      // Never overwrite the client-side filtered pager while a filter is active. The API-upgrade
+      // path (buildFiltersViaAPI) calls buildPaginationUI() mid-flight to repaint the native pager
+      // with accurate counts; if the user has already ticked a filter, that native pager would
+      // clobber the filtered (14-of-14) pager rendered by renderFilteredPage. savedBeforeFilter is
+      // non-null only once a filter has been applied, so the unfiltered page is unaffected.
+      var filterActive = !!document.querySelector('#hc-category-list .hc-category-input:checked, #hc-section-list .hc-section-input:checked');
+      if (filterActive && savedBeforeFilter !== null) return;
 
       var urlParams   = new URLSearchParams(window.location.search);
       var currentPage = parseInt(urlParams.get('page') || '1', 10);
