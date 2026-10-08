@@ -169,6 +169,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
 fi
 
 IMPORT_RESPONSE="$(api   --request POST   --header 'Content-Type: application/json'   --data "{\"job\":{\"attributes\":{\"brand_id\":\"${ZENDESK_BRAND_ID}\",\"format\":\"zip\"}}}"   "${BASE_URL}/api/v2/guide/theming/jobs/themes/imports")"
+echo "DEBUG: IMPORT_RESPONSE: $IMPORT_RESPONSE"
 
 JOB_ID="$(jq -er '.job.id' <<<"$IMPORT_RESPONSE")" || fail "Import response has no job ID."
 THEME_ID="$(jq -er '.job.data.theme_id' <<<"$IMPORT_RESPONSE")" || fail "Import response has no theme ID."
