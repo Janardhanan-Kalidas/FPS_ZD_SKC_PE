@@ -51,7 +51,7 @@ sync_manifest_version:
     - command -v git >/dev/null 2>&1 || { DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -yq git || (apk update && apk add -q git); }
   script:
     - set -Eeuo pipefail
-    - test -f build.env || { echo "ERROR: build.env missing (validate_release must run first)." >&2; exit 1; }
+    - 'test -f build.env || { echo "ERROR: build.env missing (validate_release must run first)." >&2; exit 1; }'
     - set -a; . ./build.env; set +a
     - 'echo "Release version from branch: ${RELEASE_VERSION}"'
     - 'echo "Theme name from branch:      ${THEME_NAME}"'
