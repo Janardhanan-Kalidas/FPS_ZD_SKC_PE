@@ -16408,6 +16408,17 @@ a:hover .icon-circle {
 }
 
 /* -----------------------------
+   HOME "BROWSE BY CATEGORIES" — RESPONSIVE VIEW MORE
+   The show-all vs. "View more" decision is made by assets/script.js, which
+   MEASURES the real grid layout (tiles-per-row x 2 rows) instead of guessing
+   a pixel breakpoint. Physical monitor resolution != CSS viewport width
+   (HiDPI scaling, window not maximized, scrollbars), so width breakpoints
+   proved unreliable. The collapse itself still uses the nth-child rule above:
+   this grid is always 4 columns, so 8 tiles == exactly 2 rows at every width.
+   No width media query here on purpose — JS is the single source of truth.
+------------------------------ */
+
+/* -----------------------------
    ANIMATION CONTAINER + GRID
 ------------------------------ */
 .cards-wrapper {
@@ -20635,46 +20646,92 @@ body.downvote-feedback-open {
   z-index: 30;
 }
 
+/* Hero children (text block + search) stretch to fill their capped
+   column. The LEFT-ZONE max-width cap is applied per breakpoint below. */
+.hero .hc-hero-content > * {
+  width: 100%;
+}
+
 .hero .hc-hero-content > div:first-child {
-  width: 650px;
-  max-width: 100%;
   text-align: left;
 }
 
-/* Welcome intro line — Figma: Hilti Roman 16px, #524F53 */
+/* -----------------------------------------------------------------
+   HERO — RESPONSIVE (mobile-first, stepped at the theme's standard
+   breakpoints: 576 / 768 / 992 / 1200px). Base values target phones;
+   each breakpoint below scales the intro, heading and search bar up.
+----------------------------------------------------------------- */
+
+/* Welcome intro line — Figma: Hilti Roman 16px, #524F53.
+   FLUID: scales smoothly with viewport, bounded 14px..18px. */
 .hero .hc-hero-content h1.hc-hero-welcome {
   white-space: normal;
   text-align: left;
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 0.78rem + 0.45vw, 1.125rem);
   font-weight: 400;
   line-height: normal;
   margin: 0 0 0.25rem;
 }
 
-/* Main hero heading "How can we help?" — Figma: Hilti Bold 36px, #524F53 */
+/* Main hero heading "How can we help?" — Figma: Hilti Bold 36px, #524F53.
+   FLUID: scales smoothly with viewport, bounded 22px..36px. */
 .hero .hc-hero-content p.hc-hero-heading {
   white-space: normal;
   text-align: left;
   margin: 0 0 1.25rem;
   line-height: normal;
-  font-size: 2.25rem;
+  font-size: clamp(1.375rem, 0.9rem + 2.1vw, 2.25rem);
   font-weight: 700;
 }
 
+/* Search bar fills the hero text column. Its width is governed by the
+   left-zone column cap below, so it NEVER reaches the photo. */
 .hero .search {
-  max-width: 540px;
   width: 100%;
+  max-width: 100%;
 }
 
-/* Hero search bar — Figma: 650x48 box, 1px #CFCCC5 border, 14px placeholder #BAB9BA */
+/* Hero search bar — Figma: 48px box, 1px #CFCCC5 border, 14px placeholder.
+   FLUID: height and text scale smoothly, bounded 42px..52px / 14px..16px. */
 .hero .hc-hero-search .form-field > input,
 .hero .hc-hero-search [type="search"] {
-  height: 48px;
-  font-size: 14px;
+  height: clamp(42px, 2.5vw + 32px, 52px);
+  font-size: clamp(14px, 0.5vw + 12px, 16px);
   letter-spacing: 0.15px;
   padding: 8px 16px 8px 54px;
   background-color: #fff;
   border: 1px solid #cfccc5;
+}
+
+/* -----------------------------------------------------------------
+   LEFT-ZONE CAP: keep intro + heading + search within the empty left
+   part of the hero background so nothing overlaps the photo on the
+   right. Only the WIDTH cap is stepped (it depends on the image
+   composition); the text/search SIZES above are fluid at every width.
+----------------------------------------------------------------- */
+
+/* Phones: hero text sits over a cropped image -> full width. */
+.hero .hc-hero-content > * { max-width: 100%; }
+
+/* >= 576px */
+@media (min-width: 576px) {
+  .hero .hc-hero-content > * { max-width: 70%; }
+}
+
+/* >= 768px (photo visible on the right) */
+@media (min-width: 768px) {
+  .hero .hc-hero-content > * { max-width: 52%; }
+}
+
+/* >= 992px */
+@media (min-width: 992px) {
+  .hero .hc-hero-content > * { max-width: 50%; }
+}
+
+/* >= 1200px: hard-cap at the Figma 650px so the column never grows wider
+   than designed even if 50% would exceed it. */
+@media (min-width: 1200px) {
+  .hero .hc-hero-content > * { max-width: min(50%, 650px); }
 }
 .hero .hc-hero-search .form-field > input::placeholder,
 .hero .hc-hero-search [type="search"]::placeholder {
@@ -21345,13 +21402,13 @@ body.downvote-feedback-open {
 
   .hero .hc-hero-content h1.hc-hero-welcome {
     white-space: normal;
-    font-size: 0.875rem;
     text-align: left;
+    /* font-size handled by the fluid clamp() on the base rule */
   }
 
   .hero .hc-hero-content p.hc-hero-heading {
-    font-size: 1.5rem;
     text-align: left;
+    /* font-size handled by the fluid clamp() on the base rule */
   }
 
   .hero .search {
