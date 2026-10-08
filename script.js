@@ -3246,6 +3246,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var resultsList = document.querySelector('.hc-results-list');
         var paginationWrapper = document.querySelector('.hc-pagination-wrapper');
+        var resultsTitle = document.querySelector('.hc-results-title');
 
         if (!selectedCats.length && !selectedSecs.length) {
           // No filter — only restore the DOM if we previously entered filter mode.
@@ -3254,6 +3255,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (savedBeforeFilter !== null) {
             if (resultsList)       resultsList.innerHTML       = savedBeforeFilter.results;
             if (paginationWrapper) paginationWrapper.innerHTML = savedBeforeFilter.pagination;
+            if (resultsTitle)      resultsTitle.innerHTML      = savedBeforeFilter.heading;
             savedBeforeFilter = null;
             applyHighlights();
             buildPaginationUI();
@@ -3266,6 +3268,7 @@ document.addEventListener('DOMContentLoaded', function () {
             savedBeforeFilter = {
               results:    resultsList        ? resultsList.innerHTML        : '',
               pagination: paginationWrapper  ? paginationWrapper.innerHTML  : '',
+              heading:    resultsTitle       ? resultsTitle.innerHTML       : '',
               perPage:    (fpTotal > fpCards && fpCards > 0) ? fpCards : 25
             };
           }
@@ -3304,6 +3307,20 @@ document.addEventListener('DOMContentLoaded', function () {
             page        = Math.max(1, Math.min(page, totalFP || 1));
             var start   = (page - 1) * pp;
             var slice   = matchArr.slice(start, start + pp);
+
+            if (resultsTitle && savedBeforeFilter) {
+              resultsTitle.innerHTML = savedBeforeFilter.heading;
+              var countNode = resultsTitle.querySelector('strong');
+              var countText = countNode && countNode.nextSibling;
+              if (countNode && countText && /\bresults?\b/.test(countText.textContent)) {
+                countNode.textContent = String(matchArr.length);
+                countText.textContent = countText.textContent.replace(/\bresults?\b/, matchArr.length === 1 ? 'result' : 'results');
+              }
+              var scope = selectedCats.length ? selectedCats.join(', ') : selectedSecs.join(', ');
+              resultsTitle.childNodes.forEach(function(node) {
+                if (node.nodeType === 3) node.textContent = node.textContent.replace(/in all categories/, 'in ' + scope);
+              });
+            }
 
             if (resultsList) {
               if (matchArr.length) {
