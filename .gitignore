@@ -36,3 +36,8 @@ tests/
 
 # Migration scripts (contain credentials — NEVER commit)
 tooling/migrate-*
+
+# Build output / release artifacts (generated locally and in CI — not source)
+.theme-build/
+dist/
+build.env
