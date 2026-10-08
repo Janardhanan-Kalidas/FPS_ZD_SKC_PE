@@ -938,6 +938,178 @@ git commit -m "chore: bump theme version"
 git push
 ```
 
+> The commands above (and the Kiro hook below) are for **local / preview** work.
+> They do **not** set the version that gets released. On a release branch the
+> pipeline overwrites `manifest.json` from the branch name (see next section), so
+> a stray local bump can never leak into or override a release deploy.
+
+### Automatic version sync on `release/X.Y.Z` branches
+
+Creating or pushing a branch named `release/X.Y.Z` makes the pipeline set the
+committed `manifest.json` to that exact version — no manual bump needed. This is
+driven by the `sync_manifest_version` job in this repo's `.gitlab-ci.yml` (not
+the external pipeline template), backed by `tooling/scripts/cicd/sync-manifest-version.sh`.
+
+**The release version has exactly one source of truth: the branch name.** Any
+value the manifest happens to carry — including a local/preview bump from
+`npm run version:theme` or the Kiro pre-commit hook — is overwritten at pipeline
+time. Preview and release are therefore independent: a preview bump stays local
+and never leaks into a release.
+
+#### Where the pipeline comes from
+
+The repo's `.gitlab-ci.yml` is small. It `include:`s the shared pipeline template
+and defines the one job this repo owns:
+
+```yaml
+include:
+  - project: "bu-f-ps/infra/pipeline-templates"
+    file: "/zendesk/theme.yml"      # defines: validate_release, package_theme,
+                                     #          sandbox_deploy, production_deploy
+# .gitlab-ci.yml also defines: sync_manifest_version   (this repo)
+```
+
+GitLab merges the two: the template contributes `validate_release`, `package_theme`,
+`sandbox_deploy`, and `production_deploy`; this repo contributes
+`sync_manifest_version` in the template's `validate` stage. The template's
+`workflow.rules` restrict the *entire* pipeline to `release/X.Y.Z` branches, so
+`sync_manifest_version` inherits that gating automatically — it never runs on a
+feature or preview branch.
+
+#### End-to-end deployment + versioning flow
+
+```mermaid
+flowchart TD
+    DEV([Developer creates / pushes<br/>branch release/1.2.3]) --> WF{"workflow.rules<br/>branch matches<br/>^release/[0-9]+.[0-9]+.[0-9]+$ ?"}
+    WF -->|no| STOP([No pipeline runs])
+    WF -->|yes| VR
+
+    subgraph S1["Stage: validate"]
+        VR["validate_release (template)<br/>RELEASE_VERSION = branch - 'release/' = 1.2.3<br/>THEME_NAME = 'Hilti SKC - PE_Theme 1.2.3'<br/>writes build.env (artifact)"]
+        SMV["sync_manifest_version (this repo)<br/>needs: validate_release"]
+        VR --> SMV
+    end
+
+    subgraph S2["Stage: package"]
+        PKG["package_theme (template)<br/>jq rewrite name+version from build.env<br/>-> dist/theme.zip + dist/manifest.json"]
+    end
+
+    subgraph S3["Stage: deploy"]
+        SBX["sandbox_deploy (template)<br/>on_success · SANDBOX · OAuth"]
+        PRD["production_deploy (template)<br/>manual · PROD · OAuth"]
+    end
+
+    SMV --> PKG
+    PKG --> SBX
+    PKG --> PRD
+    SBX -. "DRY_RUN=true -> prints plan, no API call" .- SBX
+    PRD -. "DRY_RUN=true -> prints plan, no API call" .- PRD
+```
+
+#### Inside `sync_manifest_version` (the decision logic)
+
+```mermaid
+flowchart TD
+    A([Job start]) --> B[source build.env<br/>RELEASE_VERSION, THEME_NAME]
+    B --> C[run sync-manifest-version.sh]
+    C --> D{RELEASE_VERSION<br/>strict semver X.Y.Z ?}
+    D -->|no| F1([FAIL: non-semver version])
+    D -->|yes| E{manifest.json version AND<br/>name already match ?}
+    E -->|yes| N([No-op · exit 0<br/>file untouched, no commit])
+    E -->|no| W[jq: set .name + .version<br/>2-space indent, trailing newline]
+    W --> G{git diff --quiet<br/>manifest.json ?}
+    G -->|no change| N
+    G -->|changed| H{DRY_RUN == 'true' ?}
+    H -->|yes| DR([Print the commit + push<br/>it WOULD perform · exit 0<br/>nothing pushed])
+    H -->|no| T{CI_PUSH_TOKEN set ?}
+    T -->|no| F2([FAIL fast:<br/>write token required])
+    T -->|yes| P["git commit<br/>'chore(release): set theme version<br/>to 1.2.3 [skip ci]'<br/>git push -o ci.skip HEAD:release/1.2.3"]
+    P --> DONE([Committed back to the<br/>release branch · exit 0])
+```
+
+#### How the version propagates (single source → every artifact)
+
+```mermaid
+flowchart LR
+    BR([Branch name<br/>release/1.2.3]) -->|validate_release strips 'release/'| RV["RELEASE_VERSION = 1.2.3<br/>THEME_NAME = Hilti SKC - PE_Theme 1.2.3"]
+    RV --> BE[(build.env)]
+
+    BE --> SMV[sync_manifest_version]
+    SMV --> RM[/"committed manifest.json<br/>version = 1.2.3<br/>(pushed back to branch)"/]
+
+    BE --> PKG[package_theme]
+    PKG --> AM[/"dist/manifest.json + theme.zip<br/>version = 1.2.3"/]
+
+    RM -. "always agree" .- AM
+    AM --> ZD([Zendesk theme<br/>imported as 1.2.3])
+
+    PREV([local/preview bump<br/>npm run version:theme]):::ghost -. "overwritten at<br/>pipeline time" .-> RM
+    classDef ghost stroke-dasharray: 4 4,color:#888;
+```
+
+#### The commit-back, step by step (non-dry-run)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant R as Release branch<br/>release/1.2.3
+    participant CI as sync_manifest_version job
+    participant S as sync-manifest-version.sh
+    participant G as GitLab repo
+
+    R->>CI: pipeline starts (build.env from validate_release)
+    CI->>S: run with RELEASE_VERSION=1.2.3
+    S->>S: validate semver, compare current manifest
+    alt already 1.2.3
+        S-->>CI: "No change needed" (exit 0)
+        CI-->>R: no commit (idempotent)
+    else differs (e.g. 0.19.85 or a preview bump)
+        S->>S: jq rewrite manifest.json -> 1.2.3
+        S-->>CI: updated working-tree file
+        CI->>CI: git diff shows a change
+        CI->>G: git commit "...1.2.3 [skip ci]"<br/>git push -o ci.skip HEAD:release/1.2.3
+        Note over G: [skip ci] + -o ci.skip<br/>-> no new pipeline (no loop)
+        G-->>R: branch now holds version 1.2.3
+    end
+```
+
+#### Why there is no pipeline loop
+
+The commit-back would normally retrigger the pipeline (a push to `release/1.2.3`).
+Two independent guards prevent that:
+
+- The commit message ends with `[skip ci]`, which GitLab honors to skip pipeline
+  creation for that commit.
+- The push uses `-o ci.skip`, a server-side push option that also suppresses the
+  pipeline — belt and suspenders in case `[skip ci]` parsing is disabled.
+
+On the *next* real pipeline run for that branch, `sync_manifest_version` finds the
+manifest already at `1.2.3` and is a no-op, so it never produces an empty commit.
+
+#### Operational requirements for the commit-back to run
+
+- **`DRY_RUN`** — In `.gitlab-ci.yml`, `DRY_RUN` currently defaults to `"true"`.
+  While `DRY_RUN=true` the job updates the working-tree manifest and prints the
+  commit/push it *would* perform, but does **not** push. Set `DRY_RUN` to
+  anything other than `"true"` to enable the actual commit-back. (This mirrors
+  the template's deploy jobs, which also honor `DRY_RUN`.)
+- **`CI_PUSH_TOKEN`** — Pushing back to the branch needs a write-capable token
+  (project or group access token / deploy token with the `write_repository`
+  scope) exposed as the CI variable `CI_PUSH_TOKEN`. The default `CI_JOB_TOKEN`
+  cannot push. If a push is needed and `CI_PUSH_TOKEN` is unset, the job fails
+  fast with a clear message. The token is injected only into the push URL
+  (`https://oauth2:***@$CI_SERVER_HOST/$CI_PROJECT_PATH.git`) and is never
+  printed in logs.
+
+#### Quick reference
+
+| Trigger | Sets release version? | Pushes to repo? |
+|---|---|---|
+| `npm run version:theme` (local) | No — preview/dev only | No |
+| Kiro pre-commit hook | No — preview/dev only | No (local commit) |
+| Push `release/1.2.3` + `DRY_RUN=true` | Computes 1.2.3, shows plan | No (dry run) |
+| Push `release/1.2.3` + `DRY_RUN≠true` + `CI_PUSH_TOKEN` set | **Yes → 1.2.3** | **Yes → release branch** |
+
 ### Kiro hook (automatic)
 
 When committing via Kiro, a pre-commit hook auto-bumps the patch version in `manifest.json`. Keywords in commit message:
