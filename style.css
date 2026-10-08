@@ -15587,6 +15587,15 @@ a:hover .icon-circle {
   margin-top: 1rem;
 }
 
+/* Both footer article columns' headings must start at the same Y. Zendesk renders
+   the related-articles section with leading whitespace nodes and recent-articles
+   compact, so the h2 margin-top collapses inconsistently between the two columns.
+   Zero the top margin on each column's first heading so both align flush. */
+.recent-articles > h2:first-child,
+.related-articles > h2:first-child {
+  margin-top: 0;
+}
+
 .recent-articles ul,
 .related-articles ul {
   padding-left: 0;
