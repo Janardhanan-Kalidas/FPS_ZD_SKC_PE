@@ -2604,6 +2604,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // null means a filter has never been active — in that case the DOM is never touched.
     var savedBeforeFilter = null;
 
+    // Last change-handlers bound to the catList/secList containers. Tracked at IIFE scope so a
+    // second (upgrade) call to buildFilters can removeEventListener the previous binding before
+    // re-adding, preventing the container-level handler from being wired twice across the
+    // instant + API-upgrade build sequence. (Per-item input listeners die with their <li> when
+    // innerHTML is reset, so only these container handlers can leak.)
+    var boundCatChange = null;
+    var boundSecChange = null;
+
     // Re-apply keyword highlight marks after dynamic HTML injection
     function applyHighlights() {
       if (!cleanedQuery) return;
@@ -3170,6 +3178,20 @@ document.addEventListener('DOMContentLoaded', function () {
     //             If omitted, rows is used for both.
     function buildFilters(rows, pageRows) {
       var storageKey = 'search_filters:' + cleanedQuery;
+
+      // Detect a rebuild (upgrade): the instant build already populated filter items, so a second
+      // call must preserve whatever the user has checked in the meantime. Snapshot the live
+      // selections BEFORE the lists are torn down and re-read from storage. These locals are
+      // OR-ed into the restored selections below so a live choice is never dropped — regardless of
+      // isSameSearchReferrer() (which can remove the stored key on a rebuild).
+      var liveCats = [];
+      var liveSecs = [];
+      var isRebuild = !!(catList && catList.querySelector('.hc-filter-item'));
+      if (isRebuild) {
+        liveCats = Array.from(catList ? catList.querySelectorAll('.hc-category-input:checked') : []).map(function(i){ return i.value; });
+        liveSecs = Array.from(secList ? secList.querySelectorAll('.hc-section-input:checked') : []).map(function(i){ return i.value; });
+      }
+
       var storedSelections = {};
       if (isSameSearchReferrer()) {
         try { storedSelections = JSON.parse(sessionStorage.getItem(storageKey)) || {}; } catch (e) { storedSelections = {}; }
@@ -3178,6 +3200,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       var storedCats = storedSelections.categories || [];
       var storedSecs = storedSelections.sections || [];
+
+      // Merge live (pre-rebuild) selections so an upgrade never loses an in-flight user choice.
+      liveCats.forEach(function(v) { if (storedCats.indexOf(v) === -1) storedCats = storedCats.concat([v]); });
+      liveSecs.forEach(function(v) { if (storedSecs.indexOf(v) === -1) storedSecs = storedSecs.concat([v]); });
 
       // Counts from the full API result set so badges reflect total across all pages.
       var countSource = rows;
@@ -3246,6 +3272,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var resultsList = document.querySelector('.hc-results-list');
         var paginationWrapper = document.querySelector('.hc-pagination-wrapper');
+        var resultsTitle = document.querySelector('.hc-results-title');
 
         if (!selectedCats.length && !selectedSecs.length) {
           // No filter — only restore the DOM if we previously entered filter mode.
@@ -3254,6 +3281,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (savedBeforeFilter !== null) {
             if (resultsList)       resultsList.innerHTML       = savedBeforeFilter.results;
             if (paginationWrapper) paginationWrapper.innerHTML = savedBeforeFilter.pagination;
+            if (resultsTitle)      resultsTitle.innerHTML      = savedBeforeFilter.heading;
             savedBeforeFilter = null;
             applyHighlights();
             buildPaginationUI();
@@ -3266,6 +3294,7 @@ document.addEventListener('DOMContentLoaded', function () {
             savedBeforeFilter = {
               results:    resultsList        ? resultsList.innerHTML        : '',
               pagination: paginationWrapper  ? paginationWrapper.innerHTML  : '',
+              heading:    resultsTitle       ? resultsTitle.innerHTML       : '',
               perPage:    (fpTotal > fpCards && fpCards > 0) ? fpCards : 25
             };
           }
@@ -3304,6 +3333,20 @@ document.addEventListener('DOMContentLoaded', function () {
             page        = Math.max(1, Math.min(page, totalFP || 1));
             var start   = (page - 1) * pp;
             var slice   = matchArr.slice(start, start + pp);
+
+            if (resultsTitle && savedBeforeFilter) {
+              resultsTitle.innerHTML = savedBeforeFilter.heading;
+              var countNode = resultsTitle.querySelector('strong');
+              var countText = countNode && countNode.nextSibling;
+              if (countNode && countText && /\bresults?\b/.test(countText.textContent)) {
+                countNode.textContent = String(matchArr.length);
+                countText.textContent = countText.textContent.replace(/\bresults?\b/, matchArr.length === 1 ? 'result' : 'results');
+              }
+              var scope = selectedCats.length ? selectedCats.join(', ') : selectedSecs.join(', ');
+              resultsTitle.childNodes.forEach(function(node) {
+                if (node.nodeType === 3) node.textContent = node.textContent.replace(/in all categories/, 'in ' + scope);
+              });
+            }
 
             if (resultsList) {
               if (matchArr.length) {
@@ -3406,11 +3449,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
       rerenderFilteredResults = updateDependentLists;
 
-      // Wire change handlers
-      if (catList) catList.addEventListener('change', updateDependentLists);
-      if (secList) secList.addEventListener('change', updateDependentLists);
+      // Wire change handlers. On an upgrade rebuild, drop the previously-bound container handler
+      // first so the change listener is never attached twice (the <li> inputs are fresh, but the
+      // container element persists across innerHTML resets).
+      if (catList) {
+        if (boundCatChange) catList.removeEventListener('change', boundCatChange);
+        boundCatChange = updateDependentLists;
+        catList.addEventListener('change', boundCatChange);
+      }
+      if (secList) {
+        if (boundSecChange) secList.removeEventListener('change', boundSecChange);
+        boundSecChange = updateDependentLists;
+        secList.addEventListener('change', boundSecChange);
+      }
 
-      // Apply any restored selections immediately
+      // Apply any restored selections immediately.
+      //
+      // On an upgrade rebuild this is the critical re-render: the lists above were torn down and
+      // re-created from the FULL API dataset, re-checking the merged (live + stored) selections, so
+      // this call runs updateDependentLists against THIS closure's `rows` (the full ~110-row set).
+      // That recomputes `matching` (14 for the example), rewrites the heading count/scope, re-renders
+      // the cards, and rebuilds the client-side pager from the full matching set — replacing the
+      // stale instant-build (25-row) render that showed only the on-current-page match. All of the
+      // active filter/sort entry points (boundCatChange, boundSecChange, rerenderFilteredResults)
+      // were just re-bound to this same closure, so no stale 25-row closure can serve a later
+      // interaction. If a filter is active, savedBeforeFilter is still non-null here, so
+      // renderFilteredPage repaints heading + cards + pager from the full `rows`.
       updateDependentLists();
     } // end buildFilters
 
@@ -3419,6 +3483,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function buildPaginationUI() {
       var wrapper = document.querySelector('.hc-pagination-wrapper');
       if (!wrapper) return;
+
+      // Never overwrite the client-side filtered pager while a filter is active. The API-upgrade
+      // path (buildFiltersViaAPI) calls buildPaginationUI() mid-flight to repaint the native pager
+      // with accurate counts; if the user has already ticked a filter, that native pager would
+      // clobber the filtered (14-of-14) pager rendered by renderFilteredPage. savedBeforeFilter is
+      // non-null only once a filter has been applied, so the unfiltered page is unaffected.
+      var filterActive = !!document.querySelector('#hc-category-list .hc-category-input:checked, #hc-section-list .hc-section-input:checked');
+      if (filterActive && savedBeforeFilter !== null) return;
 
       var urlParams   = new URLSearchParams(window.location.search);
       var currentPage = parseInt(urlParams.get('page') || '1', 10);
@@ -3511,6 +3583,12 @@ document.addEventListener('DOMContentLoaded', function () {
         buildFiltersFromCurrentPage();
         hydrateTagsOnlyFromSearchAPI();
       } else {
+        // Instant-then-upgrade: build the filter UI synchronously from the already-rendered
+        // page so filters appear immediately, then kick off the API build to upgrade the lists
+        // with the complete multi-page dataset. The API path ends by calling buildFilters again,
+        // which rebuilds cleanly (idempotent teardown) and preserves any selection the user made
+        // during the gap.
+        buildFiltersFromCurrentPage();
         buildFiltersViaAPI();
       }
 
