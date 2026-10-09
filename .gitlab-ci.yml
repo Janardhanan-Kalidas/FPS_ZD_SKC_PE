@@ -1,89 +1,19 @@
 ### use pipeline template from Gitlab
 include:
+  ## Use local template file during debugging.
+  # - local: '/theme.yml'
   - project: "bu-f-ps/infra/pipeline-templates"
     file: "/zendesk/theme.yml"
 
 variables:
-  ZCLI_VERSION: "1.0.0-beta.56"
-  NODE_VERSION: "25.9.0"
   APPROVE_FOR_PROJECT: "fps_skc_pe"
-  ### Set this temporary during pipelines debug for prevent actual deploy/rollback in PROD
-  DRY_RUN: "true"
-
-### ---------------------------------------------------------------------------
-### Release-branch manifest version sync (defined in THIS repo, not the template)
-###
-### On a release/X.Y.Z branch, set the committed manifest.json version + name to
-### the branch version and commit the correction back to the release branch.
-### The version is derived SOLELY from the branch name (via build.env from the
-### template's validate_release job), so any earlier local/preview version bump
-### is overwritten and can never influence the release deploy.
-###
-### Routing: this job lives here (not in the external template theme.yml). GitLab
-### merges it with the template's stages/jobs. The template's workflow.rules
-### already restrict the whole pipeline to release/X.Y.Z branches, so this job
-### inherits that gating.
-###
-### Push-back auth: requires a write-capable token in CI variable CI_PUSH_TOKEN
-### (project/group access token or deploy token with write_repository scope). The
-### default CI_JOB_TOKEN cannot push. The job fails fast with a clear message if a
-### push is needed but CI_PUSH_TOKEN is unset. The token is never echoed.
-###
-### Loop prevention: the commit message carries [skip ci] and the push uses
-### `-o ci.skip`, so the write-back cannot trigger another pipeline.
-###
-### DRY_RUN: when DRY_RUN == "true" (the repo default) the job updates the
-### working-tree manifest and reports the commit/push it WOULD perform, but does
-### not actually commit or push. Set DRY_RUN to anything else to enable push-back.
-### ---------------------------------------------------------------------------
-sync_manifest_version:
-  stage: validate
-  needs:
-    - job: validate_release
-      artifacts: true
-  variables:
-    GIT_STRATEGY: clone
-    GIT_DEPTH: "0"
-    GIT_AUTHOR_NAME: "gitlab-ci"
-    GIT_AUTHOR_EMAIL: "gitlab-ci@noreply.hilti.com"
-  before_script:
-    - command -v jq >/dev/null 2>&1 || { DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -yq jq || (apk update && apk add -q jq); }
-    - command -v git >/dev/null 2>&1 || { DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -yq git || (apk update && apk add -q git); }
-  script:
-    - set -Eeuo pipefail
-    - 'test -f build.env || { echo "ERROR: build.env missing (validate_release must run first)." >&2; exit 1; }'
-    - set -a; . ./build.env; set +a
-    - 'echo "Release version from branch: ${RELEASE_VERSION}"'
-    - 'echo "Theme name from branch:      ${THEME_NAME}"'
-    # Update the working-tree manifest.json to the branch version (idempotent).
-    - bash tooling/scripts/cicd/sync-manifest-version.sh
-    # If nothing changed, there is nothing to commit — exit cleanly.
-    - |
-      if git diff --quiet -- manifest.json; then
-        echo "manifest.json already matches the release version. Nothing to commit."
-        exit 0
-      fi
-    - echo "manifest.json changed; preparing commit-back to ${CI_COMMIT_BRANCH}."
-    - git --no-pager diff -- manifest.json || true
-    - |
-      COMMIT_MSG="chore(release): set theme version to ${RELEASE_VERSION} [skip ci]"
-      if [ "${DRY_RUN:-false}" = "true" ]; then
-        echo "=================================================="
-        echo "DRY_RUN is active. Skipping commit + push."
-        echo "Would commit : ${COMMIT_MSG}"
-        echo "Would push   : HEAD -> ${CI_COMMIT_BRANCH} (with -o ci.skip)"
-        echo "=================================================="
-        exit 0
-      fi
-      if [ -z "${CI_PUSH_TOKEN:-}" ]; then
-        echo "ERROR: CI_PUSH_TOKEN is not set. A write-capable token (write_repository) is required to push the manifest version back to the release branch." >&2
-        exit 1
-      fi
-      git config user.name "${GIT_AUTHOR_NAME}"
-      git config user.email "${GIT_AUTHOR_EMAIL}"
-      git add manifest.json
-      git commit -m "${COMMIT_MSG}"
-      # Build an authenticated push URL. The token is never printed.
-      PUSH_URL="https://oauth2:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-      git push -o ci.skip "${PUSH_URL}" "HEAD:${CI_COMMIT_BRANCH}"
-      echo "Pushed manifest version ${RELEASE_VERSION} back to ${CI_COMMIT_BRANCH}."
+  # DEPLOYMENT_TYPE: "NEW_THEME"
+  # JOB_POLL_INTERVAL_SECONDS: "5"
+  # JOB_POLL_TIMEOUT_SECONDS: "600"
+  # THEME_ARCHIVE: "dist/theme.zip"
+  THEME_NAME_PREFIX: "Hilti-PE_Theme"
+  # THEME_SOURCE_DIR: "."
+  # ZENDESK_BRAND_ID: "36275984782609"
+  # ZENDESK_BRAND_NAME: "Hilti PROFIS Engineering"
+  ### Temporary during debugging
+  # DRY_RUN: "true"
